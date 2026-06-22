@@ -25,6 +25,11 @@ const PASSWORD_DEFAULT = "albero";
 const oggiISO = () => new Date().toISOString().slice(0, 10);
 type Parziale<T> = Partial<Omit<T, "id">>;
 
+// helper per le azioni generiche (pannello admin → store app)
+const arrDi = (db: Database, coll: keyof Database) => db[coll] as unknown as { id: string }[];
+const conColl = (db: Database, coll: keyof Database, arr: unknown[]): Database =>
+  ({ ...db, [coll]: arr } as unknown as Database);
+
 function ricalcolaPagamento(p: Pagamento): Pagamento {
   const saldato = p.importoIncassato >= p.importoAtteso - 0.005 && p.importoAtteso > 0;
   const inRitardo = !saldato && !!p.dataScadenza && new Date(p.dataScadenza) < new Date();
@@ -94,6 +99,11 @@ interface Stato {
   creaAttrezzo: (i: Omit<Attrezzo, "id">) => void;
   aggiornaAttrezzo: (id: string, patch: Parziale<Attrezzo>) => void;
   eliminaAttrezzo: (id: string) => void;
+
+  // generiche (usate dal pannello amministrativo)
+  patchRecord: (coll: keyof Database, id: string, patch: Record<string, unknown>) => void;
+  addRecord: (coll: keyof Database, rec: Record<string, unknown>) => string;
+  removeRecord: (coll: keyof Database, id: string) => void;
 }
 
 export const useStore = create<Stato>()(
@@ -320,6 +330,37 @@ export const useStore = create<Stato>()(
         set((s) => ({ db: { ...s.db, attrezzi: s.db.attrezzi.map((a) => (a.id === id ? { ...a, ...patch } : a)) } })),
       eliminaAttrezzo: (id) =>
         set((s) => ({ db: { ...s.db, attrezzi: s.db.attrezzi.filter((a) => a.id !== id) } })),
+
+      // ---------------- generiche (pannello admin) ----------------
+      patchRecord: (coll, id, patch) =>
+        set((s) => ({ db: conColl(s.db, coll, arrDi(s.db, coll).map((x) => (x.id === id ? { ...x, ...patch } : x))) })),
+      removeRecord: (coll, id) => {
+        if (coll === "clienti") return get().eliminaCliente(id);
+        if (coll === "operatori") return get().eliminaOperatore(id);
+        set((s) => ({ db: conColl(s.db, coll, arrDi(s.db, coll).filter((x) => x.id !== id)) }));
+      },
+      addRecord: (coll, rec) => {
+        const db = get().db;
+        const id = nuovoId(coll.slice(0, 2));
+        const now = new Date().toISOString();
+        let record: Record<string, unknown>;
+        if (coll === "clienti") {
+          const nome = String(rec.nome ?? ""); const cognome = String(rec.cognome ?? "");
+          record = { modalitaPredefinita: "preventivo", ...rec, id, nome, cognome, inizialiCodice: assegnaIniziali(nome, cognome, db.clienti), creatoIl: now };
+        } else if (coll === "operatori") {
+          record = { ruolo: "collaboratore", attivo: true, ...rec, id, creatoIl: now };
+        } else if (coll === "lavori") {
+          record = { stato: "da_fare", tipoCompenso: "preventivo", ...rec, id, creatoIl: now };
+        } else if (coll === "spese") {
+          record = { categoria: "altro", data: now.slice(0, 10), ...rec, id };
+        } else if (coll === "attrezzi") {
+          record = { stato: "ok", ...rec, id };
+        } else {
+          record = { ...rec, id };
+        }
+        set((s) => ({ db: conColl(s.db, coll, [record, ...arrDi(s.db, coll)]) }));
+        return id;
+      },
     }),
     {
       name: "albero-maestri",

@@ -5,11 +5,15 @@ import {
   CalendarCheck,
   FileText,
   FolderKanban,
+  Fuel,
+  Hammer,
   Image,
   Inbox,
   Languages,
   Search,
   Settings,
+  Sprout,
+  Users,
   Wrench,
   type LucideIcon,
 } from "lucide-react";
@@ -27,15 +31,19 @@ export interface Campo {
   label: string;
   tipo: CampoTipo;
   opzioni?: { value: string; label: string }[];
+  opzioniDa?: "clienti" | "operatori"; // select con opzioni dinamiche dallo store app
   placeholder?: string;
   larga?: boolean; // occupa due colonne nel form
 }
 
 export type TipoVista = "tabella" | "config";
+export type Origine = "admin" | "app"; // "app" = collegato allo store principale
 
 export interface Modulo {
   id: string;
   coll: string; // chiave della collezione nello store
+  origine?: Origine; // "app" = store principale; assente = "admin" (sito)
+  gruppo?: string; // intestazione nella navigazione (assente = "Sito")
   label: string;
   descrizione: string;
   Icona: LucideIcon;
@@ -47,6 +55,76 @@ export interface Modulo {
   badge?: string; // campo da mostrare come badge di stato
 }
 
+const MODALITA_OPZ = [{ value: "preventivo", label: "A preventivo" }, { value: "ore", label: "A ore" }, { value: "misto", label: "Misto" }];
+const RUOLO_OPZ = [{ value: "titolare", label: "Titolare" }, { value: "collaboratore", label: "Collaboratore" }];
+const STATO_LAVORO_OPZ = [{ value: "da_fare", label: "Da fare" }, { value: "in_corso", label: "In corso" }, { value: "fatto", label: "Fatto" }];
+const CATEGORIA_OPZ = [{ value: "benzina", label: "Benzina" }, { value: "materiali", label: "Materiali" }, { value: "attrezzi", label: "Attrezzi" }, { value: "altro", label: "Altro" }];
+const STATO_ATTREZZO_OPZ = [{ value: "ok", label: "In uso" }, { value: "manutenzione", label: "Manutenzione" }, { value: "dismesso", label: "Dismesso" }];
+
+// Moduli collegati allo store dell'app: modificarli QUI cambia l'app (Spazio,
+// Squadra, Agenda, Soldi…) in tempo reale.
+const MODULI_APP: Modulo[] = [
+  {
+    id: "app_clienti", coll: "clienti", origine: "app", gruppo: "Applicazione", label: "Clienti", descrizione: "Anagrafica clienti — sincronizzata con lo Spazio", Icona: Sprout, vista: "tabella",
+    titolo: "nome", colonne: ["nome", "cognome", "luogo", "modalitaPredefinita"],
+    campi: [
+      { nome: "nome", label: "Nome", tipo: "text" },
+      { nome: "cognome", label: "Cognome", tipo: "text" },
+      { nome: "telefono", label: "Telefono", tipo: "text" },
+      { nome: "email", label: "Email", tipo: "email" },
+      { nome: "luogo", label: "Luogo", tipo: "text", larga: true },
+      { nome: "modalitaPredefinita", label: "Accordo", tipo: "select", opzioni: MODALITA_OPZ },
+      { nome: "tariffaOraria", label: "Tariffa €/h", tipo: "number" },
+    ],
+  },
+  {
+    id: "app_operatori", coll: "operatori", origine: "app", gruppo: "Applicazione", label: "Operatori", descrizione: "La squadra — sincronizzata con la sezione Squadra", Icona: Users, vista: "tabella",
+    titolo: "nome", colonne: ["nome", "ruolo", "tariffaOraria", "attivo"], badge: "attivo",
+    campi: [
+      { nome: "nome", label: "Nome", tipo: "text" },
+      { nome: "ruolo", label: "Ruolo", tipo: "select", opzioni: RUOLO_OPZ },
+      { nome: "tariffaOraria", label: "Tariffa €/h", tipo: "number" },
+      { nome: "telefono", label: "Telefono", tipo: "text" },
+      { nome: "attivo", label: "Attivo", tipo: "switch" },
+    ],
+  },
+  {
+    id: "app_lavori", coll: "lavori", origine: "app", gruppo: "Applicazione", label: "Lavori", descrizione: "Interventi — sincronizzati con Agenda e schede", Icona: Hammer, vista: "tabella",
+    titolo: "titolo", colonne: ["titolo", "clienteId", "data", "stato"], badge: "stato",
+    campi: [
+      { nome: "titolo", label: "Titolo", tipo: "text" },
+      { nome: "clienteId", label: "Cliente", tipo: "select", opzioniDa: "clienti" },
+      { nome: "data", label: "Data", tipo: "date" },
+      { nome: "operatoreId", label: "Operatore", tipo: "select", opzioniDa: "operatori" },
+      { nome: "stato", label: "Stato", tipo: "select", opzioni: STATO_LAVORO_OPZ },
+      { nome: "tipoCompenso", label: "Compenso", tipo: "select", opzioni: MODALITA_OPZ },
+      { nome: "durataPrevistaOre", label: "Durata prevista (h)", tipo: "number" },
+      { nome: "luogo", label: "Luogo", tipo: "text", larga: true },
+    ],
+  },
+  {
+    id: "app_spese", coll: "spese", origine: "app", gruppo: "Applicazione", label: "Spese", descrizione: "Uscite — sincronizzate con Soldi", Icona: Fuel, vista: "tabella",
+    titolo: "descrizione", colonne: ["descrizione", "categoria", "importo", "data"], badge: "categoria",
+    campi: [
+      { nome: "descrizione", label: "Descrizione", tipo: "text", larga: true },
+      { nome: "categoria", label: "Categoria", tipo: "select", opzioni: CATEGORIA_OPZ },
+      { nome: "importo", label: "Importo €", tipo: "number" },
+      { nome: "data", label: "Data", tipo: "date" },
+      { nome: "clienteId", label: "Cliente (facolt.)", tipo: "select", opzioniDa: "clienti" },
+    ],
+  },
+  {
+    id: "app_attrezzi", coll: "attrezzi", origine: "app", gruppo: "Applicazione", label: "Attrezzi", descrizione: "Patrimonio — sincronizzato con Soldi › Patrimonio", Icona: Wrench, vista: "tabella",
+    titolo: "nome", colonne: ["nome", "costoAcquisto", "stato"], badge: "stato",
+    campi: [
+      { nome: "nome", label: "Nome", tipo: "text" },
+      { nome: "costoAcquisto", label: "Costo €", tipo: "number" },
+      { nome: "dataAcquisto", label: "Data acquisto", tipo: "date" },
+      { nome: "stato", label: "Stato", tipo: "select", opzioni: STATO_ATTREZZO_OPZ },
+    ],
+  },
+];
+
 const sezioneOpz = [
   { value: "hero", label: "Hero" },
   { value: "chi_siamo", label: "Chi siamo" },
@@ -55,7 +133,7 @@ const sezioneOpz = [
   { value: "footer", label: "Footer" },
 ];
 
-export const MODULI: Modulo[] = [
+const MODULI_SITO: Modulo[] = [
   {
     id: "contenuti", coll: "contenuti", label: "Contenuti", descrizione: "Blocchi di testo delle pagine pubbliche", Icona: FileText, vista: "tabella",
     titolo: "titolo", colonne: ["titolo", "sezione", "pubblicato"], badge: "pubblicato",
@@ -163,6 +241,8 @@ export const MODULI: Modulo[] = [
     ],
   },
 ];
+
+export const MODULI: Modulo[] = [...MODULI_APP, ...MODULI_SITO];
 
 export function getModulo(id: string): Modulo | undefined {
   return MODULI.find((m) => m.id === id);
