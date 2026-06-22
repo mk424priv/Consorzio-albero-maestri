@@ -5,10 +5,10 @@ import {
   CalendarDays,
   Cloud,
   CloudOff,
+  HardHat,
   LayoutDashboard,
   Loader2,
   LogOut,
-  Plus,
   RefreshCw,
   Search,
   Sprout,
@@ -35,7 +35,7 @@ interface Voce {
   end?: boolean;
 }
 const NAV: Voce[] = [
-  { to: "/", label: "Spazio", Icona: Sprout, end: true },
+  { to: "/clienti", label: "Clienti", Icona: Sprout },
   { to: "/agenda", label: "Agenda", Icona: CalendarDays },
   { to: "/soldi", label: "Soldi", Icona: Wallet },
   { to: "/squadra", label: "Squadra", Icona: Users },
@@ -98,8 +98,8 @@ function RicercaInput() {
         onChange={(e) => {
           const q = e.target.value;
           setVal(q);
-          if (location.pathname !== "/") {
-            navigate(q ? `/?q=${encodeURIComponent(q)}` : "/");
+          if (location.pathname !== "/clienti") {
+            navigate(q ? `/clienti?q=${encodeURIComponent(q)}` : "/clienti");
           } else {
             if (q) params.set("q", q); else params.delete("q");
             setParams(params, { replace: true });
@@ -113,13 +113,12 @@ function RicercaInput() {
 }
 
 function SideRail() {
-  const apri = useUI((s) => s.apri);
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-surface/70 p-4 backdrop-blur lg:flex">
       <div className="mb-6 mt-1 px-1"><Logo /></div>
-      <button onClick={() => apri("crea")} className="mb-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-gradient-to-b from-brand-400 to-brand-500 px-4 text-sm font-bold text-white shadow-[var(--shadow-glow)] transition hover:to-brand-600">
-        <Plus size={18} /> Crea
-      </button>
+      <NavLink to="/" end className={({ isActive }) => cn("mb-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] px-4 text-sm font-bold text-white shadow-[var(--shadow-glow)] transition", isActive ? "bg-gradient-to-b from-brand-500 to-brand-600" : "bg-gradient-to-b from-brand-400 to-brand-500 hover:to-brand-600")}>
+        <HardHat size={18} /> Nuovo intervento
+      </NavLink>
       <nav className="flex flex-col gap-1">
         {NAV.map(({ to, label, Icona, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("group relative flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-sm font-semibold transition-colors", isActive ? "bg-brand-50 text-brand-600" : "text-ink-soft hover:bg-brand-50/60 hover:text-brand-600")}>
@@ -151,7 +150,9 @@ function SideRail() {
 }
 
 function BottomNav() {
-  const apri = useUI((s) => s.apri);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const suCantiere = location.pathname === "/";
   const sinistra = NAV.slice(0, 2);
   const destra = NAV.slice(2);
   const item = (v: Voce) => (
@@ -169,10 +170,11 @@ function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex h-safe-nav items-start justify-around border-t border-line bg-surface/90 px-2 pt-1.5 backdrop-blur lg:hidden">
       {sinistra.map(item)}
-      <div className="flex flex-1 justify-center">
-        <motion.button whileTap={tap} onClick={() => apri("crea")} aria-label="Crea" className="-mt-5 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-brand-400 to-brand-500 text-white shadow-[var(--shadow-glow)] ring-4 ring-canvas">
-          <Plus size={26} />
+      <div className="flex flex-1 flex-col items-center">
+        <motion.button whileTap={tap} onClick={() => navigate("/")} aria-label="Nuovo intervento" className={cn("-mt-5 grid h-14 w-14 place-items-center rounded-full text-white shadow-[var(--shadow-glow)] ring-4 ring-canvas transition", suCantiere ? "bg-gradient-to-b from-brand-500 to-brand-600" : "bg-gradient-to-b from-brand-400 to-brand-500")}>
+          <HardHat size={24} />
         </motion.button>
+        <span className={cn("mt-0.5 text-[0.62rem] font-bold", suCantiere ? "text-brand-600" : "text-muted")}>Cantiere</span>
       </div>
       {destra.map(item)}
     </nav>

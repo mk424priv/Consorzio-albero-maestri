@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { useStore } from "@/store/store";
 import { AppShell } from "@/components/Shell";
 import { Login } from "@/pages/Login";
+import { Cantiere } from "@/pages/Cantiere";
 import { Spazio } from "@/pages/Spazio";
 import { ClienteScheda } from "@/pages/ClienteScheda";
 import { Squadra } from "@/pages/Squadra";
@@ -23,7 +24,8 @@ export function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route element={<RichiedeAccesso><AppShell /></RichiedeAccesso>}>
-        <Route index element={<Spazio />} />
+        <Route index element={<Cantiere />} />
+        <Route path="clienti" element={<Spazio />} />
         <Route path="cliente/:id" element={<ClienteScheda />} />
         <Route path="squadra" element={<Squadra />} />
         <Route path="operatore/:id" element={<OperatoreScheda />} />

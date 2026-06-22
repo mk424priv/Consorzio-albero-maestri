@@ -72,6 +72,9 @@ interface Stato {
   aggiornaLavoro: (id: string, patch: Parziale<Lavoro>) => void;
   cambiaStatoLavoro: (id: string, stato: Lavoro["stato"]) => void;
   eliminaLavoro: (id: string) => void;
+  // intervento rapido dal campo: crea lavoro + ore + incasso in un colpo,
+  // smistando i dati nelle aree (clienti, squadra, lavori, contabilità).
+  registraIntervento: (i: { data: string; clienteId: string; operatoreId?: string | null; prezzo?: number | null; ore?: number | null; arrivo?: string | null; uscita?: string | null; titolo?: string | null }) => void;
 
   // preventivi
   creaPreventivo: (i: { clienteId: string; lavoroId?: string | null; tipo: Preventivo["tipo"]; importoTotale: number; importoAcconto?: number | null; dataEmissione?: string; dataScadenza?: string | null; note?: string | null }) => void;
@@ -218,6 +221,35 @@ export const useStore = create<Stato>()(
         set((s) => ({ db: { ...s.db, lavori: s.db.lavori.map((l) => (l.id === id ? { ...l, stato } : l)) } })),
       eliminaLavoro: (id) =>
         set((s) => ({ db: { ...s.db, lavori: s.db.lavori.filter((l) => l.id !== id) } })),
+      registraIntervento: (i) =>
+        set((s) => {
+          const lavoroId = nuovoId("lv");
+          const prezzo = i.prezzo ?? 0;
+          const ore = i.ore ?? 0;
+          const orario = i.arrivo && i.uscita ? `Orario ${i.arrivo}–${i.uscita}` : null;
+          const lavoro: Lavoro = {
+            id: lavoroId,
+            clienteId: i.clienteId,
+            titolo: i.titolo?.trim() || `Intervento del ${i.data.split("-").reverse().join("/")}`,
+            descrizione: orario,
+            luogo: null,
+            data: i.data,
+            ordineNelGiorno: null,
+            stato: "fatto",
+            tipoCompenso: prezzo > 0 ? "preventivo" : "ore",
+            durataPrevistaOre: ore > 0 ? ore : null,
+            operatoreId: i.operatoreId ?? null,
+            note: null,
+            creatoIl: new Date().toISOString(),
+          };
+          const nuoveOre = ore > 0
+            ? [{ id: nuovoId("or"), clienteId: i.clienteId, lavoroId, operatoreId: i.operatoreId ?? null, data: i.data, ore, note: orario }, ...s.db.ore]
+            : s.db.ore;
+          const nuoviPag = prezzo > 0
+            ? [{ id: nuovoId("pa"), clienteId: i.clienteId, lavoroId, preventivoId: null, origine: "manuale" as const, importoAtteso: arrotonda(prezzo), importoIncassato: 0, stato: "in_attesa" as const, dataEmissione: i.data, dataScadenza: null, dataIncasso: null }, ...s.db.pagamenti]
+            : s.db.pagamenti;
+          return { db: { ...s.db, lavori: [...s.db.lavori, lavoro], ore: nuoveOre, pagamenti: nuoviPag } };
+        }),
 
       // ---------------- preventivi ----------------
       creaPreventivo: (i) => {

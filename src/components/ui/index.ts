@@ -3,6 +3,7 @@ export * from "./fields";
 export * from "./inputs";
 export * from "./stats";
 export * from "./Sheet";
+export * from "./RuotaOrario";
 export * from "./Tabs";
 export * from "./Menu";
 export * from "./Table";
