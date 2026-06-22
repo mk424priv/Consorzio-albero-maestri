@@ -9,6 +9,7 @@ import { Squadra } from "@/pages/Squadra";
 import { OperatoreScheda } from "@/pages/OperatoreScheda";
 import { Soldi } from "@/pages/Soldi";
 import { Agenda } from "@/pages/Agenda";
+import { Admin } from "@/pages/Admin";
 
 function RichiedeAccesso({ children }: { children: ReactNode }) {
   const autenticato = useStore((s) => s.autenticato);
@@ -28,6 +29,7 @@ export function App() {
         <Route path="operatore/:id" element={<OperatoreScheda />} />
         <Route path="soldi" element={<Soldi />} />
         <Route path="agenda" element={<Agenda />} />
+        <Route path="admin" element={<Admin />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

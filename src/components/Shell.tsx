@@ -3,6 +3,7 @@ import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "reac
 import { motion } from "framer-motion";
 import {
   CalendarDays,
+  LayoutDashboard,
   LogOut,
   Plus,
   RefreshCw,
@@ -62,7 +63,8 @@ function ProfiloMenu() {
         </button>
       }
       voci={[
-        { label: "Ricarica esempi", icona: <RefreshCw size={16} />, onClick: () => { reseed(); mostra("Dati d'esempio ricaricati."); } },
+        { label: "Pannello di controllo", icona: <LayoutDashboard size={16} />, onClick: () => navigate("/admin") },
+        { label: "Ricarica esempi", icona: <RefreshCw size={16} />, separa: true, onClick: () => { reseed(); mostra("Dati d'esempio ricaricati."); } },
         { label: "Svuota tutto", icona: <Trash2 size={16} />, pericolo: true, onClick: () => chiediConferma({ titolo: "Svuotare tutti i dati?", descrizione: "Restano solo gli operatori. Non si può annullare.", pericolo: true, testoConferma: "Svuota", onConfirm: () => { svuota(); mostra("Tutto svuotato.", "info"); } }) },
         { label: "Esci", icona: <LogOut size={16} />, separa: true, onClick: () => { logout(); navigate("/login"); } },
       ]}
@@ -118,6 +120,9 @@ function SideRail() {
           </NavLink>
         ))}
       </nav>
+      <NavLink to="/admin" className={({ isActive }) => cn("group mt-1 flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-sm font-semibold transition-colors", isActive ? "bg-brand-50 text-brand-600" : "text-ink-soft hover:bg-brand-50/60 hover:text-brand-600")}>
+        {({ isActive }) => (<><LayoutDashboard size={19} className={isActive ? "text-brand-500" : "text-muted group-hover:text-brand-500"} /> Pannello</>)}
+      </NavLink>
       <div className="mt-auto flex items-center justify-between rounded-[14px] border border-line bg-surface-2 p-2.5">
         <div className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-operatore-500 to-operatore-600 text-xs font-bold text-white">M</span>
