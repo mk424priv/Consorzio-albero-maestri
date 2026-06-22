@@ -38,12 +38,15 @@ interface StatoUI {
   sheet: { tipo: SheetTipo; ctx: SheetCtx; seq: number } | null;
   conferma: (Conferma & { id: number }) | null;
   vista: "carte" | "tabella";
+  schedaLavoro: string | null; // id del lavoro aperto a tutto schermo
 
   apri: (tipo: SheetTipo, ctx?: SheetCtx) => void;
   chiudi: () => void;
   chiediConferma: (c: Conferma) => void;
   chiudiConferma: () => void;
   setVista: (v: "carte" | "tabella") => void;
+  apriSchedaLavoro: (id: string) => void;
+  chiudiSchedaLavoro: () => void;
 }
 
 let contatore = 0;
@@ -55,11 +58,14 @@ export const useUI = create<StatoUI>()(
       sheet: null,
       conferma: null,
       vista: "carte",
+      schedaLavoro: null,
       apri: (tipo, ctx = {}) => set({ sheet: { tipo, ctx, seq: ++seqSheet } }),
       chiudi: () => set({ sheet: null }),
       chiediConferma: (c) => set({ conferma: { ...c, id: ++contatore } }),
       chiudiConferma: () => set({ conferma: null }),
       setVista: (vista) => set({ vista }),
+      apriSchedaLavoro: (id) => set({ schedaLavoro: id }),
+      chiudiSchedaLavoro: () => set({ schedaLavoro: null }),
     }),
     { name: "albero-maestri-ui", partialize: (s) => ({ vista: s.vista }) },
   ),

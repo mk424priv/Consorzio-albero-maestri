@@ -401,7 +401,7 @@ function SpesaForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; ch
     e.preventDefault();
     const importo = num(v.importo);
     if (importo === null || importo <= 0) return mostra("Importo non valido.", "error");
-    crea({ categoria: v.categoria, importo, data: v.data, clienteId: v.clienteId || null, descrizione: v.descrizione || null });
+    crea({ categoria: v.categoria, importo, data: v.data, clienteId: v.clienteId || null, lavoroId: ctx.lavoroId ?? null, descrizione: v.descrizione || null });
     festa("spesa"); mostra("Spesa segnata ⛽"); chiudi();
   }
   const scena = (

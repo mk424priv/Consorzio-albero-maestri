@@ -1,46 +1,34 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Banknote,
   CalendarDays,
   ChevronLeft,
   ChevronRight,
   Clock,
   Columns3,
   Hammer,
-  Hourglass,
   LayoutList,
-  MoreVertical,
-  Pencil,
   Plus,
-  Trash2,
   TrendingUp,
-  User,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
-import { listaContenitore, listaElemento } from "@/lib/motion";
+import { listaContenitore, listaElemento, tapSoft } from "@/lib/motion";
 import { useStore } from "@/store/store";
 import { useUI } from "@/store/ui";
-import { dataIT, euro, meseAnnoIT, ore as fmtOre } from "@/lib/format";
+import { dataIT, euro, meseAnnoIT } from "@/lib/format";
 import { etichetta, STATO_LAVORO, type StatoLavoro } from "@/lib/dominio";
-import { ENTITA, STATO_LAVORO_TONO } from "@/lib/entita";
+import { ENTITA, STATO_LAVORO_TONO, type ChiaveEntita } from "@/lib/entita";
 import { riepilogoLavoro } from "@/lib/conti";
 import type { Lavoro } from "@/lib/types";
 import {
   Avatar,
   Badge,
-  Barra,
   Button,
   Card,
-  Cifra,
-  Conta,
   EmptyState,
   FilterChip,
-  Menu,
   PageHero,
   Segmented,
-  StatCard,
   StatusBadge,
 } from "@/components/ui";
 
@@ -56,7 +44,6 @@ function lunedi(offset: number): Date {
 const iso = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 type Vista = "settimana" | "bacheca" | "lista";
-
 const VISTE = [
   { k: "settimana", label: "Settimana", icona: <CalendarDays size={15} /> },
   { k: "bacheca", label: "Bacheca", icona: <Columns3 size={15} /> },
@@ -70,96 +57,63 @@ const SPINA: Record<StatoLavoro, string> = {
   fatto: "bg-success",
 };
 
-/* ----------------------- Carta del singolo lavoro ----------------------- */
+/* ----------------------- Carta del singolo lavoro -----------------------
+   Compatta e tutta cliccabile: un tocco apre la scheda dedicata del lavoro.
+   L'unico controllo rapido è il badge di stato (avanza lo stato).            */
 function CartaLavoro({ l, mostraData = false }: { l: Lavoro; mostraData?: boolean }) {
   const db = useStore((s) => s.db);
-  const apri = useUI((s) => s.apri);
+  const apriScheda = useUI((s) => s.apriSchedaLavoro);
   const cambia = useStore((s) => s.cambiaStatoLavoro);
-  const elimina = useStore((s) => s.eliminaLavoro);
-  const chiediConferma = useUI((s) => s.chiediConferma);
-  const navigate = useNavigate();
-
   const r = riepilogoLavoro(db, l.id);
   const cli = db.clienti.find((c) => c.id === l.clienteId);
   const op = db.operatori.find((o) => o.id === l.operatoreId);
-  const haSoldi = r.daPrendere > 0 || r.incassato > 0;
-  const ratio = r.daPrendere > 0 ? r.incassato / r.daPrendere : l.stato === "fatto" ? 1 : 0;
-
-  function riscuoti() {
-    if (r.pagamentoApertoId) apri("riscuoti", { pagamentoId: r.pagamentoApertoId });
-    else apri("incasso", { clienteId: l.clienteId, lavoroId: l.id });
-  }
 
   return (
-    <div className="group relative overflow-hidden rounded-[14px] border border-line bg-surface p-3 shadow-[var(--shadow-sm)] transition hover:shadow-[var(--shadow-md)]">
+    <motion.div
+      whileTap={tapSoft}
+      onClick={() => apriScheda(l.id)}
+      className="group relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-[14px] border border-line bg-surface py-2.5 pl-3 pr-2.5 shadow-[var(--shadow-sm)] transition hover:border-lavoro-200 hover:shadow-[var(--shadow-md)]"
+    >
       <span className={cn("absolute inset-y-0 left-0 w-1", SPINA[l.stato])} />
-      <div className="flex items-start gap-2.5 pl-1">
-        <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-[11px]", ENTITA.lavoro.soft)}>
-          <Hammer size={16} />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-2">
-            <button onClick={() => apri("lavoro", { id: l.id })} className="min-w-0 truncate text-left text-sm font-bold text-ink hover:text-lavoro-600">
-              {l.titolo}
-            </button>
-            <Menu
-              trigger={<button className="grid h-7 w-7 shrink-0 place-items-center rounded-[9px] text-muted hover:bg-canvas"><MoreVertical size={16} /></button>}
-              voci={[
-                { label: "Apri cliente", icona: <User size={15} />, onClick: () => navigate(`/cliente/${l.clienteId}`) },
-                { label: "Registra ore", icona: <Clock size={15} />, onClick: () => apri("ore", { clienteId: l.clienteId, operatoreId: l.operatoreId ?? undefined, lavoroId: l.id, data: l.data }) },
-                { label: "Incassa", icona: <Banknote size={15} />, onClick: riscuoti },
-                { label: "Modifica", icona: <Pencil size={15} />, onClick: () => apri("lavoro", { id: l.id }) },
-                { label: "Elimina", icona: <Trash2 size={15} />, pericolo: true, separa: true, onClick: () => chiediConferma({ titolo: "Eliminare il lavoro?", descrizione: l.titolo, pericolo: true, testoConferma: "Elimina", onConfirm: () => elimina(l.id) }) },
-              ]}
-            />
-          </div>
-          <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.72rem] text-muted">
-            <button onClick={() => navigate(`/cliente/${l.clienteId}`)} className="truncate font-semibold text-cliente-600 hover:underline">
-              {cli ? `${cli.nome} ${cli.cognome}` : "—"}
-            </button>
-            {mostraData && <span>· {dataIT(l.data)}</span>}
-            {op && <span className="inline-flex items-center gap-1"><Avatar nome={op.nome} size="sm" grad={ENTITA.operatore.grad} className="!h-4 !w-4 !text-[0.5rem]" /> {op.nome}</span>}
-          </div>
+      <div className="min-w-0 flex-1 pl-1">
+        <div className="flex items-center gap-2">
+          <span className="min-w-0 truncate text-sm font-bold text-ink">{l.titolo}</span>
+          {r.residuo > 0 ? (
+            <span className="ml-auto shrink-0 rounded-full bg-uscita-50 px-2 py-0.5 text-[0.7rem] font-bold text-uscita-600">{euro(r.residuo)}</span>
+          ) : r.daPrendere > 0 ? (
+            <span className="ml-auto shrink-0 rounded-full bg-entrata-50 px-2 py-0.5 text-[0.7rem] font-bold text-entrata-600">Saldato</span>
+          ) : null}
         </div>
-      </div>
-
-      {/* chip caratteristiche */}
-      <div className="mt-2 flex flex-wrap items-center gap-1.5 pl-1">
-        <span className="inline-flex items-center gap-1 rounded-full bg-lavoro-50 px-2 py-0.5 text-[0.66rem] font-semibold text-lavoro-600">{etichetta(l.tipoCompenso)}</span>
-        {(r.oreReali > 0 || r.durataPrevista != null) && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-operatore-50 px-2 py-0.5 text-[0.66rem] font-semibold text-operatore-600">
-            <Clock size={11} /> {r.oreReali}h{r.durataPrevista != null ? ` / ${r.durataPrevista}h` : ""}
-          </span>
-        )}
-        {r.spese > 0 && (
-          <span className="inline-flex items-center gap-1 rounded-full bg-spesa-50 px-2 py-0.5 text-[0.66rem] font-semibold text-spesa-600">spese {euro(r.spese)}</span>
-        )}
-      </div>
-
-      {/* blocco economico */}
-      {haSoldi && (
-        <div className="mt-2 ml-1 rounded-[11px] bg-surface-2 p-2">
-          <div className="flex items-center justify-between text-[0.7rem]">
-            <span className="font-semibold uppercase tracking-wide text-muted">Da prendere</span>
-            <span className="font-display text-[0.9rem] font-bold text-ink">{euro(r.daPrendere)}</span>
-          </div>
-          <Barra ratio={ratio} accent="entrata" className="my-1.5" />
-          <div className="flex items-center justify-between text-[0.7rem] font-semibold">
-            <span className="text-entrata-600">Incassato {euro(r.incassato)}</span>
-            {r.residuo > 0 ? <span className="text-uscita-600">Resta {euro(r.residuo)}</span> : <span className="text-success">Saldato ✓</span>}
-          </div>
-        </div>
-      )}
-
-      {/* azioni */}
-      <div className="mt-2 flex items-center gap-2 pl-1">
-        <button onClick={() => cambia(l.id, CICLO[l.stato])} title="Cambia stato"><StatusBadge genere="lavoro" valore={l.stato} /></button>
-        <div className="ml-auto flex items-center gap-1.5">
-          {r.residuo > 0 && (
-            <Button variante="soft" dim="sm" onClick={riscuoti}><Banknote size={14} /> Incassa</Button>
+        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.72rem] text-muted">
+          <span className="truncate font-semibold text-cliente-600">{cli ? `${cli.nome} ${cli.cognome}` : "—"}</span>
+          {mostraData && <span>· {dataIT(l.data)}</span>}
+          {op && <span className="inline-flex items-center gap-1"><Avatar nome={op.nome} size="sm" grad={ENTITA.operatore.grad} className="!h-4 !w-4 !text-[0.5rem]" /> {op.nome}</span>}
+          {(r.oreReali > 0 || r.durataPrevista != null) && (
+            <span className="inline-flex items-center gap-1 text-operatore-600"><Clock size={11} /> {r.oreReali}h{r.durataPrevista != null ? `/${r.durataPrevista}` : ""}</span>
           )}
-          <Button dim="sm" onClick={() => apri("ore", { clienteId: l.clienteId, operatoreId: l.operatoreId ?? undefined, lavoroId: l.id, data: l.data })}><Clock size={14} /></Button>
         </div>
+      </div>
+      <button
+        onClick={(e) => { e.stopPropagation(); cambia(l.id, CICLO[l.stato]); }}
+        title="Avanza stato"
+        className="shrink-0"
+      >
+        <StatusBadge genere="lavoro" valore={l.stato} />
+      </button>
+      <ChevronRight size={16} className="shrink-0 text-muted/40 transition-colors group-hover:text-lavoro-400" />
+    </motion.div>
+  );
+}
+
+/* ----------------------------- Mini statistica ----------------------------- */
+function MiniStat({ tinta, label, valore, sub }: { tinta: ChiaveEntita; label: string; valore: string; sub?: string }) {
+  return (
+    <div className="rounded-[12px] border border-line bg-surface px-3 py-2 shadow-[var(--shadow-sm)]">
+      <div className="flex items-center gap-1.5 text-[0.6rem] font-bold uppercase tracking-wide text-muted">
+        <span className={cn("h-1.5 w-1.5 rounded-full", ENTITA[tinta].dot)} /> {label}
+      </div>
+      <div className="mt-0.5 text-[0.98rem] font-extrabold leading-none text-ink">
+        {valore} {sub && <span className="text-[0.7rem] font-medium text-muted">{sub}</span>}
       </div>
     </div>
   );
@@ -171,8 +125,8 @@ export function Agenda() {
   const apri = useUI((s) => s.apri);
 
   const [vista, setVista] = useState<Vista>("settimana");
-  const [offset, setOffset] = useState(0); // settimana
-  const [meseOff, setMeseOff] = useState(0); // bacheca/lista
+  const [offset, setOffset] = useState(0);
+  const [meseOff, setMeseOff] = useState(0);
   const [tutto, setTutto] = useState(false);
   const [opFiltro, setOpFiltro] = useState<string>("tutti");
   const [statoFiltro, setStatoFiltro] = useState<StatoLavoro | "tutti">("tutti");
@@ -187,11 +141,10 @@ export function Agenda() {
 
   const mese = useMemo(() => {
     const d = new Date(oggi.getFullYear(), oggi.getMonth() + meseOff, 1);
-    return { anno: d.getFullYear(), mese: d.getMonth() + 1, key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: meseAnnoIT(d.getFullYear(), d.getMonth() + 1) };
+    return { key: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`, label: meseAnnoIT(d.getFullYear(), d.getMonth() + 1) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meseOff]);
 
-  // Lavori nello scope corrente (periodo + operatore).
   const lavoriScope = useMemo(() => {
     return db.lavori
       .filter((l) => {
@@ -204,7 +157,6 @@ export function Agenda() {
       .sort((a, b) => b.data.localeCompare(a.data) || (a.ordineNelGiorno ?? 99) - (b.ordineNelGiorno ?? 99));
   }, [db.lavori, opFiltro, vista, settimana, tutto, mese.key]);
 
-  // Aggregati del periodo.
   const stat = useMemo(() => {
     let daFare = 0, inCorso = 0, fatti = 0, oreReali = 0, orePrev = 0, daPrendere = 0, incassato = 0, residuo = 0, margine = 0;
     for (const l of lavoriScope) {
@@ -216,7 +168,6 @@ export function Agenda() {
     return { totale: lavoriScope.length, daFare, inCorso, fatti, oreReali, orePrev, daPrendere, incassato, residuo, margine };
   }, [lavoriScope, db]);
 
-  // Vista settimana: 7 giorni con i loro lavori.
   const giorni = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
       const d = new Date(settimana.inizio.getTime() + i * 86_400_000);
@@ -260,26 +211,23 @@ export function Agenda() {
         }
       />
 
-      {/* selettore vista */}
       <Segmented voci={VISTE} attivo={vista} onChange={(k) => setVista(k as Vista)} className="mb-3" />
 
-      {/* filtri operatore */}
-      <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+      <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         <FilterChip attivo={opFiltro === "tutti"} onClick={() => setOpFiltro("tutti")}>Tutta la squadra</FilterChip>
         {db.operatori.filter((o) => o.attivo).map((o) => (
           <FilterChip key={o.id} attivo={opFiltro === o.id} onClick={() => setOpFiltro(o.id)}>{o.nome}</FilterChip>
         ))}
       </div>
 
-      {/* fascia statistiche del periodo — ogni dato la sua forma */}
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard accent="lavoro" label="Lavori" valore={<Conta valore={stat.totale} />} icona={<Hammer size={15} />} ratio={stat.totale > 0 ? stat.fatti / stat.totale : 0} nota={`${stat.daFare} da fare · ${stat.inCorso} in corso · ${stat.fatti} fatti`} />
-        <StatCard accent="operatore" label="Ore" valore={<Conta valore={stat.oreReali} suffix=" h" />} icona={<Clock size={15} />} nota={stat.orePrev > 0 ? `${fmtOre(stat.orePrev)} previste` : "nessuna stima"} />
-        <StatCard accent="uscita" label="Da incassare" valore={<Cifra valore={stat.residuo} />} icona={<Hourglass size={15} />} nota={stat.residuo > 0 ? "ancora aperto" : "tutto saldato"} />
-        <StatCard accent="entrata" label="Incassato" valore={<Cifra valore={stat.incassato} />} icona={<Banknote size={15} />} ratio={stat.daPrendere > 0 ? stat.incassato / stat.daPrendere : 0} nota={`su ${euro(stat.daPrendere)} attesi`} />
+      {/* riepilogo compatto del periodo (secondario rispetto ai lavori) */}
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <MiniStat tinta="lavoro" label="Lavori" valore={String(stat.totale)} sub={`${stat.daFare}·${stat.inCorso}·${stat.fatti}`} />
+        <MiniStat tinta="operatore" label="Ore" valore={`${stat.oreReali} h`} sub={stat.orePrev > 0 ? `/ ${stat.orePrev}h` : undefined} />
+        <MiniStat tinta="uscita" label="Da incassare" valore={euro(stat.residuo)} />
+        <MiniStat tinta="entrata" label="Incassato" valore={euro(stat.incassato)} />
       </div>
 
-      {/* corpo della vista */}
       {vista === "settimana" && <VistaSettimana giorni={giorni} isOggi={isOggi} />}
       {vista === "bacheca" && <VistaBacheca lavori={lavoriScope} />}
       {vista === "lista" && <VistaLista lavori={lavoriScope} statoFiltro={statoFiltro} setStatoFiltro={setStatoFiltro} margine={stat.margine} />}

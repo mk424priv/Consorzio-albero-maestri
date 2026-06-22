@@ -25,6 +25,7 @@ import { useToast } from "@/store/toast";
 import { useSync } from "@/lib/sync";
 import { Menu } from "@/components/ui";
 import { SheetHost } from "@/components/sheets";
+import { LavoroSchedaHost } from "@/components/LavoroScheda";
 import { ConfirmHost } from "@/components/ui";
 
 interface Voce {
@@ -208,6 +209,7 @@ export function AppShell() {
         </motion.main>
       </div>
       <BottomNav />
+      <LavoroSchedaHost />
       <SheetHost />
       <ConfirmHost />
     </div>
