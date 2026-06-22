@@ -1,13 +1,17 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
+  ArrowDownRight,
+  ArrowUpRight,
   Banknote,
   ChevronLeft,
   ChevronRight,
   Fuel,
   HandCoins,
+  Hourglass,
   Plus,
   Trash2,
+  Users,
   Wallet,
   Wrench,
 } from "lucide-react";
@@ -30,7 +34,6 @@ import {
   Donut,
   EmptyState,
   FilterChip,
-  HeroStat,
   Importo,
   PageHero,
   RigaEditabile,
@@ -59,6 +62,10 @@ export function Soldi() {
   const periodo = `${anno}-${String(mese).padStart(2, "0")}`;
 
   const r = useMemo(() => riepilogoMese(db, anno, mese), [db, anno, mese]);
+  const rPrec = useMemo(() => { const d = new Date(anno, mese - 2, 1); return riepilogoMese(db, d.getFullYear(), d.getMonth() + 1); }, [db, anno, mese]);
+  const trend = useMemo(() => [...storicoMensile(db)].reverse().map((x) => x.saldo), [db]);
+  const deltaUtile = r.saldo - rPrec.saldo;
+  const positivo = r.saldo >= 0;
 
   function cambiaMese(delta: number) {
     const d = new Date(anno, mese - 1 + delta, 1);
@@ -69,10 +76,10 @@ export function Soldi() {
   return (
     <div>
       <PageHero
-        grad="bg-gradient-to-br from-uscita-400 via-entrata-500 to-entrata-700"
+        grad={positivo ? "bg-gradient-to-br from-entrata-400 via-entrata-500 to-entrata-700" : "bg-gradient-to-br from-spesa-400 via-spesa-500 to-spesa-700"}
         eyebrow="Soldi"
-        titolo="Flusso del denaro"
-        sottotitolo="Entrate, uscite e saldo del mese"
+        titolo="Utile netto del mese"
+        sottotitolo={meseAnnoIT(anno, mese)}
         icona={<Wallet size={22} />}
         azione={
           <div className="flex items-center gap-1 rounded-[11px] bg-white/12 p-1 backdrop-blur">
@@ -82,14 +89,57 @@ export function Soldi() {
           </div>
         }
       >
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          <HeroStat label="Incassato" valore={<Cifra valore={r.incassato} />} />
-          <HeroStat label="Uscite" valore={<Cifra valore={r.uscite} />} nota="spese + compensi" />
-          <HeroStat label="Saldo" valore={<Cifra valore={r.saldo} />} />
-          <HeroStat label="Da incassare" valore={<Cifra valore={r.daIncassare} />} />
-          <HeroStat label="Da pagare team" valore={<Cifra valore={r.daPagareSquadra} />} />
+        {/* METRICA PRIMARIA — utile netto (incassato − spese − compensi) */}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="font-display text-[2.7rem] font-bold leading-none text-white sm:text-[3.2rem]"><Cifra valore={r.saldo} /></div>
+            <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.78rem] text-white/85">
+              <span className="inline-flex items-center gap-1"><ArrowUpRight size={13} /> Incassato {euro(r.incassato)}</span>
+              <span className="text-white/45">−</span>
+              <span className="inline-flex items-center gap-1"><ArrowDownRight size={13} /> Uscite {euro(r.uscite)}</span>
+            </div>
+          </div>
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1.5 text-[0.74rem] font-bold text-white backdrop-blur">
+            {deltaUtile >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
+            {euro(Math.abs(deltaUtile))} <span className="font-medium text-white/70">vs mese scorso</span>
+          </div>
         </div>
       </PageHero>
+
+      {/* DASHBOARD GERARCHIZZATO — ogni dato con peso, forma e tinta propri */}
+      <div className="mb-4 grid gap-3 lg:grid-cols-3">
+        {/* primarie: entrate / uscite (carte piene, numero grande font-display) */}
+        <div className="grid grid-cols-2 gap-3 lg:col-span-2">
+          <CartaFlusso
+            tinta="entrata"
+            icona={<Banknote size={16} />}
+            label="Entrate"
+            valore={r.incassato}
+            nota="incassato nel mese"
+          />
+          <CartaFlusso
+            tinta="spesa"
+            icona={<Fuel size={16} />}
+            label="Uscite"
+            valore={r.uscite}
+            nota={`spese ${euro(r.spese)} · compensi ${euro(r.compensi)}`}
+          />
+        </div>
+        {/* razionale: andamento (forma diversa — grafico) */}
+        <Card className="flex flex-col justify-between p-3.5">
+          <div className="flex items-center justify-between">
+            <span className="text-[0.66rem] font-bold uppercase tracking-wide text-muted">Andamento utile</span>
+            <span className="text-[0.62rem] text-muted">{trend.length} mesi</span>
+          </div>
+          {trend.length > 1 ? <Sparkline accent={positivo ? "entrata" : "spesa"} valori={trend} height={48} /> : <div className="py-4 text-center text-[0.72rem] text-muted">Serve più storico</div>}
+        </Card>
+      </div>
+
+      {/* secondarie / da regolare (carte ghost, più piccole e tenui) */}
+      <div className="mb-5 grid grid-cols-2 gap-3">
+        <CartaSospeso icona={<Hourglass size={14} />} label="Da incassare" valore={r.daIncassare} nota="crediti dai clienti" />
+        <CartaSospeso icona={<Users size={14} />} label="Da pagare al team" valore={r.daPagareSquadra} nota="compensi maturati" />
+      </div>
 
       <Segmented voci={TABS} attivo={tab} onChange={setTab} className="mb-5" />
 
@@ -104,6 +154,33 @@ export function Soldi() {
           <Button variante="primary" dim="sm" onClick={() => apri("incasso")}><Plus size={15} /> Incasso</Button>
         </div>
       )}
+    </div>
+  );
+}
+
+/* Carta di flusso primaria: piena, tinta forte, numero grande (font-display). */
+function CartaFlusso({ tinta, icona, label, valore, nota }: { tinta: "entrata" | "spesa"; icona: React.ReactNode; label: string; valore: number; nota: string }) {
+  const stile = tinta === "entrata"
+    ? { card: "border-entrata-100 bg-entrata-50", chip: "bg-entrata-500 text-white", testo: "text-entrata-700", filo: "text-entrata-500/15" }
+    : { card: "border-spesa-100 bg-spesa-50", chip: "bg-spesa-500 text-white", testo: "text-spesa-700", filo: "text-spesa-500/15" };
+  return (
+    <div className={cn("relative overflow-hidden rounded-[16px] border p-4 shadow-[var(--shadow-sm)]", stile.card)}>
+      <div className={cn("pointer-events-none absolute -right-3 -top-3", stile.filo)}>{icona && <span className="[&>svg]:h-16 [&>svg]:w-16">{icona}</span>}</div>
+      <span className={cn("inline-grid h-8 w-8 place-items-center rounded-[10px]", stile.chip)}>{icona}</span>
+      <div className={cn("mt-2.5 text-[0.66rem] font-bold uppercase tracking-wide", stile.testo)}>{label}</div>
+      <div className="font-display text-[1.7rem] font-bold leading-none text-ink"><Cifra valore={valore} /></div>
+      <div className="mt-1.5 text-[0.68rem] text-muted">{nota}</div>
+    </div>
+  );
+}
+
+/* Carta secondaria "da regolare": ghost, tratteggiata, più piccola e tenue. */
+function CartaSospeso({ icona, label, valore, nota }: { icona: React.ReactNode; label: string; valore: number; nota: string }) {
+  return (
+    <div className="rounded-[14px] border border-dashed border-line-strong bg-surface/50 px-3.5 py-3">
+      <div className="flex items-center gap-1.5 text-[0.62rem] font-bold uppercase tracking-wide text-muted">{icona} {label}</div>
+      <div className="mt-0.5 text-[1.2rem] font-bold tabular-nums text-ink-soft">{euro(valore)}</div>
+      <div className="text-[0.64rem] text-muted">{nota}</div>
     </div>
   );
 }
