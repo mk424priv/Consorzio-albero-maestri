@@ -24,6 +24,9 @@ export type OriginePagamento = (typeof ORIGINE_PAGAMENTO)[number];
 export const STATO_PAGAMENTO = ["in_attesa", "pagato", "in_ritardo"] as const;
 export type StatoPagamento = (typeof STATO_PAGAMENTO)[number];
 
+export const STATO_COMPENSO = ["da_pagare", "parziale", "saldato"] as const;
+export type StatoCompenso = (typeof STATO_COMPENSO)[number];
+
 export const CATEGORIA_SPESA = [
   "benzina",
   "materiali",
@@ -35,8 +38,11 @@ export type CategoriaSpesa = (typeof CATEGORIA_SPESA)[number];
 export const STATO_ATTREZZO = ["ok", "manutenzione", "dismesso"] as const;
 export type StatoAttrezzo = (typeof STATO_ATTREZZO)[number];
 
-export const RUOLO = ["titolare", "operatore"] as const;
-export type Ruolo = (typeof RUOLO)[number];
+export const RUOLO_OPERATORE = ["titolare", "collaboratore"] as const;
+export type RuoloOperatore = (typeof RUOLO_OPERATORE)[number];
+
+export const METODO_PAGAMENTO = ["contanti", "bonifico", "altro"] as const;
+export type MetodoPagamento = (typeof METODO_PAGAMENTO)[number];
 
 export const ETICHETTE: Record<string, string> = {
   // modalita / tipo compenso
@@ -58,6 +64,10 @@ export const ETICHETTE: Record<string, string> = {
   in_attesa: "In attesa",
   pagato: "Pagato",
   in_ritardo: "In ritardo",
+  // stato compenso
+  da_pagare: "Da pagare",
+  parziale: "Parziale",
+  saldato: "Saldato",
   // categoria spesa
   benzina: "Benzina",
   materiali: "Materiali",
@@ -65,11 +75,14 @@ export const ETICHETTE: Record<string, string> = {
   altro: "Altro",
   // stato attrezzo
   ok: "In uso",
-  manutenzione: "In manutenzione",
+  manutenzione: "Manutenzione",
   dismesso: "Dismesso",
   // ruolo
   titolare: "Titolare",
-  operatore: "Operatore",
+  collaboratore: "Collaboratore",
+  // metodo
+  contanti: "Contanti",
+  bonifico: "Bonifico",
 };
 
 export function etichetta(valore: string | null | undefined): string {

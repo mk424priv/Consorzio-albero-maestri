@@ -1,19 +1,19 @@
-// Dati d'esempio — riproducono lo scenario del seed originale (Isola d'Elba):
-// quattro clienti con storie diverse (puntuale, a ore con debito, in ritardo, nuova).
+// Dati d'esempio — scenario dell'Isola d'Elba: clienti con storie diverse,
+// una squadra di due operatori e i loro compensi (saldati e in sospeso).
 
 import type { Database } from "@/lib/types";
 
-// data ISO (yyyy-mm-dd) a N giorni da oggi (negativo = passato)
 function giorni(n: number): string {
   const d = new Date();
   d.setHours(10, 0, 0, 0);
   d.setDate(d.getDate() + n);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
+const mese = (iso: string) => iso.slice(0, 7);
 
 export function datiIniziali(): Database {
-  const titolare = "p_titolare";
-  const operatore = "p_operatore";
+  const titolare = "op_marco";
+  const luca = "op_luca";
 
   const rossi = "cl_rossi";
   const ricci = "cl_ricci";
@@ -26,67 +26,27 @@ export function datiIniziali(): Database {
   const lavBianchi = "lv_bianchi";
 
   return {
-    persone: [
-      { id: titolare, nome: "Marco (titolare)", ruolo: "titolare", attivo: true },
-      { id: operatore, nome: "Luca", ruolo: "operatore", attivo: true },
+    operatori: [
+      { id: titolare, nome: "Marco", ruolo: "titolare", tariffaOraria: null, attivo: true, creatoIl: giorni(-500) },
+      { id: luca, nome: "Luca", ruolo: "collaboratore", tariffaOraria: 16, telefono: "349 5566778", attivo: true, creatoIl: giorni(-90) },
     ],
 
     clienti: [
-      {
-        id: rossi,
-        nome: "Mario",
-        cognome: "Rossi",
-        inizialiCodice: "MR",
-        telefono: "333 1234567",
-        luogo: "Villa Rossi, Marina di Campo (Elba)",
-        modalitaPredefinita: "preventivo",
-        tariffaOraria: 30,
-        creatoIl: giorni(-405),
-      },
-      {
-        id: ricci,
-        nome: "Maria",
-        cognome: "Ricci",
-        inizialiCodice: "MR1",
-        telefono: "340 7654321",
-        luogo: "Giardino Ricci, Portoferraio",
-        modalitaPredefinita: "ore",
-        tariffaOraria: 28,
-        creatoIl: giorni(-30),
-      },
-      {
-        id: bianchi,
-        nome: "Giovanni",
-        cognome: "Bianchi",
-        inizialiCodice: "GB",
-        telefono: "347 1112233",
-        luogo: "Capoliveri",
-        modalitaPredefinita: "preventivo",
-        creatoIl: giorni(-70),
-      },
-      {
-        id: verdi,
-        nome: "Anna",
-        cognome: "Verdi",
-        inizialiCodice: "AV",
-        telefono: "366 9988776",
-        luogo: "Rio Marina",
-        modalitaPredefinita: "misto",
-        tariffaOraria: 32,
-        creatoIl: giorni(-5),
-      },
+      { id: rossi, nome: "Mario", cognome: "Rossi", inizialiCodice: "MR", telefono: "333 1234567", luogo: "Villa Rossi, Marina di Campo (Elba)", modalitaPredefinita: "preventivo", tariffaOraria: 30, creatoIl: giorni(-405) },
+      { id: ricci, nome: "Maria", cognome: "Ricci", inizialiCodice: "MR1", telefono: "340 7654321", luogo: "Giardino Ricci, Portoferraio", modalitaPredefinita: "ore", tariffaOraria: 28, creatoIl: giorni(-30) },
+      { id: bianchi, nome: "Giovanni", cognome: "Bianchi", inizialiCodice: "GB", telefono: "347 1112233", luogo: "Capoliveri", modalitaPredefinita: "preventivo", creatoIl: giorni(-70) },
+      { id: verdi, nome: "Anna", cognome: "Verdi", inizialiCodice: "AV", telefono: "366 9988776", luogo: "Rio Marina", modalitaPredefinita: "misto", tariffaOraria: 32, creatoIl: giorni(-5) },
     ],
 
     lavori: [
-      { id: lavRossi1, clienteId: rossi, titolo: "Potatura olivi e siepe", luogo: "Villa Rossi, Marina di Campo", data: giorni(-400), stato: "fatto", tipoCompenso: "preventivo", personaId: titolare, creatoIl: giorni(-405) },
-      { id: lavRossi2, clienteId: rossi, titolo: "Abbattimento pino pericolante", luogo: "Villa Rossi", data: giorni(-30), stato: "fatto", tipoCompenso: "preventivo", personaId: titolare, creatoIl: giorni(-35) },
-      { id: lavRicci, clienteId: ricci, titolo: "Manutenzione giardino (a ore)", luogo: "Portoferraio", data: giorni(-10), stato: "fatto", tipoCompenso: "ore", personaId: operatore, creatoIl: giorni(-12) },
-      { id: lavBianchi, clienteId: bianchi, titolo: "Trattamento fitosanitario", luogo: "Capoliveri", data: giorni(-60), stato: "fatto", tipoCompenso: "preventivo", personaId: titolare, creatoIl: giorni(-60) },
-      // Lavori programmati (futuri) — per calendario e "oggi"
-      { id: "lv_verdi1", clienteId: verdi, titolo: "Sopralluogo e preventivo", luogo: "Rio Marina", data: giorni(0), ordineNelGiorno: 1, stato: "da_fare", tipoCompenso: "ore", personaId: titolare, creatoIl: giorni(-5) },
-      { id: "lv_ricci2", clienteId: ricci, titolo: "Taglio erba", luogo: "Portoferraio", data: giorni(0), ordineNelGiorno: 2, stato: "da_fare", tipoCompenso: "ore", personaId: operatore, creatoIl: giorni(-3) },
-      { id: "lv_rossi3", clienteId: rossi, titolo: "Controllo impianto irrigazione", luogo: "Marina di Campo", data: giorni(2), stato: "da_fare", tipoCompenso: "preventivo", personaId: titolare, creatoIl: giorni(-3) },
-      { id: "lv_bianchi2", clienteId: bianchi, titolo: "Potatura siepe", luogo: "Capoliveri", data: giorni(4), stato: "da_fare", tipoCompenso: "preventivo", personaId: operatore, creatoIl: giorni(-3) },
+      { id: lavRossi1, clienteId: rossi, titolo: "Potatura olivi e siepe", luogo: "Villa Rossi, Marina di Campo", data: giorni(-400), stato: "fatto", tipoCompenso: "preventivo", operatoreId: titolare, creatoIl: giorni(-405) },
+      { id: lavRossi2, clienteId: rossi, titolo: "Abbattimento pino pericolante", luogo: "Villa Rossi", data: giorni(-30), stato: "fatto", tipoCompenso: "preventivo", operatoreId: titolare, creatoIl: giorni(-35) },
+      { id: lavRicci, clienteId: ricci, titolo: "Manutenzione giardino (a ore)", luogo: "Portoferraio", data: giorni(-10), stato: "fatto", tipoCompenso: "ore", operatoreId: luca, creatoIl: giorni(-12) },
+      { id: lavBianchi, clienteId: bianchi, titolo: "Trattamento fitosanitario", luogo: "Capoliveri", data: giorni(-60), stato: "fatto", tipoCompenso: "preventivo", operatoreId: titolare, creatoIl: giorni(-60) },
+      { id: "lv_verdi1", clienteId: verdi, titolo: "Sopralluogo e preventivo", luogo: "Rio Marina", data: giorni(0), ordineNelGiorno: 1, stato: "da_fare", tipoCompenso: "ore", operatoreId: titolare, creatoIl: giorni(-5) },
+      { id: "lv_ricci2", clienteId: ricci, titolo: "Taglio erba", luogo: "Portoferraio", data: giorni(0), ordineNelGiorno: 2, stato: "da_fare", tipoCompenso: "ore", operatoreId: luca, creatoIl: giorni(-3) },
+      { id: "lv_rossi3", clienteId: rossi, titolo: "Controllo impianto irrigazione", luogo: "Marina di Campo", data: giorni(2), stato: "da_fare", tipoCompenso: "preventivo", operatoreId: titolare, creatoIl: giorni(-3) },
+      { id: "lv_bianchi2", clienteId: bianchi, titolo: "Potatura siepe", luogo: "Capoliveri", data: giorni(4), stato: "da_fare", tipoCompenso: "preventivo", operatoreId: luca, creatoIl: giorni(-3) },
     ],
 
     preventivi: [
@@ -96,9 +56,9 @@ export function datiIniziali(): Database {
     ],
 
     ore: [
-      { id: "or_1", clienteId: ricci, lavoroId: lavRicci, personaId: operatore, data: giorni(-12), ore: 4, note: "Manutenzione verde" },
-      { id: "or_2", clienteId: ricci, lavoroId: lavRicci, personaId: operatore, data: giorni(-10), ore: 3.5, note: "Manutenzione verde" },
-      { id: "or_3", clienteId: ricci, lavoroId: lavRicci, personaId: operatore, data: giorni(-9), ore: 2, note: "Manutenzione verde" },
+      { id: "or_1", clienteId: ricci, lavoroId: lavRicci, operatoreId: luca, data: giorni(-12), ore: 4, note: "Manutenzione verde" },
+      { id: "or_2", clienteId: ricci, lavoroId: lavRicci, operatoreId: luca, data: giorni(-10), ore: 3.5, note: "Manutenzione verde" },
+      { id: "or_3", clienteId: ricci, lavoroId: lavRicci, operatoreId: luca, data: giorni(-9), ore: 2, note: "Manutenzione verde" },
     ],
 
     pagamenti: [
@@ -107,6 +67,10 @@ export function datiIniziali(): Database {
       { id: "pa_rossi3", clienteId: rossi, lavoroId: lavRossi2, preventivoId: "pr_rossi2", origine: "saldo", importoAtteso: 400, importoIncassato: 400, stato: "pagato", dataEmissione: giorni(-30), dataScadenza: giorni(0), dataIncasso: giorni(-26) },
       { id: "pa_ricci1", clienteId: ricci, lavoroId: lavRicci, origine: "ore", importoAtteso: 9.5 * 28, importoIncassato: 0, stato: "in_attesa", dataEmissione: giorni(-8), dataScadenza: giorni(22) },
       { id: "pa_bianchi1", clienteId: bianchi, lavoroId: lavBianchi, preventivoId: "pr_bianchi1", origine: "preventivo", importoAtteso: 450, importoIncassato: 0, stato: "in_attesa", dataEmissione: giorni(-60), dataScadenza: giorni(-30) },
+    ],
+
+    compensi: [
+      { id: "co_luca1", operatoreId: luca, importo: 100, data: giorni(-7), periodo: mese(giorni(-7)), metodo: "contanti", note: "Acconto manutenzione Ricci" },
     ],
 
     spese: [

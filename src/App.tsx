@@ -1,19 +1,14 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import type { ReactNode } from "react";
 import { useStore } from "@/store/store";
-import { Layout } from "@/components/Layout";
+import { AppShell } from "@/components/Shell";
 import { Login } from "@/pages/Login";
-import { Cruscotto } from "@/pages/Cruscotto";
-import { Calendario } from "@/pages/Calendario";
-import { Clienti } from "@/pages/Clienti";
-import { ClienteDettaglio } from "@/pages/ClienteDettaglio";
-import { ClienteNuovo, ClienteModifica } from "@/pages/ClienteForm";
-import { Preventivi } from "@/pages/Preventivi";
-import { Ore } from "@/pages/Ore";
-import { Pagamenti } from "@/pages/Pagamenti";
-import { Storico } from "@/pages/Storico";
-import { Officina } from "@/pages/Officina";
-import { Spese } from "@/pages/Spese";
+import { Spazio } from "@/pages/Spazio";
+import { ClienteScheda } from "@/pages/ClienteScheda";
+import { Squadra } from "@/pages/Squadra";
+import { OperatoreScheda } from "@/pages/OperatoreScheda";
+import { Soldi } from "@/pages/Soldi";
+import { Agenda } from "@/pages/Agenda";
 
 function RichiedeAccesso({ children }: { children: ReactNode }) {
   const autenticato = useStore((s) => s.autenticato);
@@ -26,25 +21,13 @@ export function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
-      <Route
-        element={
-          <RichiedeAccesso>
-            <Layout />
-          </RichiedeAccesso>
-        }
-      >
-        <Route index element={<Cruscotto />} />
-        <Route path="calendario" element={<Calendario />} />
-        <Route path="clienti" element={<Clienti />} />
-        <Route path="clienti/nuovo" element={<ClienteNuovo />} />
-        <Route path="clienti/:id" element={<ClienteDettaglio />} />
-        <Route path="clienti/:id/modifica" element={<ClienteModifica />} />
-        <Route path="preventivi" element={<Preventivi />} />
-        <Route path="ore" element={<Ore />} />
-        <Route path="pagamenti" element={<Pagamenti />} />
-        <Route path="storico" element={<Storico />} />
-        <Route path="officina" element={<Officina />} />
-        <Route path="spese" element={<Spese />} />
+      <Route element={<RichiedeAccesso><AppShell /></RichiedeAccesso>}>
+        <Route index element={<Spazio />} />
+        <Route path="cliente/:id" element={<ClienteScheda />} />
+        <Route path="squadra" element={<Squadra />} />
+        <Route path="operatore/:id" element={<OperatoreScheda />} />
+        <Route path="soldi" element={<Soldi />} />
+        <Route path="agenda" element={<Agenda />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

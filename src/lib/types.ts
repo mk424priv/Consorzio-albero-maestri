@@ -1,6 +1,7 @@
-// Modello dati di Albero Maestri (lato client).
-// Le date sono stringhe ISO (yyyy-mm-dd o ISO completa): comode da
-// serializzare in localStorage e da usare negli <input type="date">.
+// Modello dati di Albero Maestri 2.0 (lato client).
+// Le date sono stringhe ISO (yyyy-mm-dd): comode per localStorage e per gli
+// <input type="date">. Il cliente resta la radice; la squadra (operatori) e i
+// loro compensi sono ora entità di primo piano.
 
 import type {
   Modalita,
@@ -11,7 +12,8 @@ import type {
   StatoPagamento,
   CategoriaSpesa,
   StatoAttrezzo,
-  Ruolo,
+  RuoloOperatore,
+  MetodoPagamento,
 } from "./dominio";
 
 export type ISODate = string;
@@ -24,17 +26,21 @@ export interface Cliente {
   telefono?: string | null;
   email?: string | null;
   luogo?: string | null;
-  tariffaOraria?: number | null;
+  tariffaOraria?: number | null; // €/h fatturati al cliente
   modalitaPredefinita: Modalita;
   note?: string | null;
   creatoIl: ISODate;
 }
 
-export interface Persona {
+export interface Operatore {
   id: string;
   nome: string;
-  ruolo: Ruolo;
+  ruolo: RuoloOperatore; // titolare | collaboratore
+  tariffaOraria?: number | null; // €/h riconosciuti all'operatore (costo)
+  telefono?: string | null;
   attivo: boolean;
+  note?: string | null;
+  creatoIl: ISODate;
 }
 
 export interface Lavoro {
@@ -48,7 +54,7 @@ export interface Lavoro {
   stato: StatoLavoro;
   tipoCompenso: TipoCompenso;
   durataPrevistaOre?: number | null;
-  personaId?: string | null;
+  operatoreId?: string | null;
   note?: string | null;
   creatoIl: ISODate;
 }
@@ -69,7 +75,7 @@ export interface RegistrazioneOre {
   id: string;
   clienteId: string;
   lavoroId?: string | null;
-  personaId?: string | null;
+  operatoreId?: string | null;
   data: ISODate;
   ore: number;
   note?: string | null;
@@ -87,6 +93,17 @@ export interface Pagamento {
   dataEmissione: ISODate;
   dataScadenza?: ISODate | null;
   dataIncasso?: ISODate | null;
+  note?: string | null;
+}
+
+// Soldi in USCITA verso un operatore (saldo delle sue ore).
+export interface CompensoOperatore {
+  id: string;
+  operatoreId: string;
+  importo: number;
+  data: ISODate;
+  periodo?: string | null; // "YYYY-MM"
+  metodo?: MetodoPagamento | null;
   note?: string | null;
 }
 
@@ -111,11 +128,12 @@ export interface Attrezzo {
 
 export interface Database {
   clienti: Cliente[];
-  persone: Persona[];
+  operatori: Operatore[];
   lavori: Lavoro[];
   preventivi: Preventivo[];
   ore: RegistrazioneOre[];
   pagamenti: Pagamento[];
+  compensi: CompensoOperatore[];
   spese: Spesa[];
   attrezzi: Attrezzo[];
 }
