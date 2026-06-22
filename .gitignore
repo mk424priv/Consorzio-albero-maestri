@@ -45,3 +45,4 @@ next-env.d.ts
 *.db-journal
 /prisma/migrations/dev
 !.env.example
+/prisma/schema.local.prisma
