@@ -12,6 +12,7 @@ export type SheetTipo =
   | "ore"
   | "spesa"
   | "incasso"
+  | "riscuoti"
   | "compenso"
   | "attrezzo"
   | "crea"; // menù "Crea"
@@ -21,6 +22,7 @@ export interface SheetCtx {
   clienteId?: string;
   operatoreId?: string;
   lavoroId?: string;
+  pagamentoId?: string;
   data?: string;
 }
 

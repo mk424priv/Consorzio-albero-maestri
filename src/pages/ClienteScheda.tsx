@@ -56,6 +56,15 @@ const TABS = [
   { k: "spese", label: "Spese" },
 ];
 
+// Livello "gamificato" del cliente in base all'incassato di sempre.
+function livelloCliente(incassato: number): { nome: string; grad: string } {
+  if (incassato >= 10000) return { nome: "Platino", grad: "from-slate-400 to-slate-600" };
+  if (incassato >= 5000) return { nome: "Oro", grad: "from-amber-400 to-amber-600" };
+  if (incassato >= 2000) return { nome: "Argento", grad: "from-zinc-300 to-zinc-500" };
+  if (incassato >= 500) return { nome: "Bronzo", grad: "from-orange-400 to-orange-600" };
+  return { nome: "Nuovo", grad: "from-brand-400 to-brand-600" };
+}
+
 export function ClienteScheda() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
@@ -78,6 +87,7 @@ export function ClienteScheda() {
   }
   const { codice, parti, r } = dati;
   const nomeCompl = `${cliente.nome} ${cliente.cognome}`;
+  const livello = livelloCliente(r.totaleIncassato);
 
   function elimina() {
     chiediConferma({
@@ -113,6 +123,9 @@ export function ClienteScheda() {
               </div>
               <div className="mt-1.5 flex flex-wrap items-center gap-2">
                 <Codice codice={codice} />
+                <span className={`inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r ${livello.grad} px-2.5 py-1 text-[0.7rem] font-bold text-white shadow-sm`}>
+                  <Sparkles size={12} /> {livello.nome}
+                </span>
                 <Badge tono="brand">{etichetta(cliente.modalitaPredefinita)}</Badge>
                 {cliente.tariffaOraria ? <span className="text-[0.78rem] text-muted">{euro(cliente.tariffaOraria)}/h</span> : null}
               </div>
@@ -278,8 +291,6 @@ function SezioneLavori({ id }: { id: string }) {
 function SezionePagamenti({ id }: { id: string }) {
   const db = useStore((s) => s.db);
   const apri = useUI((s) => s.apri);
-  const registra = useStore((s) => s.registraIncasso);
-  const mostra = useToast((s) => s.mostra);
   const pagamenti = db.pagamenti.filter((p) => p.clienteId === id).sort((a, b) => b.dataEmissione.localeCompare(a.dataEmissione));
   return (
     <div>
@@ -300,7 +311,7 @@ function SezionePagamenti({ id }: { id: string }) {
                   <Td className="text-right tabular-nums">{euro(p.importoAtteso)}</Td>
                   <Td className="text-right tabular-nums">{euro(p.importoIncassato)}</Td>
                   <Td><StatusBadge genere="pagamento" valore={st} /></Td>
-                  <Td className="text-right">{st !== "pagato" && <Button dim="sm" onClick={() => { registra(p.id); mostra("Incasso registrato."); }}>Incassa</Button>}</Td>
+                  <Td className="text-right">{st !== "pagato" && <Button dim="sm" onClick={() => apri("riscuoti", { pagamentoId: p.id })}>Incassa</Button>}</Td>
                 </Tr>
               );
             })}

@@ -464,6 +464,65 @@ function IncassoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
   );
 }
 
+/* ============================ RISCUOTI ============================ */
+function RiscuotiSheet() { const { aperto, ctx, seq, chiudi } = useSheet("riscuoti"); return <RiscuotiForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function RiscuotiForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
+  const db = useStore((s) => s.db);
+  const registra = useStore((s) => s.registraIncasso);
+  const mostra = useToast((s) => s.mostra);
+  const pag = ctx.pagamentoId ? db.pagamenti.find((p) => p.id === ctx.pagamentoId) : undefined;
+  const atteso = pag?.importoAtteso ?? 0;
+  const gia = pag?.importoIncassato ?? 0;
+  const residuo = Math.max(0, Math.round((atteso - gia) * 100) / 100);
+  const [v, setV] = useState({ importo: residuo > 0 ? String(residuo) : "", data: oggiISO() });
+  const ric = num(v.importo) ?? 0;
+  const rimane = Math.max(0, Math.round((residuo - ric) * 100) / 100);
+  const cliente = pag ? nomeCli(db, pag.clienteId) : "";
+
+  function salva(e: React.FormEvent) {
+    e.preventDefault();
+    if (!pag) return chiudi();
+    const imp = num(v.importo);
+    if (imp === null || imp <= 0) return mostra("Indica l'importo ricevuto.", "error");
+    registra(pag.id, imp, v.data);
+    festaDoppia("entrata");
+    mostra(rimane > 0 ? `Incassato ${euro(imp)} · rimane ${euro(rimane)}` : "Saldato per intero ✓");
+    chiudi();
+  }
+  const scena = (
+    <ScenaCard className="text-center">
+      <div className="text-[0.66rem] font-bold uppercase tracking-wide text-white/70">Riscuoti da</div>
+      <div className="truncate text-[0.95rem] font-semibold">{cliente || "—"}</div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-white transition-all" style={{ width: `${atteso > 0 ? Math.min(100, ((gia + ric) / atteso) * 100) : 0}%` }} /></div>
+      <div className="mt-2 text-[0.7rem] uppercase tracking-wide text-white/70">Rimane dopo l'incasso</div>
+      <div className="font-display text-[1.8rem] font-bold leading-none">{euro(rimane)}</div>
+    </ScenaCard>
+  );
+
+  return (
+    <Sheet aperto={aperto} onClose={chiudi} titolo="Registra incasso" sottotitolo="Quanto hai ricevuto?" accent={ENTITA.entrata.grad} pattern="dots" icona={<Banknote size={20} />} motivo={<Banknote size={120} strokeWidth={1.1} />} scena={scena}>
+      {pag ? (
+        <form onSubmit={salva}>
+          <SheetStagger className="grid gap-3">
+            <SheetRow>
+              <div className="grid grid-cols-3 gap-2">
+                <div className="rounded-[12px] border border-line bg-surface p-2.5 text-center"><div className="text-[0.6rem] font-bold uppercase tracking-wide text-muted">Atteso</div><div className="font-display text-[0.95rem] font-bold text-ink">{euro(atteso)}</div></div>
+                <div className="rounded-[12px] border border-line bg-surface p-2.5 text-center"><div className="text-[0.6rem] font-bold uppercase tracking-wide text-muted">Già preso</div><div className="font-display text-[0.95rem] font-bold text-entrata-600">{euro(gia)}</div></div>
+                <div className="rounded-[12px] border border-line bg-surface p-2.5 text-center"><div className="text-[0.6rem] font-bold uppercase tracking-wide text-muted">Residuo</div><div className="font-display text-[0.95rem] font-bold text-uscita-600">{euro(residuo)}</div></div>
+              </div>
+            </SheetRow>
+            <SheetRow><div><Etichetta>Importo ricevuto</Etichetta><AmountPad tinta="entrata" value={v.importo} onChange={(val) => setV((s) => ({ ...s, importo: val }))} suggerimenti={residuo > 0 ? [{ label: "Metà", valore: Math.round((residuo / 2) * 100) / 100 }, { label: `Tutto · ${euro(residuo)}`, valore: residuo }] : []} /></div></SheetRow>
+            <SheetRow><CampoIcona icona={<CalendarDays size={17} />} label="Data incasso" type="date" value={v.data} onChange={(e) => setV((s) => ({ ...s, data: e.target.value }))} /></SheetRow>
+            <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Registra incasso</Button></SheetFooter></SheetRow>
+          </SheetStagger>
+        </form>
+      ) : (
+        <p className="py-6 text-center text-sm text-muted">Pagamento non trovato.</p>
+      )}
+    </Sheet>
+  );
+}
+
 /* ============================ COMPENSO ============================ */
 const METODO_TILE: Tile[] = [
   { value: "contanti", label: "Contanti", icona: <Banknote size={18} /> },
@@ -571,7 +630,7 @@ export function SheetHost() {
   return (
     <>
       <CreaMenu /><ClienteSheet /><OperatoreSheet /><LavoroSheet /><PreventivoSheet />
-      <OreSheet /><SpesaSheet /><IncassoSheet /><CompensoSheet /><AttrezzoSheet />
+      <OreSheet /><SpesaSheet /><IncassoSheet /><RiscuotiSheet /><CompensoSheet /><AttrezzoSheet />
     </>
   );
 }

@@ -38,3 +38,13 @@ src/
 | `npm run preview` | Anteprima della build |
 
 Accesso: password predefinita `albero`.
+
+## Flusso di lavoro (OBBLIGATORIO)
+
+- **Commit + push dopo ogni modifica.** Ogni volta che apporti modifiche al
+  progetto, esegui sempre `git commit` e `git push` per innescare il redeploy
+  automatico su Vercel. Non lasciare modifiche solo in locale.
+- Prima del commit verifica sempre con `npm run build` (type-check + build).
+- Sviluppa sul branch `claude/vite-react-refactor-x4ag6f` e, una volta che la
+  build passa, allinea `main` (fast-forward) così Vercel pubblica la versione
+  aggiornata.
