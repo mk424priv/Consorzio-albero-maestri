@@ -17,6 +17,8 @@ import {
   ReceiptText,
   Sparkles,
   Trash2,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 import { useStore } from "@/store/store";
 import { useUI } from "@/store/ui";
@@ -34,7 +36,6 @@ import {
   Card,
   Cifra,
   Codice,
-  Conta,
   EmptyState,
   Menu,
   RingStat,
@@ -142,7 +143,7 @@ export function ClienteScheda() {
       </Card>
 
       {/* Stat band — ogni dato con la sua forma e gerarchia */}
-      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="mb-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <RingStat
           className="sm:col-span-2 lg:col-span-1"
           accent="entrata"
@@ -152,8 +153,16 @@ export function ClienteScheda() {
           sub={`su ${euro(r.totaleAtteso)} attesi`}
         />
         <StatCard accent="uscita" label="Da incassare" valore={<Cifra valore={r.saldoDaIncassare} />} icona={<Hourglass size={15} />} nota={r.saldoDaIncassare > 0 ? "ancora aperto" : "tutto in regola"} />
-        <StatCard accent="lavoro" label="Lavori" valore={<Conta valore={r.numeroLavori} />} icona={<Hammer size={15} />} />
-        <StatCard accent="operatore" label="Ore totali" valore={<Conta valore={r.oreTotali} suffix=" h" />} icona={<Clock size={15} />} />
+        <StatCard accent="spesa" label="Spese" valore={<Cifra valore={r.spese} />} icona={<Fuel size={15} />} nota="attribuite al cliente" />
+        <StatCard accent={r.margine >= 0 ? "entrata" : "spesa"} label="Margine" valore={<Cifra valore={r.margine} />} icona={<TrendingUp size={15} />} nota="incassato − spese − manodopera" />
+      </div>
+
+      {/* striscia di relazioni: lavori, ore, costo manodopera, fatturabile */}
+      <div className="mb-5 flex flex-wrap gap-2 text-[0.74rem] font-semibold">
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-ink-soft"><Hammer size={13} className="text-lavoro-500" /> {r.numeroLavori} lavori</span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-ink-soft"><Clock size={13} className="text-operatore-500" /> {fmtOre(r.oreTotali)}</span>
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-ink-soft"><Users size={13} className="text-uscita-500" /> Manodopera {euro(r.costoManodopera)}</span>
+        {r.valoreFatturabile > 0 && <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface px-3 py-1.5 text-ink-soft"><ReceiptText size={13} className="text-preventivo-500" /> Fatturabile {euro(r.valoreFatturabile)}</span>}
       </div>
 
       <Segmented voci={TABS} attivo={tab} onChange={setTab} className="mb-5" />
@@ -303,13 +312,19 @@ function SezioneOre({ id }: { id: string }) {
   const mostra = useToast((s) => s.mostra);
   const ore = db.ore.filter((o) => o.clienteId === id).sort((a, b) => b.data.localeCompare(a.data));
   const operatore = (oid?: string | null) => db.operatori.find((o) => o.id === oid)?.nome ?? "—";
+  const r = riepilogoCliente(db, id);
   const oggi = new Date();
   function compenso() {
-    const r = genera(id, oggi.getFullYear(), oggi.getMonth() + 1);
-    mostra(r.messaggio, r.ok ? "success" : "error");
+    const res = genera(id, oggi.getFullYear(), oggi.getMonth() + 1);
+    mostra(res.messaggio, res.ok ? "success" : "error");
   }
   return (
     <div>
+      <div className="mb-3 grid grid-cols-3 gap-2">
+        <div className="rounded-[12px] border border-line bg-surface p-2.5 text-center"><div className="text-[0.6rem] font-bold uppercase tracking-wide text-muted">Ore</div><div className="font-display text-[1rem] font-bold text-ink">{fmtOre(r.oreTotali)}</div></div>
+        <div className="rounded-[12px] border border-line bg-surface p-2.5 text-center"><div className="text-[0.6rem] font-bold uppercase tracking-wide text-muted">Manodopera</div><div className="font-display text-[1rem] font-bold text-uscita-600">{euro(r.costoManodopera)}</div></div>
+        <div className="rounded-[12px] border border-line bg-surface p-2.5 text-center"><div className="text-[0.6rem] font-bold uppercase tracking-wide text-muted">Fatturabile</div><div className="font-display text-[1rem] font-bold text-preventivo-600">{euro(r.valoreFatturabile)}</div></div>
+      </div>
       <div className="mb-3 flex justify-end gap-2">
         <Button variante="outline" dim="sm" onClick={compenso}><Sparkles size={15} /> Genera incasso del mese</Button>
         <Button variante="soft" dim="sm" onClick={() => apri("ore", { clienteId: id })}><Plus size={15} /> Ore</Button>
@@ -333,9 +348,13 @@ function SezioneSpese({ id }: { id: string }) {
   const db = useStore((s) => s.db);
   const apri = useUI((s) => s.apri);
   const spese = db.spese.filter((s) => s.clienteId === id).sort((a, b) => b.data.localeCompare(a.data));
+  const totale = spese.reduce((a, s) => a + s.importo, 0);
   return (
     <div>
-      <div className="mb-3 flex justify-end"><Button variante="soft" dim="sm" onClick={() => apri("spesa", { clienteId: id })}><Plus size={15} /> Spesa</Button></div>
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <span className="text-sm font-semibold text-ink-soft">Totale <b className="text-spesa-600">{euro(totale)}</b></span>
+        <Button variante="soft" dim="sm" onClick={() => apri("spesa", { clienteId: id })}><Plus size={15} /> Spesa</Button>
+      </div>
       {spese.length === 0 ? <EmptyState icona={<Fuel size={24} />} testo="Nessuna spesa attribuita." /> : (
         <Card className="divide-y divide-line overflow-hidden">
           {spese.map((s) => (

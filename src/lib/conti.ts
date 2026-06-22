@@ -30,21 +30,38 @@ export type RiepilogoCliente = {
   saldoDaIncassare: number;
   numeroLavori: number;
   oreTotali: number;
+  spese: number; // spese attribuite al cliente
+  costoManodopera: number; // Σ ore × tariffa dell'operatore
+  valoreFatturabile: number; // Σ ore × tariffa del cliente
+  margine: number; // incassato − spese − costo manodopera
 };
 
 export function riepilogoCliente(db: Database, clienteId: string): RiepilogoCliente {
   const pagamenti = db.pagamenti.filter((p) => p.clienteId === clienteId);
   const totaleAtteso = arrotonda(pagamenti.reduce((a, p) => a + p.importoAtteso, 0));
   const totaleIncassato = arrotonda(pagamenti.reduce((a, p) => a + p.importoIncassato, 0));
-  const oreTotali = arrotonda(
-    db.ore.filter((o) => o.clienteId === clienteId).reduce((a, o) => a + o.ore, 0),
-  );
+
+  const cliente = db.clienti.find((c) => c.id === clienteId);
+  const tariffaCliente = cliente?.tariffaOraria ?? 0;
+  const tariffaOp = new Map(db.operatori.map((o) => [o.id, o.tariffaOraria ?? 0]));
+
+  const ore = db.ore.filter((o) => o.clienteId === clienteId);
+  const oreTotali = arrotonda(ore.reduce((a, o) => a + o.ore, 0));
+  const costoManodopera = arrotonda(ore.reduce((a, o) => a + o.ore * (tariffaOp.get(o.operatoreId ?? "") ?? 0), 0));
+  const valoreFatturabile = arrotonda(oreTotali * tariffaCliente);
+
+  const spese = arrotonda(db.spese.filter((s) => s.clienteId === clienteId).reduce((a, s) => a + s.importo, 0));
+
   return {
     totaleAtteso,
     totaleIncassato,
     saldoDaIncassare: arrotonda(totaleAtteso - totaleIncassato),
     numeroLavori: db.lavori.filter((l) => l.clienteId === clienteId).length,
     oreTotali,
+    spese,
+    costoManodopera,
+    valoreFatturabile,
+    margine: arrotonda(totaleIncassato - spese - costoManodopera),
   };
 }
 

@@ -7,6 +7,7 @@ import {
   Check,
   ChevronDown,
   Clock,
+  Fuel,
   LayoutGrid,
   Phone,
   Plus,
@@ -181,12 +182,13 @@ function ClienteCard({ cliente, codice, parti, saldo, prossimo, inRitardo }: Rig
   const db = useStore((s) => s.db);
   const [aperto, setAperto] = useState(false);
 
-  const { pagamenti, atteso, incassato } = useMemo(() => {
+  const { pagamenti, atteso, incassato, rc } = useMemo(() => {
     const pags = db.pagamenti.filter((p) => p.clienteId === cliente.id);
     return {
       pagamenti: [...pags].sort((a, b) => b.dataEmissione.localeCompare(a.dataEmissione)).slice(0, 3),
       atteso: pags.reduce((a, p) => a + p.importoAtteso, 0),
       incassato: pags.reduce((a, p) => a + p.importoIncassato, 0),
+      rc: riepilogoCliente(db, cliente.id),
     };
   }, [db, cliente.id]);
   const ratio = atteso > 0 ? incassato / atteso : 1;
@@ -247,14 +249,16 @@ function ClienteCard({ cliente, codice, parti, saldo, prossimo, inRitardo }: Rig
         )}
       </div>
 
-      {/* azioni */}
-      <div className="mt-auto flex items-center gap-1.5 border-t border-line p-2.5">
-        <LinkButton to={`/cliente/${cliente.id}`} variante="soft" dim="sm" className="flex-1"><ArrowRight size={15} /> Apri scheda</LinkButton>
+      {/* azioni compatte */}
+      <div className="mt-auto flex items-center gap-1 border-t border-line p-2">
         <IconButton label="Registra ore" onClick={() => apri("ore", { clienteId: cliente.id })} className="bg-operatore-50 text-operatore-600 hover:bg-operatore-100"><Clock size={16} /></IconButton>
         <IconButton label="Nuovo preventivo" onClick={() => apri("preventivo", { clienteId: cliente.id })} className="bg-preventivo-50 text-preventivo-600 hover:bg-preventivo-100"><ReceiptText size={16} /></IconButton>
+        <IconButton label="Nuova spesa" onClick={() => apri("spesa", { clienteId: cliente.id })} className="bg-spesa-50 text-spesa-600 hover:bg-spesa-100"><Fuel size={16} /></IconButton>
+        <div className="flex-1" />
         <IconButton label={aperto ? "Comprimi" : "Espandi"} onClick={() => setAperto((a) => !a)}>
           <motion.span animate={{ rotate: aperto ? 180 : 0 }} className="grid place-items-center"><ChevronDown size={16} /></motion.span>
         </IconButton>
+        <LinkButton to={`/cliente/${cliente.id}`} variante="ghost" dim="sm" className="!px-2 text-brand-600">Apri <ArrowRight size={14} /></LinkButton>
       </div>
 
       <AnimatePresence initial={false}>
@@ -274,6 +278,11 @@ function ClienteCard({ cliente, codice, parti, saldo, prossimo, inRitardo }: Rig
                   ))}
                 </div>
               )}
+              <div className="mt-3 grid grid-cols-3 gap-2 border-t border-line pt-3">
+                <div className="text-center"><div className="text-[0.58rem] font-bold uppercase tracking-wide text-muted">Spese</div><div className="font-display text-[0.85rem] font-bold text-spesa-600">{euro(rc.spese)}</div></div>
+                <div className="text-center"><div className="text-[0.58rem] font-bold uppercase tracking-wide text-muted">Manodopera</div><div className="font-display text-[0.85rem] font-bold text-uscita-600">{euro(rc.costoManodopera)}</div></div>
+                <div className="text-center"><div className="text-[0.58rem] font-bold uppercase tracking-wide text-muted">Margine</div><div className={cn("font-display text-[0.85rem] font-bold", rc.margine >= 0 ? "text-entrata-600" : "text-spesa-600")}>{euro(rc.margine)}</div></div>
+              </div>
             </div>
           </motion.div>
         )}
