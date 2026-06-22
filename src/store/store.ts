@@ -299,10 +299,15 @@ export const useStore = create<Stato>()(
             ...s.db,
             pagamenti: s.db.pagamenti.map((p) => {
               if (p.id !== id) return p;
-              const quota = importo ?? p.importoAtteso - p.importoIncassato;
+              // Vincolo di coerenza: non si incassa mai più del residuo.
+              const residuo = Math.max(0, arrotonda(p.importoAtteso - p.importoIncassato));
+              const quota = Math.max(0, Math.min(importo ?? residuo, residuo));
+              if (quota <= 0) return p;
               const nuovoIncassato = arrotonda(p.importoIncassato + quota);
               const saldato = nuovoIncassato >= p.importoAtteso - 0.005;
-              return { ...p, importoIncassato: nuovoIncassato, stato: saldato ? "pagato" : p.stato === "in_ritardo" ? "in_ritardo" : "in_attesa", dataIncasso: saldato ? (dataIncasso ?? oggiISO()) : p.dataIncasso };
+              // La data dell'incasso va registrata sempre (anche parziale),
+              // altrimenti il movimento non rientra nel mese.
+              return { ...p, importoIncassato: nuovoIncassato, stato: saldato ? "pagato" : p.stato === "in_ritardo" ? "in_ritardo" : "in_attesa", dataIncasso: dataIncasso ?? oggiISO() };
             }),
           },
         })),

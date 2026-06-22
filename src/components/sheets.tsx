@@ -304,6 +304,8 @@ function PreventivoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCt
     e.preventDefault();
     const t = num(v.importoTotale);
     if (!v.clienteId || t === null || t <= 0) return mostra("Cliente e importo validi richiesti.", "error");
+    const acc = num(v.importoAcconto);
+    if (v.tipo === "acconto_saldo" && acc !== null && acc > t + 0.005) return mostra("L'acconto non può superare il totale.", "error");
     crea({ clienteId: v.clienteId, tipo: v.tipo, importoTotale: t, importoAcconto: num(v.importoAcconto), dataEmissione: v.dataEmissione, dataScadenza: v.dataScadenza || null, note: null });
     festa("preventivo"); mostra("Preventivo creato 🧾"); chiudi();
   }
@@ -351,6 +353,7 @@ function OreForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiu
     e.preventDefault();
     const ore = num(v.ore);
     if (!v.clienteId || ore === null || ore <= 0) return mostra("Scegli cliente e ore.", "error");
+    if (ore > 24) return mostra("Troppe ore per una registrazione (max 24).", "error");
     registra({ clienteId: v.clienteId, operatoreId: v.operatoreId || null, lavoroId: v.lavoroId || null, data: v.data, ore, note: v.note || null });
     festa("operatore"); mostra(`+${ore}h registrate ⏱️`); chiudi();
   }
@@ -491,6 +494,7 @@ function RiscuotiForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx;
     if (!pag) return chiudi();
     const imp = num(v.importo);
     if (imp === null || imp <= 0) return mostra("Indica l'importo ricevuto.", "error");
+    if (imp > residuo + 0.005) return mostra(`Non puoi incassare più del residuo (${euro(residuo)}).`, "error");
     registra(pag.id, imp, v.data);
     festaDoppia("entrata");
     mostra(rimane > 0 ? `Incassato ${euro(imp)} · rimane ${euro(rimane)}` : "Saldato per intero ✓");
@@ -551,6 +555,8 @@ function CompensoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx;
     e.preventDefault();
     const imp = num(v.importo);
     if (!v.operatoreId || imp === null || imp <= 0) return mostra("Operatore e importo richiesti.", "error");
+    if (saldo <= 0) return mostra("Questo operatore non ha compensi da pagare.", "error");
+    if (imp > saldo + 0.005) return mostra(`Non puoi pagare più del dovuto (${euro(saldo)}).`, "error");
     paga({ operatoreId: v.operatoreId, importo: imp, data: v.data, metodo: v.metodo, note: v.note || null });
     festaDoppia("uscita"); mostra("Compenso pagato 🤝"); chiudi();
   }

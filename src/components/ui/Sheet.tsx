@@ -69,20 +69,20 @@ export function Sheet({
   ) : null;
 
   const Intestazione = (
-    <div className="relative flex items-center gap-3">
+    <div className="relative flex items-center gap-2.5">
       {icona && (
         <motion.span
           initial={{ scale: 0.7, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: "spring", stiffness: 420, damping: 20, delay: 0.05 }}
-          className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-[14px]", colorata ? "bg-white/20 text-white backdrop-blur" : "bg-brand-50 text-brand-500")}
+          className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-[11px]", colorata ? "bg-white/20 text-white backdrop-blur" : "bg-brand-50 text-brand-500")}
         >
           {icona}
         </motion.span>
       )}
       <div className="min-w-0">
-        <Dialog.Title className={cn("font-display text-lg font-bold leading-tight", colorata ? "text-white" : "text-ink")}>{titolo}</Dialog.Title>
-        {sottotitolo && <p className={cn("mt-0.5 text-[0.82rem]", colorata ? "text-white/85" : "text-muted")}>{sottotitolo}</p>}
+        <Dialog.Title className={cn("font-display text-[1.05rem] font-bold leading-tight", colorata ? "text-white" : "text-ink")}>{titolo}</Dialog.Title>
+        {sottotitolo && <p className={cn("text-[0.76rem]", colorata ? "text-white/80" : "text-muted")}>{sottotitolo}</p>}
       </div>
     </div>
   );
@@ -134,21 +134,22 @@ export function Sheet({
                   </>
                 ) : (
                   <>
-                    {/* Intestazione colorata (con scena impilata se presente) */}
+                    {/* Intestazione compatta: poco spazio, focus su campi/azioni.
+                        La "scena" resta solo su desktop (pannello laterale). */}
                     <div className={cn("relative shrink-0 overflow-hidden", colorata ? cn(accent, "text-white") : "bg-surface")}>
                       {Filigrana}
                       {!desktop && (
-                        <div className="relative flex justify-center pt-2.5">
+                        <div className="relative flex justify-center pt-2">
                           <span className={cn("h-1.5 w-10 rounded-full", colorata ? "bg-white/45" : "bg-line-strong")} />
                         </div>
                       )}
-                      <div className="relative flex items-start justify-between gap-3 px-5 pb-4 pt-4">
+                      <div className="relative flex items-center justify-between gap-3 px-4 pb-3 pt-3">
                         {Intestazione}
                         {ChiudiBtn(colorata)}
                       </div>
-                      {scena && <div className="relative px-5 pb-5">{scena}</div>}
+                      {scena && desktop && <div className="relative px-5 pb-5">{scena}</div>}
                     </div>
-                    <div className="overflow-y-auto px-5 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">{children}</div>
+                    <div className="overflow-y-auto px-4 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">{children}</div>
                   </>
                 )}
               </motion.div>
