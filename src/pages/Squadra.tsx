@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { HandCoins, Phone, Plus, Users } from "lucide-react";
+import { HandCoins, Pencil, Phone, Plus, Users } from "lucide-react";
 import { listaContenitore, listaElemento } from "@/lib/motion";
 import { useStore } from "@/store/store";
 import { useUI } from "@/store/ui";
@@ -78,7 +78,8 @@ export function Squadra() {
               </div>
               <div className="mt-auto flex items-center gap-1 border-t border-line p-2">
                 <LinkButton to={`/operatore/${o.id}`} variante="soft" dim="sm" className="flex-1">Apri</LinkButton>
-                <Button variante="outline" dim="sm" onClick={() => apri("compenso", { operatoreId: o.id })}><HandCoins size={15} /> Paga</Button>
+                <Button variante="outline" dim="sm" onClick={() => apri("operatore", { id: o.id })} aria-label="Modifica dati"><Pencil size={15} /> Modifica</Button>
+                <Button variante="outline" dim="icon" onClick={() => apri("compenso", { operatoreId: o.id })} aria-label="Paga"><HandCoins size={15} /></Button>
                 {o.telefono && <a href={`tel:${o.telefono}`} className="grid h-9 w-9 place-items-center rounded-[11px] text-muted transition hover:bg-operatore-50 hover:text-operatore-600" aria-label="Chiama"><Phone size={16} /></a>}
               </div>
             </motion.div>

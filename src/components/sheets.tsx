@@ -106,10 +106,11 @@ function ClienteForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
   const codiceProvv = `${v.nome || v.cognome ? inizialiDa(v.nome || "X", v.cognome || "X") : "??"}-00-00-00`;
   function salva(e: React.FormEvent) {
     e.preventDefault();
-    if (!v.nome.trim() || !v.cognome.trim()) return mostra("Nome e cognome obbligatori.", "error");
+    const nome = v.nome.trim() || "Cliente";
+    const cognome = v.cognome.trim();
     const dati = { telefono: v.telefono || null, email: v.email || null, luogo: v.luogo || null, tariffaOraria: num(v.tariffaOraria), modalitaPredefinita: v.modalitaPredefinita, note: esistente?.note ?? null };
-    if (esistente) { aggiornaCliente(esistente.id, { nome: v.nome.trim(), cognome: v.cognome.trim(), ...dati }); mostra("Cliente aggiornato!"); chiudi(); }
-    else { const id = creaCliente({ nome: v.nome, cognome: v.cognome, ...dati }); festa("cliente"); mostra("Radice piantata 🌱"); chiudi(); navigate(`/cliente/${id}`); }
+    if (esistente) { aggiornaCliente(esistente.id, { nome, cognome, ...dati }); mostra("Cliente aggiornato!"); chiudi(); }
+    else { const id = creaCliente({ nome, cognome, ...dati }); festa("cliente"); mostra("Radice piantata 🌱"); chiudi(); navigate(`/cliente/${id}`); }
   }
   const scena = (
     <ScenaCard>
@@ -126,8 +127,8 @@ function ClienteForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
         <SheetStagger className="grid gap-3">
           <SheetRow><Sezione icona={<User size={15} />} titolo="Anagrafica">
             <div className="grid gap-2 sm:grid-cols-2">
-              <CampoIcona icona={<User size={17} />} label="Nome *" value={v.nome} onChange={set("nome")} placeholder="Mario" autoFocus />
-              <CampoIcona icona={<User size={17} />} label="Cognome *" value={v.cognome} onChange={set("cognome")} placeholder="Rossi" />
+              <CampoIcona icona={<User size={17} />} label="Nome" value={v.nome} onChange={set("nome")} placeholder="Mario" autoFocus />
+              <CampoIcona icona={<User size={17} />} label="Cognome" value={v.cognome} onChange={set("cognome")} placeholder="Rossi" />
             </div>
           </Sezione></SheetRow>
           <SheetRow><Sezione icona={<Phone size={15} />} titolo="Contatti">
@@ -166,10 +167,10 @@ function OperatoreForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
   function salva(e: React.FormEvent) {
     e.preventDefault();
-    if (!v.nome.trim()) return mostra("Il nome è obbligatorio.", "error");
+    const nome = v.nome.trim() || "Operatore";
     const dati = { ruolo: v.ruolo, tariffaOraria: num(v.tariffaOraria), telefono: v.telefono || null, note: esistente?.note ?? null };
-    if (esistente) { aggiorna(esistente.id, { nome: v.nome.trim(), ...dati }); mostra("Operatore aggiornato!"); chiudi(); }
-    else { const id = crea({ nome: v.nome, ...dati }); festa("operatore"); mostra("Squadra rinforzata 🧑‍🌾"); chiudi(); navigate(`/operatore/${id}`); }
+    if (esistente) { aggiorna(esistente.id, { nome, ...dati }); mostra("Operatore aggiornato!"); chiudi(); }
+    else { const id = crea({ nome, ...dati }); festa("operatore"); mostra("Squadra rinforzata 🧑‍🌾"); chiudi(); navigate(`/operatore/${id}`); }
   }
   const scena = (
     <ScenaCard className="text-center">
@@ -183,7 +184,7 @@ function OperatoreForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx
     <Sheet aperto={aperto} onClose={chiudi} titolo={esistente ? "Modifica operatore" : "Nuovo operatore"} sottotitolo={esistente ? undefined : "Un membro della squadra"} accent={ENTITA.operatore.grad} pattern="grid" icona={<Users size={20} />} motivo={<Users size={120} strokeWidth={1.1} />} scena={scena}>
       <form onSubmit={salva}>
         <SheetStagger className="grid gap-3">
-          <SheetRow><CampoIcona icona={<User size={17} />} label="Nome *" value={v.nome} onChange={set("nome")} placeholder="Luca" autoFocus /></SheetRow>
+          <SheetRow><CampoIcona icona={<User size={17} />} label="Nome" value={v.nome} onChange={set("nome")} placeholder="Luca" autoFocus /></SheetRow>
           <SheetRow><div><Etichetta>Ruolo</Etichetta><TileSelect tinta="operatore" cols={2} value={v.ruolo} onChange={(val) => setV((s) => ({ ...s, ruolo: val as RuoloOperatore }))} options={RUOLO_TILE} /></div></SheetRow>
           <SheetRow><Sezione icona={<Wallet size={15} />} titolo="Dettagli">
             <CampoIcona icona={<Euro size={17} />} label="Tariffa oraria (€/h)" type="number" step="0.01" inputMode="decimal" value={v.tariffaOraria} onChange={set("tariffaOraria")} placeholder="16" />
@@ -230,9 +231,10 @@ function LavoroForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; c
 
   function salva(e: React.FormEvent) {
     e.preventDefault();
-    if (!v.clienteId || !v.titolo.trim()) return mostra("Cliente e titolo obbligatori.", "error");
+    const clienteId = v.clienteId || db.clienti[0]?.id;
+    if (!clienteId) return mostra("Aggiungi prima un cliente.", "info");
     const dati = {
-      clienteId: v.clienteId, titolo: v.titolo.trim(), descrizione: v.descrizione || null, data: v.data,
+      clienteId, titolo: v.titolo.trim() || "Nuovo lavoro", descrizione: v.descrizione || null, data: v.data,
       durataPrevistaOre: num(v.durata), tipoCompenso: v.tipoCompenso, stato: v.stato,
       operatoreId: v.operatoreId || null, luogo: v.luogo || null,
     };
@@ -262,7 +264,7 @@ function LavoroForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; c
         <SheetStagger className="grid gap-3">
           <SheetRow><div><Etichetta>Cliente</Etichetta><ChipPicker tinta="cliente" items={clientiChip(db)} value={v.clienteId} onChange={(id) => setV((s) => ({ ...s, clienteId: id }))} vuoto="Crea prima un cliente." /></div></SheetRow>
           <SheetRow><Sezione icona={<Hammer size={15} />} titolo="Dettagli">
-            <CampoIcona icona={<Type size={17} />} label="Titolo *" value={v.titolo} onChange={(e) => setV((s) => ({ ...s, titolo: e.target.value }))} placeholder="es. Potatura olivi" />
+            <CampoIcona icona={<Type size={17} />} label="Titolo" value={v.titolo} onChange={(e) => setV((s) => ({ ...s, titolo: e.target.value }))} placeholder="es. Potatura olivi" />
             <AreaIcona icona={<AlignLeft size={17} />} label="Descrizione" rows={2} value={v.descrizione} onChange={(e) => setV((s) => ({ ...s, descrizione: e.target.value }))} placeholder="dettagli dell'intervento…" />
             <CampoIcona icona={<MapPin size={17} />} label="Luogo" value={v.luogo} onChange={(e) => setV((s) => ({ ...s, luogo: e.target.value }))} />
           </Sezione></SheetRow>
@@ -302,11 +304,12 @@ function PreventivoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCt
   const saldo = Math.round((tot - acconto) * 100) / 100;
   function salva(e: React.FormEvent) {
     e.preventDefault();
-    const t = num(v.importoTotale);
-    if (!v.clienteId || t === null || t <= 0) return mostra("Cliente e importo validi richiesti.", "error");
+    const clienteId = v.clienteId || db.clienti[0]?.id;
+    if (!clienteId) return mostra("Aggiungi prima un cliente.", "info");
+    const t = num(v.importoTotale) ?? 0;
     const acc = num(v.importoAcconto);
     if (v.tipo === "acconto_saldo" && acc !== null && acc > t + 0.005) return mostra("L'acconto non può superare il totale.", "error");
-    crea({ clienteId: v.clienteId, tipo: v.tipo, importoTotale: t, importoAcconto: num(v.importoAcconto), dataEmissione: v.dataEmissione, dataScadenza: v.dataScadenza || null, note: null });
+    crea({ clienteId, tipo: v.tipo, importoTotale: t, importoAcconto: acc, dataEmissione: v.dataEmissione, dataScadenza: v.dataScadenza || null, note: null });
     festa("preventivo"); mostra("Preventivo creato 🧾"); chiudi();
   }
   const scena = (
@@ -351,10 +354,12 @@ function OreForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiu
   const lavoriCliente = db.lavori.filter((l) => l.clienteId === v.clienteId).sort((a, b) => b.data.localeCompare(a.data));
   function salva(e: React.FormEvent) {
     e.preventDefault();
-    const ore = num(v.ore);
-    if (!v.clienteId || ore === null || ore <= 0) return mostra("Scegli cliente e ore.", "error");
+    const clienteId = v.clienteId || db.clienti[0]?.id;
+    if (!clienteId) return mostra("Aggiungi prima un cliente.", "info");
+    const ore = num(v.ore) ?? 0;
     if (ore > 24) return mostra("Troppe ore per una registrazione (max 24).", "error");
-    registra({ clienteId: v.clienteId, operatoreId: v.operatoreId || null, lavoroId: v.lavoroId || null, data: v.data, ore, note: v.note || null });
+    if (ore <= 0) return chiudi();
+    registra({ clienteId, operatoreId: v.operatoreId || null, lavoroId: v.lavoroId || null, data: v.data, ore, note: v.note || null });
     festa("operatore"); mostra(`+${ore}h registrate ⏱️`); chiudi();
   }
   const scena = (
@@ -402,8 +407,8 @@ function SpesaForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; ch
   const [v, setV] = useState({ categoria: "benzina" as CategoriaSpesa, importo: "", data: ctx.data ?? oggiISO(), clienteId: ctx.clienteId ?? "", descrizione: "" });
   function salva(e: React.FormEvent) {
     e.preventDefault();
-    const importo = num(v.importo);
-    if (importo === null || importo <= 0) return mostra("Importo non valido.", "error");
+    const importo = num(v.importo) ?? 0;
+    if (importo <= 0) return chiudi();
     crea({ categoria: v.categoria, importo, data: v.data, clienteId: v.clienteId || null, lavoroId: ctx.lavoroId ?? null, descrizione: v.descrizione || null });
     festa("spesa"); mostra("Spesa segnata ⛽"); chiudi();
   }
@@ -440,9 +445,11 @@ function IncassoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
   const lavoriCliente = db.lavori.filter((l) => l.clienteId === v.clienteId).sort((a, b) => b.data.localeCompare(a.data));
   function salva(e: React.FormEvent) {
     e.preventDefault();
-    const importo = num(v.importoAtteso);
-    if (!v.clienteId || importo === null || importo <= 0) return mostra("Cliente e importo richiesti.", "error");
-    crea({ clienteId: v.clienteId, lavoroId: v.lavoroId || null, importoAtteso: importo, dataScadenza: v.dataScadenza || null, note: v.note || null });
+    const clienteId = v.clienteId || db.clienti[0]?.id;
+    if (!clienteId) return mostra("Aggiungi prima un cliente.", "info");
+    const importo = num(v.importoAtteso) ?? 0;
+    if (importo <= 0) return chiudi();
+    crea({ clienteId, lavoroId: v.lavoroId || null, importoAtteso: importo, dataScadenza: v.dataScadenza || null, note: v.note || null });
     festaDoppia("entrata"); mostra("Incasso atteso 💶"); chiudi();
   }
   const scena = (
@@ -492,8 +499,8 @@ function RiscuotiForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx;
   function salva(e: React.FormEvent) {
     e.preventDefault();
     if (!pag) return chiudi();
-    const imp = num(v.importo);
-    if (imp === null || imp <= 0) return mostra("Indica l'importo ricevuto.", "error");
+    const imp = num(v.importo) ?? 0;
+    if (imp <= 0) return chiudi();
     if (imp > residuo + 0.005) return mostra(`Non puoi incassare più del residuo (${euro(residuo)}).`, "error");
     registra(pag.id, imp, v.data);
     festaDoppia("entrata");
@@ -553,11 +560,14 @@ function CompensoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx;
   const opName = db.operatori.find((o) => o.id === v.operatoreId)?.nome ?? "";
   function salva(e: React.FormEvent) {
     e.preventDefault();
-    const imp = num(v.importo);
-    if (!v.operatoreId || imp === null || imp <= 0) return mostra("Operatore e importo richiesti.", "error");
-    if (saldo <= 0) return mostra("Questo operatore non ha compensi da pagare.", "error");
-    if (imp > saldo + 0.005) return mostra(`Non puoi pagare più del dovuto (${euro(saldo)}).`, "error");
-    paga({ operatoreId: v.operatoreId, importo: imp, data: v.data, metodo: v.metodo, note: v.note || null });
+    const operatoreId = v.operatoreId || db.operatori[0]?.id;
+    if (!operatoreId) return mostra("Aggiungi prima un operatore.", "info");
+    const imp = num(v.importo) ?? 0;
+    if (imp <= 0) return chiudi();
+    const saldoOp = libroOperatore(db, operatoreId).saldo;
+    if (saldoOp <= 0) return mostra("Questo operatore non ha compensi da pagare.", "error");
+    if (imp > saldoOp + 0.005) return mostra(`Non puoi pagare più del dovuto (${euro(saldoOp)}).`, "error");
+    paga({ operatoreId, importo: imp, data: v.data, metodo: v.metodo, note: v.note || null });
     festaDoppia("uscita"); mostra("Compenso pagato 🤝"); chiudi();
   }
   const scena = (
