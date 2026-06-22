@@ -1,6 +1,7 @@
 export * from "./primitives";
 export * from "./fields";
 export * from "./inputs";
+export * from "./stats";
 export * from "./Sheet";
 export * from "./Tabs";
 export * from "./Menu";

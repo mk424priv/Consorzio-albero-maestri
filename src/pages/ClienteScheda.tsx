@@ -7,6 +7,7 @@ import {
   Clock,
   Fuel,
   Hammer,
+  Hourglass,
   Mail,
   MapPin,
   MoreVertical,
@@ -34,8 +35,9 @@ import {
   Codice,
   EmptyState,
   Menu,
-  Metric,
+  RingStat,
   Segmented,
+  StatCard,
   StatusBadge,
   Table,
   Td,
@@ -137,12 +139,19 @@ export function ClienteScheda() {
         </div>
       </Card>
 
-      {/* Stat band */}
-      <div className="mb-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        <Metric label="Da incassare" valore={euro(r.saldoDaIncassare)} tono={r.saldoDaIncassare > 0 ? "warn" : "success"} />
-        <Metric label="Incassato" valore={euro(r.totaleIncassato)} tono="success" />
-        <Metric label="Lavori" valore={String(r.numeroLavori)} tono="brand" />
-        <Metric label="Ore totali" valore={fmtOre(r.oreTotali)} tono="brand" />
+      {/* Stat band — ogni dato con la sua forma e gerarchia */}
+      <div className="mb-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <RingStat
+          className="sm:col-span-2 lg:col-span-1"
+          accent="entrata"
+          ratio={r.totaleAtteso > 0 ? r.totaleIncassato / r.totaleAtteso : 0}
+          label="Incassato"
+          valore={euro(r.totaleIncassato)}
+          sub={`su ${euro(r.totaleAtteso)} attesi`}
+        />
+        <StatCard accent="uscita" label="Da incassare" valore={euro(r.saldoDaIncassare)} icona={<Hourglass size={15} />} nota={r.saldoDaIncassare > 0 ? "ancora aperto" : "tutto in regola"} />
+        <StatCard accent="lavoro" label="Lavori" valore={String(r.numeroLavori)} icona={<Hammer size={15} />} />
+        <StatCard accent="operatore" label="Ore totali" valore={fmtOre(r.oreTotali)} icona={<Clock size={15} />} />
       </div>
 
       <Segmented voci={TABS} attivo={tab} onChange={setTab} className="mb-5" />

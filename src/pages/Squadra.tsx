@@ -9,7 +9,7 @@ import { libroOperatore } from "@/lib/squadra";
 import { euro, ore as fmtOre } from "@/lib/format";
 import { etichetta } from "@/lib/dominio";
 import { ENTITA } from "@/lib/entita";
-import { Avatar, Badge, Button, EmptyState, HeroStat, LinkButton, PageHero, StatusBadge } from "@/components/ui";
+import { Avatar, Badge, Barra, Button, EmptyState, HeroStat, LinkButton, PageHero, StatusBadge } from "@/components/ui";
 import { panoramicaSpazio } from "@/lib/movimenti";
 
 export function Squadra() {
@@ -69,8 +69,12 @@ export function Squadra() {
                   </div>
                 ))}
               </div>
-              <div className="flex items-center justify-between gap-2 p-4">
+              <div className="px-4 pt-3">
+                <Barra accent="uscita" ratio={libro.dovuto > 0 ? libro.pagato / libro.dovuto : 1} />
+              </div>
+              <div className="flex items-center justify-between gap-2 p-4 pt-2.5">
                 {libro.saldo > 0 ? <Badge tono="warn">{euro(libro.saldo)} da pagare</Badge> : <Badge tono="success">Saldato</Badge>}
+                <span className="text-[0.7rem] font-semibold text-muted">{libro.dovuto > 0 ? Math.round((libro.pagato / libro.dovuto) * 100) : 100}% saldato</span>
               </div>
               <div className="mt-auto flex items-center gap-1 border-t border-line p-2">
                 <LinkButton to={`/operatore/${o.id}`} variante="soft" dim="sm" className="flex-1">Apri</LinkButton>

@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, HandCoins, Hammer, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, HandCoins, Hammer, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useStore } from "@/store/store";
 import { useUI } from "@/store/ui";
 import { useToast } from "@/store/toast";
@@ -8,7 +8,7 @@ import { libroOperatore } from "@/lib/squadra";
 import { dataIT, euro, ore as fmtOre } from "@/lib/format";
 import { etichetta } from "@/lib/dominio";
 import { ENTITA } from "@/lib/entita";
-import { Avatar, Badge, Button, Card, EmptyState, Menu, Metric, StatusBadge } from "@/components/ui";
+import { Avatar, Badge, Button, Card, EmptyState, Menu, RingStat, StatCard, StatusBadge } from "@/components/ui";
 
 export function OperatoreScheda() {
   const { id = "" } = useParams();
@@ -62,13 +62,18 @@ export function OperatoreScheda() {
         </div>
       </Card>
 
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div className="grid flex-1 grid-cols-2 gap-2.5 lg:grid-cols-4">
-          <Metric label="Dovuto" valore={euro(libro.dovuto)} tono="neutral" />
-          <Metric label="Pagato" valore={euro(libro.pagato)} tono="success" />
-          <Metric label="Saldo" valore={euro(libro.saldo)} tono={libro.saldo > 0 ? "warn" : "success"} />
-          <Metric label="Ore" valore={fmtOre(libro.ore)} tono="brand" />
-        </div>
+      <div className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <RingStat
+          className="sm:col-span-2 lg:col-span-1"
+          accent="uscita"
+          ratio={libro.dovuto > 0 ? libro.pagato / libro.dovuto : 1}
+          label="Saldato"
+          valore={euro(libro.pagato)}
+          sub={`su ${euro(libro.dovuto)} dovuti`}
+        />
+        <StatCard accent="uscita" label="Da pagare" valore={euro(libro.saldo)} icona={<HandCoins size={15} />} nota={libro.saldo > 0 ? "in sospeso" : "saldato"} />
+        <StatCard accent="lavoro" label="Dovuto" valore={euro(libro.dovuto)} />
+        <StatCard accent="operatore" label="Ore" valore={fmtOre(libro.ore)} icona={<Clock size={15} />} />
       </div>
       <Button variante="primary" onClick={() => apri("compenso", { operatoreId: id })} className="mb-6 w-full sm:w-auto"><HandCoins size={16} /> Paga operatore</Button>
 

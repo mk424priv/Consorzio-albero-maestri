@@ -155,8 +155,8 @@ function Storico() {
   if (righe.length === 0) return <EmptyState testo="Ancora nessun movimento registrato." />;
   return (
     <div className="grid gap-3">
-      {righe.map((r) => (
-        <Card key={r.chiave} className="p-4">
+      {righe.map((r, i) => (
+        <Card key={r.chiave} className={cn("p-4", i === 0 && "ring-2 ring-brand-200")}>
           <div className="mb-3 flex items-center justify-between">
             <span className="font-bold text-ink">{meseAnnoIT(r.anno, r.mese)}</span>
             <span className={cn("text-sm font-extrabold", r.saldo >= 0 ? "text-success" : "text-danger")}>{euro(r.saldo)}</span>
