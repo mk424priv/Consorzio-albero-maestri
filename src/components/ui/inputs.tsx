@@ -2,7 +2,7 @@
 // avatar, stepper, importo grande, date rapide. Interazioni STABILI
 // (niente scale al tocco): solo colore/ombra/translate.
 import type { ReactNode } from "react";
-import { Minus, Plus } from "lucide-react";
+import { Delete, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Avatar } from "./primitives";
 
@@ -208,7 +208,7 @@ export function AmountField({
           autoFocus={autoFocus}
           onChange={(e) => onChange(e.target.value)}
           placeholder="0"
-          className="w-40 bg-transparent text-center text-[2.4rem] font-extrabold tracking-tight text-ink outline-none placeholder:text-line-strong"
+          className="w-40 bg-transparent text-center font-display text-[2.4rem] font-bold tracking-tight text-ink outline-none placeholder:text-line-strong"
         />
       </div>
       {suggerimenti.length > 0 && (
@@ -273,6 +273,75 @@ export function QuickDate({
         onChange={(e) => onChange(e.target.value)}
         className="h-9 rounded-full border border-line-strong bg-surface px-3 text-[0.8rem] text-ink outline-none transition-colors hover:border-brand-300 focus:border-brand-400 focus:ring-4 focus:ring-brand-100"
       />
+    </div>
+  );
+}
+
+/* ----------------------------- NumberPad ---------------------------- */
+// Tastierino "da cassa": tasti grandi, virgola, cancella.
+export function NumberPad({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const press = (k: string) => {
+    if (k === "←") return onChange(value.slice(0, -1));
+    if (k === ",") {
+      if (value.includes(",") || value.includes(".")) return;
+      return onChange((value === "" ? "0" : value) + ",");
+    }
+    if (value === "0") return onChange(k);
+    onChange(value + k);
+  };
+  const tasti = ["1", "2", "3", "4", "5", "6", "7", "8", "9", ",", "0", "←"];
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      {tasti.map((k) => (
+        <button
+          type="button"
+          key={k}
+          onClick={() => press(k)}
+          className={cn(
+            "grid h-12 place-items-center rounded-[13px] border border-line bg-surface font-display text-[1.15rem] font-bold text-ink transition-colors active:translate-y-px hover:border-brand-300 hover:bg-brand-50 hover:text-brand-600",
+            k === "←" && "text-muted",
+          )}
+        >
+          {k === "←" ? <Delete size={18} /> : k}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+/* ----------------------------- AmountPad ---------------------------- */
+// Importo-eroe + suggerimenti + tastierino: il modo "gamificato" per le cifre.
+export function AmountPad({
+  value,
+  onChange,
+  tinta = "entrata",
+  suggerimenti = [],
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  tinta?: Tinta;
+  suggerimenti?: { label: string; valore: number }[];
+}) {
+  const attivo = numVal(value);
+  return (
+    <div className="grid gap-3">
+      <div className={cn("flex items-center justify-center gap-1.5 rounded-[18px] border bg-surface-2 py-4", SEL[tinta].split(" ").find((c) => c.startsWith("border-")) ?? "border-line-strong")}>
+        <span className="font-display text-2xl font-bold text-muted">€</span>
+        <span className="font-display text-[2.4rem] font-bold leading-none tracking-tight text-ink">{value === "" ? "0" : value}</span>
+      </div>
+      {suggerimenti.length > 0 && (
+        <div className="flex flex-wrap justify-center gap-2">
+          {suggerimenti.map((s) => {
+            const sel = attivo === s.valore && value !== "";
+            return (
+              <button type="button" key={s.label} onClick={() => onChange(String(s.valore))} className={cn("rounded-full border px-3 py-1 text-[0.78rem] font-bold transition-colors", sel ? SEL[tinta] : "border-line bg-surface text-muted hover:border-line-strong hover:text-ink")}>
+                {s.label}
+              </button>
+            );
+          })}
+        </div>
+      )}
+      <NumberPad value={value} onChange={onChange} />
     </div>
   );
 }

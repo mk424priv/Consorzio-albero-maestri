@@ -1,6 +1,5 @@
-// Fogli globali: menù "Crea" + form di creazione/modifica.
-// Ogni foglio è una "scena" con identità propria: intestazione colorata con
-// filigrana + texture, comparsa a cascata dei campi, coriandoli al salvataggio.
+// Fogli globali: menù "Crea" + finestre-scena di creazione/modifica.
+// Ogni finestra ha due zone (scena viva + form) e un protagonista dedicato.
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -12,7 +11,7 @@ import { useStore } from "@/store/store";
 import { useUI, type SheetCtx, type SheetTipo } from "@/store/ui";
 import { useToast } from "@/store/toast";
 import {
-  AmountField, Avatar, Button, ChipPicker, Field, Input, QuickDate, Select,
+  AmountPad, Avatar, Button, ChipPicker, Field, Input, QuickDate, Select,
   Sheet, SheetFooter, SheetRow, SheetStagger, Stepper, TileSelect, type Tile,
 } from "@/components/ui";
 import { etichetta } from "@/lib/dominio";
@@ -33,15 +32,22 @@ const num = (s: string): number | null => {
 };
 const clientiChip = (db: Database) => db.clienti.map((c) => ({ id: c.id, nome: `${c.nome} ${c.cognome}` }));
 const operatoriChip = (db: Database) => db.operatori.filter((o) => o.attivo).map((o) => ({ id: o.id, nome: o.nome }));
+const nomeCli = (db: Database, id: string) => { const c = db.clienti.find((x) => x.id === id); return c ? `${c.nome} ${c.cognome}` : ""; };
 
 function useSheet(tipo: SheetTipo) {
   const sheet = useUI((s) => s.sheet);
   const chiudi = useUI((s) => s.chiudi);
   return { aperto: sheet?.tipo === tipo, ctx: (sheet?.ctx ?? {}) as SheetCtx, seq: sheet?.seq ?? 0, chiudi };
 }
-
 function Etichetta({ children }: { children: React.ReactNode }) {
   return <div className="mb-1.5 text-[0.74rem] font-bold uppercase tracking-wide text-muted">{children}</div>;
+}
+// blocchi per la zona-scena (testo bianco su accento)
+function ScenaCard({ children, className }: { children: React.ReactNode; className?: string }) {
+  return <div className={`rounded-[14px] border border-white/15 bg-white/12 p-3 backdrop-blur ${className ?? ""}`}>{children}</div>;
+}
+function AvatarBianco({ nome, size = "lg" as const }: { nome: string; size?: "lg" | "xl" }) {
+  return <Avatar nome={nome} size={size} grad="bg-white/20 ring-1 ring-white/40" />;
 }
 
 /* =============================== CREA =============================== */
@@ -80,15 +86,8 @@ const MODALITA_TILE: Tile[] = [
   { value: "ore", label: "A ore", icona: <Clock size={18} /> },
   { value: "misto", label: "Misto", icona: <Layers size={18} /> },
 ];
-function ClienteSheet() {
-  const { aperto, ctx, seq, chiudi } = useSheet("cliente");
-  return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo={ctx.id ? "Modifica cliente" : "Nuova radice"} sottotitolo={ctx.id ? undefined : "Da un cliente nasce tutto 🌱"} accent={ENTITA.cliente.grad} pattern="dots" icona={<Sprout size={20} />} motivo={<Sprout size={120} strokeWidth={1.1} />}>
-      {aperto && <ClienteBody key={seq} ctx={ctx} chiudi={chiudi} />}
-    </Sheet>
-  );
-}
-function ClienteBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
+function ClienteSheet() { const { aperto, ctx, seq, chiudi } = useSheet("cliente"); return <ClienteForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function ClienteForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
   const creaCliente = useStore((s) => s.creaCliente);
   const aggiornaCliente = useStore((s) => s.aggiornaCliente);
@@ -96,15 +95,14 @@ function ClienteBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
   const navigate = useNavigate();
   const esistente = ctx.id ? db.clienti.find((c) => c.id === ctx.id) : undefined;
   const [v, setV] = useState({
-    nome: esistente?.nome ?? "", cognome: esistente?.cognome ?? "",
-    telefono: esistente?.telefono ?? "", email: esistente?.email ?? "", luogo: esistente?.luogo ?? "",
+    nome: esistente?.nome ?? "", cognome: esistente?.cognome ?? "", telefono: esistente?.telefono ?? "",
+    email: esistente?.email ?? "", luogo: esistente?.luogo ?? "",
     modalitaPredefinita: (esistente?.modalitaPredefinita ?? "preventivo") as Modalita,
     tariffaOraria: esistente?.tariffaOraria != null ? String(esistente.tariffaOraria) : "",
   });
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
   const nomeCompl = `${v.nome} ${v.cognome}`.trim() || "Nuovo cliente";
   const codiceProvv = `${v.nome || v.cognome ? inizialiDa(v.nome || "X", v.cognome || "X") : "??"}-00-00-00`;
-
   function salva(e: React.FormEvent) {
     e.preventDefault();
     if (!v.nome.trim() || !v.cognome.trim()) return mostra("Nome e cognome obbligatori.", "error");
@@ -112,26 +110,28 @@ function ClienteBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     if (esistente) { aggiornaCliente(esistente.id, { nome: v.nome.trim(), cognome: v.cognome.trim(), ...dati }); mostra("Cliente aggiornato!"); chiudi(); }
     else { const id = creaCliente({ nome: v.nome, cognome: v.cognome, ...dati }); festa("cliente"); mostra("Radice piantata 🌱"); chiudi(); navigate(`/cliente/${id}`); }
   }
+  const scena = (
+    <ScenaCard>
+      <div className="flex items-center gap-3">
+        <AvatarBianco nome={nomeCompl} />
+        <div className="min-w-0"><div className="truncate font-display font-bold leading-tight">{nomeCompl}</div><div className="mt-1 inline-block rounded-md bg-white/15 px-2 py-0.5 font-mono text-[0.7rem]">{codiceProvv}</div></div>
+      </div>
+      <div className="mt-3 text-[0.72rem] text-white/80">{etichetta(v.modalitaPredefinita)}{v.tariffaOraria ? ` · ${v.tariffaOraria} €/h` : ""}</div>
+    </ScenaCard>
+  );
   return (
-    <form onSubmit={salva}>
-      <SheetStagger className="grid gap-4">
-        <SheetRow>
-          <div className="flex items-center gap-3 rounded-[16px] border border-cliente-100 bg-cliente-50/60 p-3">
-            <Avatar nome={nomeCompl} size="lg" grad={ENTITA.cliente.grad} />
-            <div className="min-w-0">
-              <div className="truncate font-extrabold text-ink">{nomeCompl}</div>
-              <span className="codice mt-1 inline-block text-[0.72rem]">{codiceProvv}</span>
-            </div>
-          </div>
-        </SheetRow>
-        <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Nome *"><Input value={v.nome} onChange={set("nome")} autoFocus /></Field><Field label="Cognome *"><Input value={v.cognome} onChange={set("cognome")} /></Field></div></SheetRow>
-        <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Telefono"><Input value={v.telefono} onChange={set("telefono")} placeholder="333 …" /></Field><Field label="Email"><Input type="email" value={v.email} onChange={set("email")} /></Field></div></SheetRow>
-        <SheetRow><Field label="Luogo"><Input value={v.luogo} onChange={set("luogo")} placeholder="es. Villa Rossi, Marina di Campo" /></Field></SheetRow>
-        <SheetRow><div><Etichetta>Accordo economico</Etichetta><TileSelect tinta="cliente" cols={3} value={v.modalitaPredefinita} onChange={(val) => setV((s) => ({ ...s, modalitaPredefinita: val as Modalita }))} options={MODALITA_TILE} /></div></SheetRow>
-        <SheetRow><Field label="Tariffa oraria (€/h)" hint="Se lavori a ore con questo cliente"><Input type="number" step="0.01" value={v.tariffaOraria} onChange={set("tariffaOraria")} placeholder="es. 30" /></Field></SheetRow>
-        <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Crea cliente"}</Button></SheetFooter></SheetRow>
-      </SheetStagger>
-    </form>
+    <Sheet aperto={aperto} onClose={chiudi} titolo={esistente ? "Modifica cliente" : "Nuova radice"} sottotitolo={esistente ? undefined : "Da un cliente nasce tutto"} accent={ENTITA.cliente.grad} pattern="dots" icona={<Sprout size={20} />} motivo={<Sprout size={120} strokeWidth={1.1} />} scena={scena}>
+      <form onSubmit={salva}>
+        <SheetStagger className="grid gap-4">
+          <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Nome *"><Input value={v.nome} onChange={set("nome")} autoFocus /></Field><Field label="Cognome *"><Input value={v.cognome} onChange={set("cognome")} /></Field></div></SheetRow>
+          <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Telefono"><Input value={v.telefono} onChange={set("telefono")} placeholder="333 …" /></Field><Field label="Email"><Input type="email" value={v.email} onChange={set("email")} /></Field></div></SheetRow>
+          <SheetRow><Field label="Luogo"><Input value={v.luogo} onChange={set("luogo")} placeholder="es. Villa Rossi, Marina di Campo" /></Field></SheetRow>
+          <SheetRow><div><Etichetta>Accordo economico</Etichetta><TileSelect tinta="cliente" cols={3} value={v.modalitaPredefinita} onChange={(val) => setV((s) => ({ ...s, modalitaPredefinita: val as Modalita }))} options={MODALITA_TILE} /></div></SheetRow>
+          <SheetRow><Field label="Tariffa oraria (€/h)" hint="Se lavori a ore con questo cliente"><Input type="number" step="0.01" value={v.tariffaOraria} onChange={set("tariffaOraria")} placeholder="es. 30" /></Field></SheetRow>
+          <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Crea cliente"}</Button></SheetFooter></SheetRow>
+        </SheetStagger>
+      </form>
+    </Sheet>
   );
 }
 
@@ -140,15 +140,8 @@ const RUOLO_TILE: Tile[] = [
   { value: "titolare", label: "Titolare", icona: <Crown size={18} /> },
   { value: "collaboratore", label: "Collaboratore", icona: <User size={18} /> },
 ];
-function OperatoreSheet() {
-  const { aperto, ctx, seq, chiudi } = useSheet("operatore");
-  return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo={ctx.id ? "Modifica operatore" : "Nuovo operatore"} sottotitolo={ctx.id ? undefined : "Aggiungi un membro alla squadra"} accent={ENTITA.operatore.grad} pattern="grid" icona={<Users size={20} />} motivo={<Users size={120} strokeWidth={1.1} />}>
-      {aperto && <OperatoreBody key={seq} ctx={ctx} chiudi={chiudi} />}
-    </Sheet>
-  );
-}
-function OperatoreBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
+function OperatoreSheet() { const { aperto, ctx, seq, chiudi } = useSheet("operatore"); return <OperatoreForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function OperatoreForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
   const crea = useStore((s) => s.creaOperatore);
   const aggiorna = useStore((s) => s.aggiornaOperatore);
@@ -167,21 +160,27 @@ function OperatoreBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     if (esistente) { aggiorna(esistente.id, { nome: v.nome.trim(), ...dati }); mostra("Operatore aggiornato!"); chiudi(); }
     else { const id = crea({ nome: v.nome, ...dati }); festa("operatore"); mostra("Squadra rinforzata 🧑‍🌾"); chiudi(); navigate(`/operatore/${id}`); }
   }
+  const scena = (
+    <ScenaCard>
+      <div className="flex flex-col items-center gap-2 text-center">
+        <AvatarBianco nome={v.nome || "Operatore"} size="xl" />
+        <div className="font-display font-bold leading-tight">{v.nome || "Nuovo operatore"}</div>
+        <div className="flex items-center gap-1.5 text-[0.72rem] text-white/80">{v.ruolo === "titolare" ? <Crown size={13} /> : <User size={13} />}{etichetta(v.ruolo)}</div>
+        {v.tariffaOraria && <div className="rounded-full bg-white/15 px-2.5 py-0.5 font-display text-[0.8rem] font-bold">{v.tariffaOraria} €/h</div>}
+      </div>
+    </ScenaCard>
+  );
   return (
-    <form onSubmit={salva}>
-      <SheetStagger className="grid gap-4">
-        <SheetRow>
-          <div className="flex items-center gap-3 rounded-[16px] border border-operatore-100 bg-operatore-50/60 p-3">
-            <Avatar nome={v.nome || "Operatore"} size="lg" grad={ENTITA.operatore.grad} />
-            <div className="min-w-0"><div className="truncate font-extrabold text-ink">{v.nome || "Nuovo operatore"}</div><div className="text-[0.78rem] text-muted">{etichetta(v.ruolo)}{v.tariffaOraria ? ` · ${v.tariffaOraria} €/h` : ""}</div></div>
-          </div>
-        </SheetRow>
-        <SheetRow><Field label="Nome *"><Input value={v.nome} onChange={set("nome")} autoFocus /></Field></SheetRow>
-        <SheetRow><div><Etichetta>Ruolo</Etichetta><TileSelect tinta="operatore" cols={2} value={v.ruolo} onChange={(val) => setV((s) => ({ ...s, ruolo: val as RuoloOperatore }))} options={RUOLO_TILE} /></div></SheetRow>
-        <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Tariffa oraria (€/h)" hint="Quanto gli riconosci"><Input type="number" step="0.01" value={v.tariffaOraria} onChange={set("tariffaOraria")} placeholder="es. 16" /></Field><Field label="Telefono"><Input value={v.telefono} onChange={set("telefono")} /></Field></div></SheetRow>
-        <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Crea"}</Button></SheetFooter></SheetRow>
-      </SheetStagger>
-    </form>
+    <Sheet aperto={aperto} onClose={chiudi} titolo={esistente ? "Modifica operatore" : "Nuovo operatore"} sottotitolo={esistente ? undefined : "Un membro della squadra"} accent={ENTITA.operatore.grad} pattern="grid" icona={<Users size={20} />} motivo={<Users size={120} strokeWidth={1.1} />} scena={scena}>
+      <form onSubmit={salva}>
+        <SheetStagger className="grid gap-4">
+          <SheetRow><Field label="Nome *"><Input value={v.nome} onChange={set("nome")} autoFocus /></Field></SheetRow>
+          <SheetRow><div><Etichetta>Ruolo</Etichetta><TileSelect tinta="operatore" cols={2} value={v.ruolo} onChange={(val) => setV((s) => ({ ...s, ruolo: val as RuoloOperatore }))} options={RUOLO_TILE} /></div></SheetRow>
+          <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Tariffa oraria (€/h)" hint="Quanto gli riconosci"><Input type="number" step="0.01" value={v.tariffaOraria} onChange={set("tariffaOraria")} placeholder="es. 16" /></Field><Field label="Telefono"><Input value={v.telefono} onChange={set("telefono")} /></Field></div></SheetRow>
+          <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Crea"}</Button></SheetFooter></SheetRow>
+        </SheetStagger>
+      </form>
+    </Sheet>
   );
 }
 
@@ -191,15 +190,8 @@ const COMPENSO_TILE: Tile[] = [
   { value: "ore", label: "A ore", icona: <Clock size={18} /> },
   { value: "misto", label: "Misto", icona: <Layers size={18} /> },
 ];
-function LavoroSheet() {
-  const { aperto, ctx, seq, chiudi } = useSheet("lavoro");
-  return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo={ctx.id ? "Modifica lavoro" : "Nuovo lavoro"} sottotitolo={ctx.id ? undefined : "Programma un intervento"} accent={ENTITA.lavoro.grad} pattern="diagonal" icona={<Hammer size={20} />} motivo={<Hammer size={120} strokeWidth={1.1} />}>
-      {aperto && <LavoroBody key={seq} ctx={ctx} chiudi={chiudi} />}
-    </Sheet>
-  );
-}
-function LavoroBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
+function LavoroSheet() { const { aperto, ctx, seq, chiudi } = useSheet("lavoro"); return <LavoroForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function LavoroForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
   const crea = useStore((s) => s.creaLavoro);
   const aggiorna = useStore((s) => s.aggiornaLavoro);
@@ -217,18 +209,68 @@ function LavoroBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     if (esistente) { aggiorna(esistente.id, dati); mostra("Lavoro aggiornato!"); } else { crea(dati); festa("lavoro"); mostra("Lavoro in agenda 🗓️"); }
     chiudi();
   }
+  const d = new Date(v.data);
+  const giorno = Number.isNaN(d.getTime()) ? "—" : d.getDate();
+  const mese = Number.isNaN(d.getTime()) ? "" : new Intl.DateTimeFormat("it-IT", { month: "short" }).format(d);
+  const scena = (
+    <ScenaCard className="text-center">
+      <div className="font-display text-[3rem] font-bold leading-none">{giorno}</div>
+      <div className="text-[0.78rem] font-bold uppercase tracking-wide text-white/80">{mese}</div>
+      <div className="mt-3 truncate text-[0.82rem] font-semibold">{v.titolo || "Nuovo lavoro"}</div>
+      {v.clienteId && <div className="truncate text-[0.72rem] text-white/75">{nomeCli(db, v.clienteId)}</div>}
+    </ScenaCard>
+  );
   return (
-    <form onSubmit={salva}>
-      <SheetStagger className="grid gap-4">
-        <SheetRow><div><Etichetta>Cliente</Etichetta><ChipPicker tinta="cliente" items={clientiChip(db)} value={v.clienteId} onChange={(id) => setV((s) => ({ ...s, clienteId: id }))} vuoto="Crea prima un cliente." /></div></SheetRow>
-        <SheetRow><Field label="Titolo *"><Input value={v.titolo} onChange={(e) => setV((s) => ({ ...s, titolo: e.target.value }))} placeholder="es. Potatura olivi" /></Field></SheetRow>
-        <SheetRow><div><Etichetta>Quando</Etichetta><QuickDate tinta="lavoro" value={v.data} onChange={(d) => setV((s) => ({ ...s, data: d }))} /></div></SheetRow>
-        <SheetRow><div><Etichetta>Tipo compenso</Etichetta><TileSelect tinta="lavoro" cols={3} value={v.tipoCompenso} onChange={(val) => setV((s) => ({ ...s, tipoCompenso: val as TipoCompenso }))} options={COMPENSO_TILE} /></div></SheetRow>
-        <SheetRow><div><Etichetta>Assegnato a</Etichetta><ChipPicker tinta="operatore" items={operatoriChip(db)} value={v.operatoreId} onChange={(id) => setV((s) => ({ ...s, operatoreId: id }))} consentiNessuno vuoto="Nessun operatore." /></div></SheetRow>
-        <SheetRow><Field label="Luogo"><Input value={v.luogo} onChange={(e) => setV((s) => ({ ...s, luogo: e.target.value }))} /></Field></SheetRow>
-        <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Aggiungi"}</Button></SheetFooter></SheetRow>
-      </SheetStagger>
-    </form>
+    <Sheet aperto={aperto} onClose={chiudi} titolo={esistente ? "Modifica lavoro" : "Nuovo lavoro"} sottotitolo={esistente ? undefined : "Programma un intervento"} accent={ENTITA.lavoro.grad} pattern="diagonal" icona={<Hammer size={20} />} motivo={<Hammer size={120} strokeWidth={1.1} />} scena={scena}>
+      <form onSubmit={salva}>
+        <SheetStagger className="grid gap-4">
+          <SheetRow><div><Etichetta>Cliente</Etichetta><ChipPicker tinta="cliente" items={clientiChip(db)} value={v.clienteId} onChange={(id) => setV((s) => ({ ...s, clienteId: id }))} vuoto="Crea prima un cliente." /></div></SheetRow>
+          <SheetRow><Field label="Titolo *"><Input value={v.titolo} onChange={(e) => setV((s) => ({ ...s, titolo: e.target.value }))} placeholder="es. Potatura olivi" /></Field></SheetRow>
+          <SheetRow><div><Etichetta>Quando</Etichetta><QuickDate tinta="lavoro" value={v.data} onChange={(dd) => setV((s) => ({ ...s, data: dd }))} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Tipo compenso</Etichetta><TileSelect tinta="lavoro" cols={3} value={v.tipoCompenso} onChange={(val) => setV((s) => ({ ...s, tipoCompenso: val as TipoCompenso }))} options={COMPENSO_TILE} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Assegnato a</Etichetta><ChipPicker tinta="operatore" items={operatoriChip(db)} value={v.operatoreId} onChange={(id) => setV((s) => ({ ...s, operatoreId: id }))} consentiNessuno vuoto="Nessun operatore." /></div></SheetRow>
+          <SheetRow><Field label="Luogo"><Input value={v.luogo} onChange={(e) => setV((s) => ({ ...s, luogo: e.target.value }))} /></Field></SheetRow>
+          <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Aggiungi"}</Button></SheetFooter></SheetRow>
+        </SheetStagger>
+      </form>
+    </Sheet>
+  );
+}
+
+/* =============================== ORE =============================== */
+function OreSheet() { const { aperto, ctx, seq, chiudi } = useSheet("ore"); return <OreForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function OreForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
+  const db = useStore((s) => s.db);
+  const registra = useStore((s) => s.registraOre);
+  const mostra = useToast((s) => s.mostra);
+  const [v, setV] = useState({ clienteId: ctx.clienteId ?? "", operatoreId: ctx.operatoreId ?? "", data: ctx.data ?? oggiISO(), ore: "", note: "" });
+  function salva(e: React.FormEvent) {
+    e.preventDefault();
+    const ore = num(v.ore);
+    if (!v.clienteId || ore === null || ore <= 0) return mostra("Scegli cliente e ore.", "error");
+    registra({ clienteId: v.clienteId, operatoreId: v.operatoreId || null, data: v.data, ore, note: v.note || null });
+    festa("operatore"); mostra(`+${ore}h registrate ⏱️`); chiudi();
+  }
+  const scena = (
+    <ScenaCard className="text-center">
+      <div className="font-display text-[3.4rem] font-bold leading-none">{v.ore || "0"}<span className="text-[1.4rem]">h</span></div>
+      <div className="mt-1 text-[0.72rem] uppercase tracking-wide text-white/75">ore di lavoro</div>
+      {v.clienteId && <div className="mt-3 truncate text-[0.8rem] font-semibold">{nomeCli(db, v.clienteId)}</div>}
+    </ScenaCard>
+  );
+  return (
+    <Sheet aperto={aperto} onClose={chiudi} titolo="Registra ore" sottotitolo="Segna il lavoro di oggi" accent={ENTITA.operatore.grad} pattern="rings" icona={<Clock size={20} />} motivo={<Clock size={120} strokeWidth={1.1} />} scena={scena}>
+      <form onSubmit={salva}>
+        <SheetStagger className="grid gap-4">
+          <SheetRow><div className="rounded-[18px] border border-operatore-100 bg-operatore-50/50 p-4"><Stepper tinta="operatore" value={v.ore} onChange={(val) => setV((s) => ({ ...s, ore: val }))} presets={[1, 2, 4, 8]} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Cliente</Etichetta><ChipPicker tinta="cliente" items={clientiChip(db)} value={v.clienteId} onChange={(id) => setV((s) => ({ ...s, clienteId: id }))} vuoto="Crea prima un cliente." /></div></SheetRow>
+          <SheetRow><div><Etichetta>Chi ha lavorato</Etichetta><ChipPicker tinta="operatore" items={operatoriChip(db)} value={v.operatoreId} onChange={(id) => setV((s) => ({ ...s, operatoreId: id }))} consentiNessuno vuoto="Nessun operatore." /></div></SheetRow>
+          <SheetRow><div><Etichetta>Giorno</Etichetta><QuickDate tinta="operatore" value={v.data} onChange={(dd) => setV((s) => ({ ...s, data: dd }))} /></div></SheetRow>
+          <SheetRow><Field label="Nota"><Input value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} placeholder="es. manutenzione verde" /></Field></SheetRow>
+          <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Salva ore</Button></SheetFooter></SheetRow>
+        </SheetStagger>
+      </form>
+    </Sheet>
   );
 }
 
@@ -237,15 +279,8 @@ const PREV_TILE: Tile[] = [
   { value: "unico", label: "Cifra unica", icona: <Coins size={18} />, hint: "un pagamento" },
   { value: "acconto_saldo", label: "Acconto + saldo", icona: <Layers size={18} />, hint: "due rate" },
 ];
-function PreventivoSheet() {
-  const { aperto, ctx, seq, chiudi } = useSheet("preventivo");
-  return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo="Nuovo preventivo" sottotitolo="Concorda il prezzo → nascono i pagamenti" accent={ENTITA.preventivo.grad} pattern="rings" icona={<ReceiptText size={20} />} motivo={<ReceiptText size={120} strokeWidth={1.1} />}>
-      {aperto && <PreventivoBody key={seq} ctx={ctx} chiudi={chiudi} />}
-    </Sheet>
-  );
-}
-function PreventivoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
+function PreventivoSheet() { const { aperto, ctx, seq, chiudi } = useSheet("preventivo"); return <PreventivoForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function PreventivoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
   const crea = useStore((s) => s.creaPreventivo);
   const mostra = useToast((s) => s.mostra);
@@ -260,62 +295,32 @@ function PreventivoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) 
     crea({ clienteId: v.clienteId, tipo: v.tipo, importoTotale: t, importoAcconto: num(v.importoAcconto), dataEmissione: v.dataEmissione, dataScadenza: v.dataScadenza || null, note: null });
     festa("preventivo"); mostra("Preventivo creato 🧾"); chiudi();
   }
-  return (
-    <form onSubmit={salva}>
-      <SheetStagger className="grid gap-4">
-        <SheetRow><Field label="Cliente *"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` }))} /></Field></SheetRow>
-        <SheetRow><div><Etichetta>Formato</Etichetta><TileSelect tinta="preventivo" cols={2} value={v.tipo} onChange={(val) => setV((s) => ({ ...s, tipo: val as TipoPreventivo }))} options={PREV_TILE} /></div></SheetRow>
-        <SheetRow><div><Etichetta>Importo totale</Etichetta><AmountField tinta="preventivo" autoFocus value={v.importoTotale} onChange={(val) => setV((s) => ({ ...s, importoTotale: val }))} suggerimenti={[{ label: "100", valore: 100 }, { label: "300", valore: 300 }, { label: "500", valore: 500 }, { label: "800", valore: 800 }]} /></div></SheetRow>
-        {v.tipo === "acconto_saldo" && (
-          <SheetRow>
-            <div className="grid gap-3">
-              <Field label="Acconto (€)" hint="Vuoto = metà"><Input type="number" step="0.01" value={v.importoAcconto} onChange={(e) => setV((s) => ({ ...s, importoAcconto: e.target.value }))} /></Field>
-              <div className="grid grid-cols-2 gap-2">
-                <div className="rounded-[13px] border border-preventivo-100 bg-preventivo-50 px-3 py-2.5 text-center"><div className="text-[0.64rem] font-bold uppercase tracking-wide text-preventivo-600">Acconto</div><div className="text-[1.05rem] font-extrabold text-ink">{euro(acconto)}</div></div>
-                <div className="rounded-[13px] border border-preventivo-100 bg-preventivo-50 px-3 py-2.5 text-center"><div className="text-[0.64rem] font-bold uppercase tracking-wide text-preventivo-600">Saldo</div><div className="text-[1.05rem] font-extrabold text-ink">{euro(saldo)}</div></div>
-              </div>
-            </div>
-          </SheetRow>
-        )}
-        <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Emissione"><Input type="date" value={v.dataEmissione} onChange={(e) => setV((s) => ({ ...s, dataEmissione: e.target.value }))} /></Field><Field label="Scadenza incasso"><Input type="date" value={v.dataScadenza} onChange={(e) => setV((s) => ({ ...s, dataScadenza: e.target.value }))} /></Field></div></SheetRow>
-        <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Crea preventivo</Button></SheetFooter></SheetRow>
-      </SheetStagger>
-    </form>
+  const scena = (
+    <ScenaCard>
+      <div className="text-[0.66rem] font-bold uppercase tracking-wide text-white/70">Ricevuta</div>
+      <div className="mt-1 font-display text-[1.9rem] font-bold leading-none">{euro(tot)}</div>
+      {v.clienteId && <div className="mt-1 truncate text-[0.74rem] text-white/80">{nomeCli(db, v.clienteId)}</div>}
+      {v.tipo === "acconto_saldo" && (
+        <div className="mt-3 space-y-1 border-t border-white/20 pt-2 text-[0.74rem]">
+          <div className="flex justify-between"><span className="text-white/75">Acconto</span><b>{euro(acconto)}</b></div>
+          <div className="flex justify-between"><span className="text-white/75">Saldo</span><b>{euro(saldo)}</b></div>
+        </div>
+      )}
+    </ScenaCard>
   );
-}
-
-/* =============================== ORE =============================== */
-function OreSheet() {
-  const { aperto, ctx, seq, chiudi } = useSheet("ore");
   return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo="Registra ore" sottotitolo="Segna il lavoro di oggi ⏱️" accent={ENTITA.operatore.grad} pattern="rings" icona={<Clock size={20} />} motivo={<Clock size={120} strokeWidth={1.1} />}>
-      {aperto && <OreBody key={seq} ctx={ctx} chiudi={chiudi} />}
+    <Sheet aperto={aperto} onClose={chiudi} titolo="Nuovo preventivo" sottotitolo="Concorda il prezzo" accent={ENTITA.preventivo.grad} pattern="rings" icona={<ReceiptText size={20} />} motivo={<ReceiptText size={120} strokeWidth={1.1} />} scena={scena}>
+      <form onSubmit={salva}>
+        <SheetStagger className="grid gap-4">
+          <SheetRow><Field label="Cliente *"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` }))} /></Field></SheetRow>
+          <SheetRow><div><Etichetta>Formato</Etichetta><TileSelect tinta="preventivo" cols={2} value={v.tipo} onChange={(val) => setV((s) => ({ ...s, tipo: val as TipoPreventivo }))} options={PREV_TILE} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Importo totale</Etichetta><AmountPad tinta="preventivo" value={v.importoTotale} onChange={(val) => setV((s) => ({ ...s, importoTotale: val }))} suggerimenti={[{ label: "100", valore: 100 }, { label: "300", valore: 300 }, { label: "500", valore: 500 }, { label: "800", valore: 800 }]} /></div></SheetRow>
+          {v.tipo === "acconto_saldo" && <SheetRow><Field label="Acconto (€)" hint="Vuoto = metà"><Input type="number" step="0.01" value={v.importoAcconto} onChange={(e) => setV((s) => ({ ...s, importoAcconto: e.target.value }))} /></Field></SheetRow>}
+          <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Emissione"><Input type="date" value={v.dataEmissione} onChange={(e) => setV((s) => ({ ...s, dataEmissione: e.target.value }))} /></Field><Field label="Scadenza"><Input type="date" value={v.dataScadenza} onChange={(e) => setV((s) => ({ ...s, dataScadenza: e.target.value }))} /></Field></div></SheetRow>
+          <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Crea preventivo</Button></SheetFooter></SheetRow>
+        </SheetStagger>
+      </form>
     </Sheet>
-  );
-}
-function OreBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
-  const db = useStore((s) => s.db);
-  const registra = useStore((s) => s.registraOre);
-  const mostra = useToast((s) => s.mostra);
-  const [v, setV] = useState({ clienteId: ctx.clienteId ?? "", operatoreId: ctx.operatoreId ?? "", data: ctx.data ?? oggiISO(), ore: "", note: "" });
-  function salva(e: React.FormEvent) {
-    e.preventDefault();
-    const ore = num(v.ore);
-    if (!v.clienteId || ore === null || ore <= 0) return mostra("Scegli cliente e ore.", "error");
-    registra({ clienteId: v.clienteId, operatoreId: v.operatoreId || null, data: v.data, ore, note: v.note || null });
-    festa("operatore"); mostra(`+${ore}h registrate ⏱️`); chiudi();
-  }
-  return (
-    <form onSubmit={salva}>
-      <SheetStagger className="grid gap-4">
-        <SheetRow><div className="rounded-[18px] border border-operatore-100 bg-operatore-50/50 p-4"><Stepper tinta="operatore" value={v.ore} onChange={(val) => setV((s) => ({ ...s, ore: val }))} presets={[1, 2, 4, 8]} /></div></SheetRow>
-        <SheetRow><div><Etichetta>Cliente</Etichetta><ChipPicker tinta="cliente" items={clientiChip(db)} value={v.clienteId} onChange={(id) => setV((s) => ({ ...s, clienteId: id }))} vuoto="Crea prima un cliente." /></div></SheetRow>
-        <SheetRow><div><Etichetta>Chi ha lavorato</Etichetta><ChipPicker tinta="operatore" items={operatoriChip(db)} value={v.operatoreId} onChange={(id) => setV((s) => ({ ...s, operatoreId: id }))} consentiNessuno vuoto="Nessun operatore." /></div></SheetRow>
-        <SheetRow><div><Etichetta>Giorno</Etichetta><QuickDate tinta="operatore" value={v.data} onChange={(d) => setV((s) => ({ ...s, data: d }))} /></div></SheetRow>
-        <SheetRow><Field label="Nota"><Input value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} placeholder="es. manutenzione verde" /></Field></SheetRow>
-        <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Salva ore</Button></SheetFooter></SheetRow>
-      </SheetStagger>
-    </form>
   );
 }
 
@@ -326,15 +331,9 @@ const SPESA_TILE: Tile[] = [
   { value: "attrezzi", label: "Attrezzi", icona: <Wrench size={18} /> },
   { value: "altro", label: "Altro", icona: <Tag size={18} /> },
 ];
-function SpesaSheet() {
-  const { aperto, ctx, seq, chiudi } = useSheet("spesa");
-  return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo="Nuova spesa" sottotitolo="Cosa è uscito dalla cassa?" accent={ENTITA.spesa.grad} pattern="diagonal" icona={<Fuel size={20} />} motivo={<Fuel size={120} strokeWidth={1.1} />}>
-      {aperto && <SpesaBody key={seq} ctx={ctx} chiudi={chiudi} />}
-    </Sheet>
-  );
-}
-function SpesaBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
+const SPESA_ICONA: Record<string, React.ReactNode> = { benzina: <Fuel size={40} />, materiali: <Package size={40} />, attrezzi: <Wrench size={40} />, altro: <Tag size={40} /> };
+function SpesaSheet() { const { aperto, ctx, seq, chiudi } = useSheet("spesa"); return <SpesaForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function SpesaForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
   const crea = useStore((s) => s.creaSpesa);
   const mostra = useToast((s) => s.mostra);
@@ -346,30 +345,32 @@ function SpesaBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     crea({ categoria: v.categoria, importo, data: v.data, clienteId: v.clienteId || null, descrizione: v.descrizione || null });
     festa("spesa"); mostra("Spesa segnata ⛽"); chiudi();
   }
+  const scena = (
+    <ScenaCard className="text-center">
+      <div className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-white/15">{SPESA_ICONA[v.categoria]}</div>
+      <div className="mt-2 text-[0.78rem] font-bold uppercase tracking-wide text-white/80">{etichetta(v.categoria)}</div>
+      <div className="mt-1 font-display text-[1.9rem] font-bold leading-none">{euro(num(v.importo) ?? 0)}</div>
+    </ScenaCard>
+  );
   return (
-    <form onSubmit={salva}>
-      <SheetStagger className="grid gap-4">
-        <SheetRow><div><Etichetta>Categoria</Etichetta><TileSelect tinta="spesa" cols={4} value={v.categoria} onChange={(val) => setV((s) => ({ ...s, categoria: val as CategoriaSpesa }))} options={SPESA_TILE} /></div></SheetRow>
-        <SheetRow><div><Etichetta>Importo</Etichetta><AmountField tinta="spesa" autoFocus value={v.importo} onChange={(val) => setV((s) => ({ ...s, importo: val }))} suggerimenti={[{ label: "10", valore: 10 }, { label: "20", valore: 20 }, { label: "50", valore: 50 }, { label: "100", valore: 100 }]} /></div></SheetRow>
-        <SheetRow><div><Etichetta>Quando</Etichetta><QuickDate tinta="spesa" value={v.data} onChange={(d) => setV((s) => ({ ...s, data: d }))} /></div></SheetRow>
-        <SheetRow><Field label="Cliente (facoltativo)"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={[{ value: "", label: "— nessuno —" }, ...db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` }))]} placeholder="— nessuno —" /></Field></SheetRow>
-        <SheetRow><Field label="Descrizione"><Input value={v.descrizione} onChange={(e) => setV((s) => ({ ...s, descrizione: e.target.value }))} placeholder="es. Pieno furgone" /></Field></SheetRow>
-        <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Aggiungi spesa</Button></SheetFooter></SheetRow>
-      </SheetStagger>
-    </form>
+    <Sheet aperto={aperto} onClose={chiudi} titolo="Nuova spesa" sottotitolo="Un'uscita dalla cassa" accent={ENTITA.spesa.grad} pattern="diagonal" icona={<Fuel size={20} />} motivo={<Fuel size={120} strokeWidth={1.1} />} scena={scena}>
+      <form onSubmit={salva}>
+        <SheetStagger className="grid gap-4">
+          <SheetRow><div><Etichetta>Categoria</Etichetta><TileSelect tinta="spesa" cols={4} value={v.categoria} onChange={(val) => setV((s) => ({ ...s, categoria: val as CategoriaSpesa }))} options={SPESA_TILE} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Importo</Etichetta><AmountPad tinta="spesa" value={v.importo} onChange={(val) => setV((s) => ({ ...s, importo: val }))} suggerimenti={[{ label: "10", valore: 10 }, { label: "20", valore: 20 }, { label: "50", valore: 50 }, { label: "100", valore: 100 }]} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Quando</Etichetta><QuickDate tinta="spesa" value={v.data} onChange={(dd) => setV((s) => ({ ...s, data: dd }))} /></div></SheetRow>
+          <SheetRow><Field label="Cliente (facoltativo)"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={[{ value: "", label: "— nessuno —" }, ...db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` }))]} placeholder="— nessuno —" /></Field></SheetRow>
+          <SheetRow><Field label="Descrizione"><Input value={v.descrizione} onChange={(e) => setV((s) => ({ ...s, descrizione: e.target.value }))} placeholder="es. Pieno furgone" /></Field></SheetRow>
+          <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Aggiungi spesa</Button></SheetFooter></SheetRow>
+        </SheetStagger>
+      </form>
+    </Sheet>
   );
 }
 
 /* ============================= INCASSO ============================ */
-function IncassoSheet() {
-  const { aperto, ctx, seq, chiudi } = useSheet("incasso");
-  return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo="Incasso atteso" sottotitolo="Un pagamento da segnare in entrata" accent={ENTITA.entrata.grad} pattern="dots" icona={<Banknote size={20} />} motivo={<Banknote size={120} strokeWidth={1.1} />}>
-      {aperto && <IncassoBody key={seq} ctx={ctx} chiudi={chiudi} />}
-    </Sheet>
-  );
-}
-function IncassoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
+function IncassoSheet() { const { aperto, ctx, seq, chiudi } = useSheet("incasso"); return <IncassoForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function IncassoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
   const crea = useStore((s) => s.creaPagamento);
   const mostra = useToast((s) => s.mostra);
@@ -379,18 +380,28 @@ function IncassoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     const importo = num(v.importoAtteso);
     if (!v.clienteId || importo === null || importo <= 0) return mostra("Cliente e importo richiesti.", "error");
     crea({ clienteId: v.clienteId, importoAtteso: importo, dataScadenza: v.dataScadenza || null, note: v.note || null });
-    festa("entrata"); mostra("Incasso atteso 💶"); chiudi();
+    festaDoppia("entrata"); mostra("Incasso atteso 💶"); chiudi();
   }
+  const scena = (
+    <ScenaCard className="text-center">
+      <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white/15"><Banknote size={26} /></div>
+      <div className="mt-2 text-[0.7rem] font-bold uppercase tracking-wide text-white/75">In entrata</div>
+      <div className="mt-1 font-display text-[2rem] font-bold leading-none">{euro(num(v.importoAtteso) ?? 0)}</div>
+      {v.clienteId && <div className="mt-1 truncate text-[0.74rem] text-white/80">da {nomeCli(db, v.clienteId)}</div>}
+    </ScenaCard>
+  );
   return (
-    <form onSubmit={salva}>
-      <SheetStagger className="grid gap-4">
-        <SheetRow><Field label="Cliente *"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` }))} /></Field></SheetRow>
-        <SheetRow><div><Etichetta>Importo atteso</Etichetta><AmountField tinta="entrata" autoFocus value={v.importoAtteso} onChange={(val) => setV((s) => ({ ...s, importoAtteso: val }))} suggerimenti={[{ label: "100", valore: 100 }, { label: "200", valore: 200 }, { label: "500", valore: 500 }]} /></div></SheetRow>
-        <SheetRow><div><Etichetta>Scadenza</Etichetta><QuickDate tinta="entrata" value={v.dataScadenza} onChange={(d) => setV((s) => ({ ...s, dataScadenza: d }))} /></div></SheetRow>
-        <SheetRow><Field label="Note"><Input value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} /></Field></SheetRow>
-        <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Crea</Button></SheetFooter></SheetRow>
-      </SheetStagger>
-    </form>
+    <Sheet aperto={aperto} onClose={chiudi} titolo="Incasso atteso" sottotitolo="Un pagamento da segnare" accent={ENTITA.entrata.grad} pattern="dots" icona={<Banknote size={20} />} motivo={<Banknote size={120} strokeWidth={1.1} />} scena={scena}>
+      <form onSubmit={salva}>
+        <SheetStagger className="grid gap-4">
+          <SheetRow><Field label="Cliente *"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` }))} /></Field></SheetRow>
+          <SheetRow><div><Etichetta>Importo atteso</Etichetta><AmountPad tinta="entrata" value={v.importoAtteso} onChange={(val) => setV((s) => ({ ...s, importoAtteso: val }))} suggerimenti={[{ label: "100", valore: 100 }, { label: "200", valore: 200 }, { label: "500", valore: 500 }]} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Scadenza</Etichetta><QuickDate tinta="entrata" value={v.dataScadenza} onChange={(dd) => setV((s) => ({ ...s, dataScadenza: dd }))} /></div></SheetRow>
+          <SheetRow><Field label="Note"><Input value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} /></Field></SheetRow>
+          <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Crea</Button></SheetFooter></SheetRow>
+        </SheetStagger>
+      </form>
+    </Sheet>
   );
 }
 
@@ -400,46 +411,52 @@ const METODO_TILE: Tile[] = [
   { value: "bonifico", label: "Bonifico", icona: <Landmark size={18} /> },
   { value: "altro", label: "Altro", icona: <Wallet size={18} /> },
 ];
-function CompensoSheet() {
-  const { aperto, ctx, seq, chiudi } = useSheet("compenso");
-  return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo="Paga operatore" sottotitolo="Salda le ore della squadra 🤝" accent={ENTITA.uscita.grad} pattern="rings" icona={<HandCoins size={20} />} motivo={<HandCoins size={120} strokeWidth={1.1} />}>
-      {aperto && <CompensoBody key={seq} ctx={ctx} chiudi={chiudi} />}
-    </Sheet>
-  );
-}
-function CompensoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
+function CompensoSheet() { const { aperto, ctx, seq, chiudi } = useSheet("compenso"); return <CompensoForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function CompensoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
   const paga = useStore((s) => s.pagaOperatore);
   const mostra = useToast((s) => s.mostra);
   const saldoIniz = useMemo(() => (ctx.operatoreId ? libroOperatore(db, ctx.operatoreId).saldo : 0), [db, ctx.operatoreId]);
   const [v, setV] = useState({ operatoreId: ctx.operatoreId ?? "", importo: ctx.operatoreId && saldoIniz > 0 ? String(saldoIniz) : "", data: oggiISO(), metodo: "contanti" as MetodoPagamento, note: "" });
   const saldo = v.operatoreId ? libroOperatore(db, v.operatoreId).saldo : 0;
+  const importo = num(v.importo) ?? 0;
+  const ratio = saldo > 0 ? Math.min(1, importo / saldo) : 0;
+  const opName = db.operatori.find((o) => o.id === v.operatoreId)?.nome ?? "";
   function salva(e: React.FormEvent) {
     e.preventDefault();
-    const importo = num(v.importo);
-    if (!v.operatoreId || importo === null || importo <= 0) return mostra("Operatore e importo richiesti.", "error");
-    paga({ operatoreId: v.operatoreId, importo, data: v.data, metodo: v.metodo, note: v.note || null });
+    const imp = num(v.importo);
+    if (!v.operatoreId || imp === null || imp <= 0) return mostra("Operatore e importo richiesti.", "error");
+    paga({ operatoreId: v.operatoreId, importo: imp, data: v.data, metodo: v.metodo, note: v.note || null });
     festaDoppia("uscita"); mostra("Compenso pagato 🤝"); chiudi();
   }
+  const scena = (
+    <ScenaCard>
+      {v.operatoreId ? (
+        <>
+          <div className="flex items-center gap-2"><AvatarBianco nome={opName} size="lg" /><div className="min-w-0"><div className="truncate text-[0.82rem] font-semibold">{opName}</div><div className="text-[0.68rem] text-white/75">saldo {euro(saldo)}</div></div></div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/20"><div className="h-full rounded-full bg-white transition-all" style={{ width: `${ratio * 100}%` }} /></div>
+          <div className="mt-1.5 text-center font-display text-[1.5rem] font-bold leading-none">{euro(importo)}</div>
+        </>
+      ) : (
+        <div className="text-center"><div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white/15"><HandCoins size={26} /></div><div className="mt-2 text-[0.78rem] text-white/80">Scegli un operatore</div></div>
+      )}
+    </ScenaCard>
+  );
   return (
-    <form onSubmit={salva}>
-      <SheetStagger className="grid gap-4">
-        <SheetRow><div><Etichetta>Operatore</Etichetta><ChipPicker tinta="operatore" items={operatoriChip(db)} value={v.operatoreId} onChange={(id) => setV((s) => ({ ...s, operatoreId: id, importo: libroOperatore(db, id).saldo > 0 ? String(libroOperatore(db, id).saldo) : "" }))} vuoto="Nessun operatore." /></div></SheetRow>
-        {v.operatoreId && (
-          <SheetRow>
-            <div className="flex items-center justify-between rounded-[14px] border border-uscita-100 bg-uscita-50 px-4 py-3">
-              <div><div className="text-[0.66rem] font-bold uppercase tracking-wide text-uscita-600">Saldo da pagare</div><div className="text-[1.3rem] font-extrabold text-ink">{euro(saldo)}</div></div>
-              {saldo > 0 && <Button type="button" dim="sm" variante="soft" onClick={() => setV((s) => ({ ...s, importo: String(saldo) }))}>Salda tutto</Button>}
-            </div>
-          </SheetRow>
-        )}
-        <SheetRow><div><Etichetta>Importo</Etichetta><AmountField tinta="uscita" value={v.importo} onChange={(val) => setV((s) => ({ ...s, importo: val }))} suggerimenti={saldo > 0 ? [{ label: `Tutto · ${euro(saldo)}`, valore: saldo }] : []} /></div></SheetRow>
-        <SheetRow><div><Etichetta>Metodo</Etichetta><TileSelect tinta="uscita" cols={3} value={v.metodo} onChange={(val) => setV((s) => ({ ...s, metodo: val as MetodoPagamento }))} options={METODO_TILE} /></div></SheetRow>
-        <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Data"><Input type="date" value={v.data} onChange={(e) => setV((s) => ({ ...s, data: e.target.value }))} /></Field><Field label="Note"><Input value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} /></Field></div></SheetRow>
-        <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Registra</Button></SheetFooter></SheetRow>
-      </SheetStagger>
-    </form>
+    <Sheet aperto={aperto} onClose={chiudi} titolo="Paga operatore" sottotitolo="Salda le ore della squadra" accent={ENTITA.uscita.grad} pattern="rings" icona={<HandCoins size={20} />} motivo={<HandCoins size={120} strokeWidth={1.1} />} scena={scena}>
+      <form onSubmit={salva}>
+        <SheetStagger className="grid gap-4">
+          <SheetRow><div><Etichetta>Operatore</Etichetta><ChipPicker tinta="operatore" items={operatoriChip(db)} value={v.operatoreId} onChange={(id) => setV((s) => ({ ...s, operatoreId: id, importo: libroOperatore(db, id).saldo > 0 ? String(libroOperatore(db, id).saldo) : "" }))} vuoto="Nessun operatore." /></div></SheetRow>
+          {v.operatoreId && saldo > 0 && (
+            <SheetRow><div className="flex items-center justify-between rounded-[14px] border border-uscita-100 bg-uscita-50 px-4 py-2.5"><span className="text-[0.8rem] text-uscita-600">Saldo da pagare <b>{euro(saldo)}</b></span><Button type="button" dim="sm" variante="soft" onClick={() => setV((s) => ({ ...s, importo: String(saldo) }))}>Salda tutto</Button></div></SheetRow>
+          )}
+          <SheetRow><div><Etichetta>Importo</Etichetta><AmountPad tinta="uscita" value={v.importo} onChange={(val) => setV((s) => ({ ...s, importo: val }))} suggerimenti={saldo > 0 ? [{ label: `Tutto`, valore: saldo }] : []} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Metodo</Etichetta><TileSelect tinta="uscita" cols={3} value={v.metodo} onChange={(val) => setV((s) => ({ ...s, metodo: val as MetodoPagamento }))} options={METODO_TILE} /></div></SheetRow>
+          <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Data"><Input type="date" value={v.data} onChange={(e) => setV((s) => ({ ...s, data: e.target.value }))} /></Field><Field label="Note"><Input value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} /></Field></div></SheetRow>
+          <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Registra</Button></SheetFooter></SheetRow>
+        </SheetStagger>
+      </form>
+    </Sheet>
   );
 }
 
@@ -449,15 +466,8 @@ const ATTREZZO_TILE: Tile[] = [
   { value: "manutenzione", label: "Manutenz.", icona: <Wrench size={18} /> },
   { value: "dismesso", label: "Dismesso", icona: <Tag size={18} /> },
 ];
-function AttrezzoSheet() {
-  const { aperto, ctx, seq, chiudi } = useSheet("attrezzo");
-  return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo={ctx.id ? "Modifica attrezzo" : "Nuovo attrezzo"} sottotitolo={ctx.id ? undefined : "Aggiungi al patrimonio"} accent={ENTITA.patrimonio.grad} pattern="grid" icona={<Wrench size={20} />} motivo={<Wrench size={120} strokeWidth={1.1} />}>
-      {aperto && <AttrezzoBody key={seq} ctx={ctx} chiudi={chiudi} />}
-    </Sheet>
-  );
-}
-function AttrezzoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
+function AttrezzoSheet() { const { aperto, ctx, seq, chiudi } = useSheet("attrezzo"); return <AttrezzoForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
+function AttrezzoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
   const crea = useStore((s) => s.creaAttrezzo);
   const aggiorna = useStore((s) => s.aggiornaAttrezzo);
@@ -471,15 +481,25 @@ function AttrezzoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     if (esistente) { aggiorna(esistente.id, dati); mostra("Attrezzo aggiornato!"); } else { crea(dati); festa("patrimonio"); mostra("Attrezzo aggiunto 🔧"); }
     chiudi();
   }
+  const scena = (
+    <ScenaCard className="text-center">
+      <div className="mx-auto grid h-14 w-14 place-items-center rounded-[16px] bg-white/15"><Wrench size={36} /></div>
+      <div className="mt-2 truncate text-[0.85rem] font-semibold">{v.nome || "Nuovo attrezzo"}</div>
+      <div className="mt-1 font-display text-[1.6rem] font-bold leading-none">{euro(num(v.costoAcquisto) ?? 0)}</div>
+      <div className="mt-1 text-[0.7rem] text-white/75">{etichetta(v.stato)}</div>
+    </ScenaCard>
+  );
   return (
-    <form onSubmit={salva}>
-      <SheetStagger className="grid gap-4">
-        <SheetRow><Field label="Nome *"><Input value={v.nome} onChange={(e) => setV((s) => ({ ...s, nome: e.target.value }))} placeholder="es. Motosega Stihl" autoFocus /></Field></SheetRow>
-        <SheetRow><div><Etichetta>Costo d'acquisto</Etichetta><AmountField tinta="patrimonio" value={v.costoAcquisto} onChange={(val) => setV((s) => ({ ...s, costoAcquisto: val }))} suggerimenti={[{ label: "150", valore: 150 }, { label: "300", valore: 300 }, { label: "600", valore: 600 }]} /></div></SheetRow>
-        <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Data acquisto"><Input type="date" value={v.dataAcquisto} onChange={(e) => setV((s) => ({ ...s, dataAcquisto: e.target.value }))} /></Field><div><Etichetta>Stato</Etichetta><TileSelect tinta="patrimonio" cols={3} value={v.stato} onChange={(val) => setV((s) => ({ ...s, stato: val as StatoAttrezzo }))} options={ATTREZZO_TILE} /></div></div></SheetRow>
-        <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Aggiungi"}</Button></SheetFooter></SheetRow>
-      </SheetStagger>
-    </form>
+    <Sheet aperto={aperto} onClose={chiudi} titolo={esistente ? "Modifica attrezzo" : "Nuovo attrezzo"} sottotitolo={esistente ? undefined : "Aggiungi al patrimonio"} accent={ENTITA.patrimonio.grad} pattern="grid" icona={<Wrench size={20} />} motivo={<Wrench size={120} strokeWidth={1.1} />} scena={scena}>
+      <form onSubmit={salva}>
+        <SheetStagger className="grid gap-4">
+          <SheetRow><Field label="Nome *"><Input value={v.nome} onChange={(e) => setV((s) => ({ ...s, nome: e.target.value }))} placeholder="es. Motosega Stihl" autoFocus /></Field></SheetRow>
+          <SheetRow><div><Etichetta>Costo d'acquisto</Etichetta><AmountPad tinta="patrimonio" value={v.costoAcquisto} onChange={(val) => setV((s) => ({ ...s, costoAcquisto: val }))} suggerimenti={[{ label: "150", valore: 150 }, { label: "300", valore: 300 }, { label: "600", valore: 600 }]} /></div></SheetRow>
+          <SheetRow><div className="grid gap-3 sm:grid-cols-2"><Field label="Data acquisto"><Input type="date" value={v.dataAcquisto} onChange={(e) => setV((s) => ({ ...s, dataAcquisto: e.target.value }))} /></Field><div><Etichetta>Stato</Etichetta><TileSelect tinta="patrimonio" cols={3} value={v.stato} onChange={(val) => setV((s) => ({ ...s, stato: val as StatoAttrezzo }))} options={ATTREZZO_TILE} /></div></div></SheetRow>
+          <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Aggiungi"}</Button></SheetFooter></SheetRow>
+        </SheetStagger>
+      </form>
+    </Sheet>
   );
 }
 

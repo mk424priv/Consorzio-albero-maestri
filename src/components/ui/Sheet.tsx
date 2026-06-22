@@ -31,6 +31,7 @@ export function Sheet({
   accent,
   pattern = "dots",
   motivo,
+  scena,
   children,
   larghezza = "sm:max-w-lg",
 }: {
@@ -39,14 +40,60 @@ export function Sheet({
   titolo: string;
   sottotitolo?: string;
   icona?: ReactNode;
-  accent?: string; // classi gradiente per l'intestazione colorata
+  accent?: string;
   pattern?: PatternModale;
   motivo?: ReactNode; // icona-filigrana grande
+  scena?: ReactNode; // anteprima viva (zona-scena)
   children: ReactNode;
   larghezza?: string;
 }) {
   const desktop = useIsDesktop();
   const colorata = !!accent;
+  const duePannelli = desktop && colorata && !!scena;
+
+  const Filigrana = colorata ? (
+    <>
+      <div className="pointer-events-none absolute inset-0 opacity-60" style={texture(pattern)} />
+      {motivo && (
+        <motion.div
+          aria-hidden
+          initial={{ opacity: 0, scale: 0.9, rotate: -8 }}
+          animate={{ opacity: 1, scale: 1, rotate: 0, y: [0, -6, 0] }}
+          transition={{ opacity: { duration: 0.4 }, scale: { duration: 0.4 }, y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" } }}
+          className="pointer-events-none absolute -right-5 -top-6 text-white/15"
+        >
+          {motivo}
+        </motion.div>
+      )}
+    </>
+  ) : null;
+
+  const Intestazione = (
+    <div className="relative flex items-center gap-3">
+      {icona && (
+        <motion.span
+          initial={{ scale: 0.7, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: "spring", stiffness: 420, damping: 20, delay: 0.05 }}
+          className={cn("grid h-11 w-11 shrink-0 place-items-center rounded-[14px]", colorata ? "bg-white/20 text-white backdrop-blur" : "bg-brand-50 text-brand-500")}
+        >
+          {icona}
+        </motion.span>
+      )}
+      <div className="min-w-0">
+        <Dialog.Title className={cn("font-display text-lg font-bold leading-tight", colorata ? "text-white" : "text-ink")}>{titolo}</Dialog.Title>
+        {sottotitolo && <p className={cn("mt-0.5 text-[0.82rem]", colorata ? "text-white/85" : "text-muted")}>{sottotitolo}</p>}
+      </div>
+    </div>
+  );
+
+  const ChiudiBtn = (chiaro: boolean) => (
+    <Dialog.Close asChild>
+      <button aria-label="Chiudi" className={cn("grid h-9 w-9 place-items-center rounded-[11px] transition", chiaro ? "text-white/80 hover:bg-white/20 hover:text-white" : "text-muted hover:bg-canvas hover:text-ink")}>
+        <X size={18} />
+      </button>
+    </Dialog.Close>
+  );
 
   return (
     <Dialog.Root open={aperto} onOpenChange={(o) => !o && onClose()}>
@@ -64,60 +111,46 @@ export function Sheet({
                 animate="show"
                 exit="exit"
                 className={cn(
-                  "fixed z-50 flex flex-col overflow-hidden border border-line bg-surface shadow-[var(--shadow-lg)]",
+                  "fixed z-50 overflow-hidden border border-line bg-surface shadow-[var(--shadow-lg)]",
                   desktop
-                    ? cn("left-1/2 top-1/2 w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)]", larghezza)
+                    ? cn("left-1/2 top-1/2 w-[calc(100vw-2rem)] -translate-x-1/2 -translate-y-1/2 rounded-[var(--radius-xl)]", duePannelli ? "max-w-3xl" : larghezza)
                     : "inset-x-0 bottom-0 max-h-[92dvh] rounded-t-[var(--radius-xl)]",
+                  duePannelli ? "flex" : "flex flex-col",
                 )}
               >
-                {/* Scena d'intestazione (colorata + filigrana + texture) */}
-                <div className={cn("relative shrink-0 overflow-hidden", colorata ? cn(accent, "text-white") : "bg-surface")}>
-                  {colorata && <div className="pointer-events-none absolute inset-0 opacity-60" style={texture(pattern)} />}
-                  {colorata && (
-                    <motion.div
-                      aria-hidden
-                      initial={{ opacity: 0, scale: 0.9, rotate: -8 }}
-                      animate={{ opacity: 1, scale: 1, rotate: 0, y: [0, -5, 0] }}
-                      transition={{ opacity: { duration: 0.4 }, scale: { duration: 0.4 }, y: { duration: 4.5, repeat: Infinity, ease: "easeInOut" } }}
-                      className="pointer-events-none absolute -right-4 -top-5 text-white/15"
-                    >
-                      {motivo}
-                    </motion.div>
-                  )}
-                  {!desktop && (
-                    <div className="relative flex justify-center pt-2.5">
-                      <span className={cn("h-1.5 w-10 rounded-full", colorata ? "bg-white/45" : "bg-line-strong")} />
+                {duePannelli ? (
+                  <>
+                    {/* ASIDE — zona scena */}
+                    <aside className={cn("relative flex w-[15.5rem] shrink-0 flex-col justify-between overflow-hidden p-5 text-white", accent)}>
+                      {Filigrana}
+                      <div className="relative">{Intestazione}</div>
+                      <div className="relative mt-5">{scena}</div>
+                    </aside>
+                    {/* FORM */}
+                    <div className="flex min-w-0 flex-1 flex-col">
+                      <div className="flex justify-end p-3 pb-0">{ChiudiBtn(false)}</div>
+                      <div className="overflow-y-auto px-5 pb-5 pt-1">{children}</div>
                     </div>
-                  )}
-                  <div className="relative flex items-start justify-between gap-3 px-5 pb-4 pt-4">
-                    <div className="flex items-center gap-3">
-                      {icona && (
-                        <motion.span
-                          initial={{ scale: 0.7, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ type: "spring", stiffness: 420, damping: 20, delay: 0.05 }}
-                          className={cn("grid h-11 w-11 place-items-center rounded-[14px]", colorata ? "bg-white/20 text-white backdrop-blur" : "bg-brand-50 text-brand-500")}
-                        >
-                          {icona}
-                        </motion.span>
+                  </>
+                ) : (
+                  <>
+                    {/* Intestazione colorata (con scena impilata se presente) */}
+                    <div className={cn("relative shrink-0 overflow-hidden", colorata ? cn(accent, "text-white") : "bg-surface")}>
+                      {Filigrana}
+                      {!desktop && (
+                        <div className="relative flex justify-center pt-2.5">
+                          <span className={cn("h-1.5 w-10 rounded-full", colorata ? "bg-white/45" : "bg-line-strong")} />
+                        </div>
                       )}
-                      <div>
-                        <Dialog.Title className={cn("text-lg font-extrabold leading-tight", colorata ? "text-white" : "text-ink")}>{titolo}</Dialog.Title>
-                        {sottotitolo && <p className={cn("mt-0.5 text-[0.82rem]", colorata ? "text-white/85" : "text-muted")}>{sottotitolo}</p>}
+                      <div className="relative flex items-start justify-between gap-3 px-5 pb-4 pt-4">
+                        {Intestazione}
+                        {ChiudiBtn(colorata)}
                       </div>
+                      {scena && <div className="relative px-5 pb-5">{scena}</div>}
                     </div>
-                    <Dialog.Close asChild>
-                      <button
-                        aria-label="Chiudi"
-                        className={cn("-mr-1 grid h-9 w-9 place-items-center rounded-[11px] transition", colorata ? "text-white/80 hover:bg-white/20 hover:text-white" : "text-muted hover:bg-canvas hover:text-ink")}
-                      >
-                        <X size={18} />
-                      </button>
-                    </Dialog.Close>
-                  </div>
-                </div>
-
-                <div className="overflow-y-auto px-5 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">{children}</div>
+                    <div className="overflow-y-auto px-5 py-4 pb-[calc(1.25rem+env(safe-area-inset-bottom,0px))]">{children}</div>
+                  </>
+                )}
               </motion.div>
             </Dialog.Content>
           </Dialog.Portal>
@@ -131,15 +164,9 @@ export function SheetFooter({ children }: { children: ReactNode }) {
   return <div className="mt-5 flex items-center justify-end gap-2">{children}</div>;
 }
 
-// contenitore per la comparsa "a cascata" dei campi dentro un foglio
 export function SheetStagger({ children, className }: { children: ReactNode; className?: string }) {
   return (
-    <motion.div
-      className={className}
-      initial="hidden"
-      animate="show"
-      variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } } }}
-    >
+    <motion.div className={className} initial="hidden" animate="show" variants={{ hidden: {}, show: { transition: { staggerChildren: 0.05, delayChildren: 0.04 } } }}>
       {children}
     </motion.div>
   );

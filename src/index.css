@@ -8,6 +8,7 @@
 
 @theme {
   --font-sans: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
+  --font-display: "Space Grotesk", "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 
   /* ---- Neutri (verde-tinti) ---- */
@@ -156,7 +157,7 @@
     text-rendering: optimizeLegibility;
     overscroll-behavior-y: none;
   }
-  h1, h2, h3, h4 { letter-spacing: -0.02em; }
+  h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
   button { font-family: inherit; }
   ::selection { background: var(--color-brand-200); color: var(--color-brand-700); }
 
