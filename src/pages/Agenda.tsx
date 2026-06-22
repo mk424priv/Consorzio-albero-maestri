@@ -108,7 +108,7 @@ export function Agenda() {
                         <button onClick={() => cambia(l.id, CICLO[l.stato as StatoLavoro])}><StatusBadge genere="lavoro" valore={l.stato} /></button>
                         <Menu trigger={<button className="grid h-8 w-8 place-items-center rounded-[10px] text-muted hover:bg-canvas"><MoreVertical size={16} /></button>} voci={[
                           { label: "Apri cliente", icona: <User size={15} />, onClick: () => navigate(`/cliente/${l.clienteId}`) },
-                          { label: "Registra ore", icona: <Clock size={15} />, onClick: () => apri("ore", { clienteId: l.clienteId, operatoreId: l.operatoreId ?? undefined, data: l.data }) },
+                          { label: "Registra ore", icona: <Clock size={15} />, onClick: () => apri("ore", { clienteId: l.clienteId, operatoreId: l.operatoreId ?? undefined, lavoroId: l.id, data: l.data }) },
                           { label: "Modifica", icona: <Pencil size={15} />, onClick: () => apri("lavoro", { id: l.id }) },
                           { label: "Elimina", icona: <Trash2 size={15} />, pericolo: true, separa: true, onClick: () => chiediConferma({ titolo: "Eliminare il lavoro?", pericolo: true, testoConferma: "Elimina", onConfirm: () => elimina(l.id) }) },
                         ]} />

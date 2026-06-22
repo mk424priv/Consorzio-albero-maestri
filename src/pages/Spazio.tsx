@@ -8,19 +8,23 @@ import {
   ChevronDown,
   Clock,
   Fuel,
+  Hourglass,
   LayoutGrid,
   Phone,
   Plus,
   ReceiptText,
   Rows3,
   Sprout,
+  TrendingUp,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { listaContenitore, listaElemento } from "@/lib/motion";
 import { useStore } from "@/store/store";
 import { useUI } from "@/store/ui";
 import { codiceCliente, leggiCodice } from "@/lib/codice-parlante";
-import { riepilogoCliente, statoCalcolato } from "@/lib/conti";
+import { riepilogoCliente, statoCalcolato, storicoMensile } from "@/lib/conti";
+import { libroOperatore } from "@/lib/squadra";
 import { panoramicaSpazio } from "@/lib/movimenti";
 import { dataIT, euro } from "@/lib/format";
 import { etichetta } from "@/lib/dominio";
@@ -35,11 +39,11 @@ import {
   Conta,
   EmptyState,
   FilterChip,
-  HeroStat,
   IconButton,
   LinkButton,
   PageHero,
   Select,
+  Sparkline,
   StatusBadge,
   Table,
   Td,
@@ -104,6 +108,17 @@ export function Spazio() {
     { k: "preventivo", label: "A preventivo" },
   ];
 
+  // dati per i widget del cruscotto
+  const oggiKey = new Date().toDateString();
+  const lavoriOggiList = useMemo(() => db.lavori.filter((l) => new Date(l.data).toDateString() === oggiKey), [db, oggiKey]);
+  const sparkIncassi = useMemo(() => [...storicoMensile(db)].slice(0, 6).reverse().map((r) => r.incassato), [db]);
+  const ratioIncassato = useMemo(() => {
+    let a = 0, i = 0;
+    for (const p of db.pagamenti) { a += p.importoAtteso; i += p.importoIncassato; }
+    return a > 0 ? i / a : 1;
+  }, [db]);
+  const operatoriDaPagare = useMemo(() => db.operatori.filter((o) => libroOperatore(db, o.id).saldo > 0), [db]);
+
   return (
     <div>
       <PageHero
@@ -121,14 +136,75 @@ export function Spazio() {
             <Button variante="glass" onClick={() => apri("cliente")}><Plus size={16} /> Nuovo cliente</Button>
           </div>
         }
-      >
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <HeroStat label="Da incassare" valore={<Cifra valore={pan.daIncassare} />} nota={pan.clientiInRitardo ? `${pan.clientiInRitardo} in ritardo` : "in regola"} onClick={() => setFiltro("da_incassare")} />
-          <HeroStat label="Incassato mese" valore={<Cifra valore={pan.incassatoMese} />} onClick={() => navigate("/soldi")} />
-          <HeroStat label="Lavori oggi" valore={<Conta valore={pan.lavoriOggi} />} onClick={() => navigate("/agenda")} />
-          <HeroStat label="Da pagare team" valore={<Cifra valore={pan.daPagareSquadra} />} onClick={() => navigate("/squadra")} />
-        </div>
-      </PageHero>
+      />
+
+      {/* Cruscotto — ogni widget la sua stilistica */}
+      <div className="mb-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {/* Da incassare — ambra, anello di completamento */}
+        <button onClick={() => setFiltro("da_incassare")} className="group relative overflow-hidden rounded-[var(--radius-lg)] border border-uscita-100 bg-gradient-to-br from-uscita-50 to-surface p-4 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
+          <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-uscita-100/60 blur-xl" />
+          <div className="relative flex items-center justify-between">
+            <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-gradient-to-br from-uscita-400 to-uscita-600 text-white shadow-sm"><Hourglass size={17} /></span>
+            {pan.clientiInRitardo > 0 && <Badge tono="danger">{pan.clientiInRitardo} ritardo</Badge>}
+          </div>
+          <div className="relative mt-3 text-[0.66rem] font-bold uppercase tracking-wide text-muted">Da incassare</div>
+          <div className="relative font-display text-[1.55rem] font-bold leading-none text-ink"><Cifra valore={pan.daIncassare} /></div>
+          <div className="relative mt-2.5"><Barra accent="entrata" ratio={ratioIncassato} /></div>
+          <div className="relative mt-1 text-[0.64rem] font-medium text-muted">{Math.round(ratioIncassato * 100)}% già incassato</div>
+        </button>
+
+        {/* Incassato mese — verde, sparkline */}
+        <button onClick={() => navigate("/soldi")} className="group relative overflow-hidden rounded-[var(--radius-lg)] border border-entrata-100 bg-gradient-to-br from-entrata-50 to-surface p-4 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
+          <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-entrata-100/60 blur-xl" />
+          <div className="relative flex items-center justify-between">
+            <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-gradient-to-br from-entrata-400 to-entrata-600 text-white shadow-sm"><TrendingUp size={17} /></span>
+            <ArrowRight size={15} className="text-muted transition group-hover:translate-x-0.5 group-hover:text-entrata-600" />
+          </div>
+          <div className="relative mt-3 text-[0.66rem] font-bold uppercase tracking-wide text-muted">Incassato mese</div>
+          <div className="relative font-display text-[1.55rem] font-bold leading-none text-ink"><Cifra valore={pan.incassatoMese} /></div>
+          <div className="relative mt-1.5"><Sparkline accent="entrata" valori={sparkIncassi.length > 1 ? sparkIncassi : [0, pan.incassatoMese]} height={30} /></div>
+        </button>
+
+        {/* Lavori oggi — viola, pallini di stato */}
+        <button onClick={() => navigate("/agenda")} className="group relative overflow-hidden rounded-[var(--radius-lg)] border border-lavoro-100 bg-gradient-to-br from-lavoro-50 to-surface p-4 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
+          <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-lavoro-100/60 blur-xl" />
+          <div className="relative flex items-center justify-between">
+            <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-gradient-to-br from-lavoro-400 to-lavoro-600 text-white shadow-sm"><CalendarClock size={17} /></span>
+            <ArrowRight size={15} className="text-muted transition group-hover:translate-x-0.5 group-hover:text-lavoro-600" />
+          </div>
+          <div className="relative mt-3 text-[0.66rem] font-bold uppercase tracking-wide text-muted">Lavori oggi</div>
+          <div className="relative font-display text-[1.55rem] font-bold leading-none text-ink"><Conta valore={pan.lavoriOggi} /></div>
+          <div className="relative mt-2.5 flex flex-wrap gap-1">
+            {lavoriOggiList.length === 0 ? (
+              <span className="text-[0.64rem] text-muted">niente in programma</span>
+            ) : (
+              lavoriOggiList.slice(0, 8).map((l) => (
+                <span key={l.id} className={cn("h-2 w-2 rounded-full", l.stato === "fatto" ? "bg-success" : l.stato === "in_corso" ? "bg-warn" : "bg-line-strong")} />
+              ))
+            )}
+          </div>
+        </button>
+
+        {/* Da pagare squadra — teal, avatar operatori */}
+        <button onClick={() => navigate("/squadra")} className="group relative overflow-hidden rounded-[var(--radius-lg)] border border-operatore-100 bg-gradient-to-br from-operatore-50 to-surface p-4 text-left shadow-[var(--shadow-sm)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
+          <div className="pointer-events-none absolute -right-6 -top-6 h-20 w-20 rounded-full bg-operatore-100/60 blur-xl" />
+          <div className="relative flex items-center justify-between">
+            <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-gradient-to-br from-operatore-400 to-operatore-600 text-white shadow-sm"><Users size={17} /></span>
+            <ArrowRight size={15} className="text-muted transition group-hover:translate-x-0.5 group-hover:text-operatore-600" />
+          </div>
+          <div className="relative mt-3 text-[0.66rem] font-bold uppercase tracking-wide text-muted">Da pagare team</div>
+          <div className="relative font-display text-[1.55rem] font-bold leading-none text-ink"><Cifra valore={pan.daPagareSquadra} /></div>
+          <div className="relative mt-2.5 flex items-center -space-x-2">
+            {operatoriDaPagare.length === 0 ? (
+              <span className="text-[0.64rem] text-muted">tutti saldati ✓</span>
+            ) : (
+              operatoriDaPagare.slice(0, 5).map((o) => (
+                <Avatar key={o.id} nome={o.nome} size="sm" grad="bg-gradient-to-br from-operatore-500 to-operatore-700" className="!h-6 !w-6 !text-[0.55rem] ring-2 ring-surface" />
+              ))
+            )}
+          </div>
+        </button>
+      </div>
 
       {/* filtri */}
       <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">

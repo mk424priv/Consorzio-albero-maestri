@@ -4,16 +4,17 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Banknote, CalendarDays, Clock, Coins, Crown, Euro, Fuel, HandCoins, Hammer,
-  Landmark, Layers, Mail, MapPin, Package, Phone, ReceiptText, Save, Sparkles,
-  Sprout, StickyNote, Tag, Type, User, Users, Wallet, Wrench, type LucideIcon,
+  AlignLeft, Banknote, CalendarDays, CheckCircle2, Circle, CircleDot, Clock, Coins,
+  Crown, Euro, Fuel, HandCoins, Hammer, Landmark, Layers, Mail, MapPin, Package,
+  Phone, ReceiptText, Save, Sparkles, Sprout, StickyNote, Tag, Type, User, Users,
+  Wallet, Wrench, type LucideIcon,
 } from "lucide-react";
 import { useStore } from "@/store/store";
 import { useUI, type SheetCtx, type SheetTipo } from "@/store/ui";
 import { useToast } from "@/store/toast";
 import {
-  AmountPad, Avatar, Button, CampoIcona, ChipPicker, QuickDate, Select, Sezione,
-  Sheet, SheetFooter, SheetRow, SheetStagger, Stepper, TileSelect, type Tile,
+  AmountPad, AreaIcona, Avatar, Button, CampoIcona, ChipPicker, QuickDate, Select,
+  Sezione, Sheet, SheetFooter, SheetRow, SheetStagger, Stepper, TileSelect, type Tile,
 } from "@/components/ui";
 import { etichetta } from "@/lib/dominio";
 import type { CategoriaSpesa, MetodoPagamento, Modalita, RuoloOperatore, StatoAttrezzo, TipoCompenso, TipoPreventivo } from "@/lib/dominio";
@@ -201,34 +202,58 @@ const COMPENSO_TILE: Tile[] = [
   { value: "ore", label: "A ore", icona: <Clock size={18} /> },
   { value: "misto", label: "Misto", icona: <Layers size={18} /> },
 ];
+const STATO_LAVORO_TILE: Tile[] = [
+  { value: "da_fare", label: "Da fare", icona: <Circle size={18} /> },
+  { value: "in_corso", label: "In corso", icona: <CircleDot size={18} /> },
+  { value: "fatto", label: "Fatto", icona: <CheckCircle2 size={18} /> },
+];
 function LavoroSheet() { const { aperto, ctx, seq, chiudi } = useSheet("lavoro"); return <LavoroForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
 function LavoroForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
   const crea = useStore((s) => s.creaLavoro);
   const aggiorna = useStore((s) => s.aggiornaLavoro);
+  const apri = useUI((s) => s.apri);
   const mostra = useToast((s) => s.mostra);
   const esistente = ctx.id ? db.lavori.find((l) => l.id === ctx.id) : undefined;
   const [v, setV] = useState({
-    clienteId: esistente?.clienteId ?? ctx.clienteId ?? "", titolo: esistente?.titolo ?? "",
-    data: esistente?.data ?? ctx.data ?? oggiISO(), tipoCompenso: (esistente?.tipoCompenso ?? "preventivo") as TipoCompenso,
-    operatoreId: esistente?.operatoreId ?? "", luogo: esistente?.luogo ?? "",
+    clienteId: esistente?.clienteId ?? ctx.clienteId ?? "",
+    titolo: esistente?.titolo ?? "",
+    descrizione: esistente?.descrizione ?? "",
+    data: esistente?.data ?? ctx.data ?? oggiISO(),
+    durata: esistente?.durataPrevistaOre != null ? String(esistente.durataPrevistaOre) : "",
+    tipoCompenso: (esistente?.tipoCompenso ?? "preventivo") as TipoCompenso,
+    stato: (esistente?.stato ?? "da_fare") as "da_fare" | "in_corso" | "fatto",
+    operatoreId: esistente?.operatoreId ?? "",
+    luogo: esistente?.luogo ?? "",
   });
+  const oreReali = esistente ? db.ore.filter((o) => o.lavoroId === esistente.id).reduce((a, o) => a + o.ore, 0) : 0;
+
   function salva(e: React.FormEvent) {
     e.preventDefault();
     if (!v.clienteId || !v.titolo.trim()) return mostra("Cliente e titolo obbligatori.", "error");
-    const dati = { clienteId: v.clienteId, titolo: v.titolo.trim(), data: v.data, tipoCompenso: v.tipoCompenso, operatoreId: v.operatoreId || null, luogo: v.luogo || null };
+    const dati = {
+      clienteId: v.clienteId, titolo: v.titolo.trim(), descrizione: v.descrizione || null, data: v.data,
+      durataPrevistaOre: num(v.durata), tipoCompenso: v.tipoCompenso, stato: v.stato,
+      operatoreId: v.operatoreId || null, luogo: v.luogo || null,
+    };
     if (esistente) { aggiorna(esistente.id, dati); mostra("Lavoro aggiornato!"); } else { crea(dati); festa("lavoro"); mostra("Lavoro in agenda 🗓️"); }
     chiudi();
   }
   const d = new Date(v.data);
   const giorno = Number.isNaN(d.getTime()) ? "—" : d.getDate();
   const mese = Number.isNaN(d.getTime()) ? "" : new Intl.DateTimeFormat("it-IT", { month: "short" }).format(d);
+  const statoLabel = v.stato === "fatto" ? "Fatto" : v.stato === "in_corso" ? "In corso" : "Da fare";
   const scena = (
     <ScenaCard className="text-center">
-      <div className="font-display text-[3rem] font-bold leading-none">{giorno}</div>
+      <div className="font-display text-[2.8rem] font-bold leading-none">{giorno}</div>
       <div className="text-[0.78rem] font-bold uppercase tracking-wide text-white/80">{mese}</div>
-      <div className="mt-3 truncate text-[0.82rem] font-semibold">{v.titolo || "Nuovo lavoro"}</div>
+      <div className="mt-2 truncate text-[0.82rem] font-semibold">{v.titolo || "Nuovo lavoro"}</div>
       {v.clienteId && <div className="truncate text-[0.72rem] text-white/75">{nomeCli(db, v.clienteId)}</div>}
+      <div className="mt-3 flex flex-wrap justify-center gap-1.5 text-[0.66rem] font-semibold">
+        <span className="rounded-full bg-white/15 px-2 py-0.5">{statoLabel}</span>
+        {num(v.durata) ? <span className="rounded-full bg-white/15 px-2 py-0.5">~{v.durata}h prev.</span> : null}
+        {esistente && oreReali > 0 ? <span className="rounded-full bg-white/15 px-2 py-0.5">{oreReali}h reali</span> : null}
+      </div>
     </ScenaCard>
   );
   return (
@@ -236,11 +261,24 @@ function LavoroForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; c
       <form onSubmit={salva}>
         <SheetStagger className="grid gap-3">
           <SheetRow><div><Etichetta>Cliente</Etichetta><ChipPicker tinta="cliente" items={clientiChip(db)} value={v.clienteId} onChange={(id) => setV((s) => ({ ...s, clienteId: id }))} vuoto="Crea prima un cliente." /></div></SheetRow>
-          <SheetRow><CampoIcona icona={<Type size={17} />} label="Titolo *" value={v.titolo} onChange={(e) => setV((s) => ({ ...s, titolo: e.target.value }))} placeholder="es. Potatura olivi" /></SheetRow>
+          <SheetRow><Sezione icona={<Hammer size={15} />} titolo="Dettagli">
+            <CampoIcona icona={<Type size={17} />} label="Titolo *" value={v.titolo} onChange={(e) => setV((s) => ({ ...s, titolo: e.target.value }))} placeholder="es. Potatura olivi" />
+            <AreaIcona icona={<AlignLeft size={17} />} label="Descrizione" rows={2} value={v.descrizione} onChange={(e) => setV((s) => ({ ...s, descrizione: e.target.value }))} placeholder="dettagli dell'intervento…" />
+            <CampoIcona icona={<MapPin size={17} />} label="Luogo" value={v.luogo} onChange={(e) => setV((s) => ({ ...s, luogo: e.target.value }))} />
+          </Sezione></SheetRow>
           <SheetRow><div><Etichetta>Quando</Etichetta><QuickDate tinta="lavoro" value={v.data} onChange={(dd) => setV((s) => ({ ...s, data: dd }))} /></div></SheetRow>
+          <SheetRow><div className="rounded-[18px] border border-lavoro-100 bg-lavoro-50/50 p-4">
+            <div className="mb-1 text-center text-[0.7rem] font-bold uppercase tracking-wide text-muted">Durata prevista</div>
+            <Stepper tinta="lavoro" value={v.durata} onChange={(val) => setV((s) => ({ ...s, durata: val }))} presets={[1, 2, 4, 8]} />
+          </div></SheetRow>
           <SheetRow><div><Etichetta>Tipo compenso</Etichetta><TileSelect tinta="lavoro" cols={3} value={v.tipoCompenso} onChange={(val) => setV((s) => ({ ...s, tipoCompenso: val as TipoCompenso }))} options={COMPENSO_TILE} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Stato</Etichetta><TileSelect tinta="lavoro" cols={3} value={v.stato} onChange={(val) => setV((s) => ({ ...s, stato: val as typeof v.stato }))} options={STATO_LAVORO_TILE} /></div></SheetRow>
           <SheetRow><div><Etichetta>Assegnato a</Etichetta><ChipPicker tinta="operatore" items={operatoriChip(db)} value={v.operatoreId} onChange={(id) => setV((s) => ({ ...s, operatoreId: id }))} consentiNessuno vuoto="Nessun operatore." /></div></SheetRow>
-          <SheetRow><CampoIcona icona={<MapPin size={17} />} label="Luogo" value={v.luogo} onChange={(e) => setV((s) => ({ ...s, luogo: e.target.value }))} /></SheetRow>
+          {esistente && (
+            <SheetRow><button type="button" onClick={() => apri("ore", { clienteId: v.clienteId, operatoreId: v.operatoreId || undefined, lavoroId: esistente.id, data: v.data })} className="flex w-full items-center justify-center gap-2 rounded-[13px] border border-dashed border-operatore-200 bg-operatore-50/50 py-2.5 text-[0.85rem] font-bold text-operatore-600">
+              <Clock size={16} /> Registra ore su questo lavoro {oreReali > 0 ? `(${oreReali}h)` : ""}
+            </button></SheetRow>
+          )}
           <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Aggiungi"}</Button></SheetFooter></SheetRow>
         </SheetStagger>
       </form>
@@ -307,12 +345,13 @@ function OreForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiu
   const db = useStore((s) => s.db);
   const registra = useStore((s) => s.registraOre);
   const mostra = useToast((s) => s.mostra);
-  const [v, setV] = useState({ clienteId: ctx.clienteId ?? "", operatoreId: ctx.operatoreId ?? "", data: ctx.data ?? oggiISO(), ore: "", note: "" });
+  const [v, setV] = useState({ clienteId: ctx.clienteId ?? "", operatoreId: ctx.operatoreId ?? "", lavoroId: ctx.lavoroId ?? "", data: ctx.data ?? oggiISO(), ore: "", note: "" });
+  const lavoriCliente = db.lavori.filter((l) => l.clienteId === v.clienteId).sort((a, b) => b.data.localeCompare(a.data));
   function salva(e: React.FormEvent) {
     e.preventDefault();
     const ore = num(v.ore);
     if (!v.clienteId || ore === null || ore <= 0) return mostra("Scegli cliente e ore.", "error");
-    registra({ clienteId: v.clienteId, operatoreId: v.operatoreId || null, data: v.data, ore, note: v.note || null });
+    registra({ clienteId: v.clienteId, operatoreId: v.operatoreId || null, lavoroId: v.lavoroId || null, data: v.data, ore, note: v.note || null });
     festa("operatore"); mostra(`+${ore}h registrate ⏱️`); chiudi();
   }
   const scena = (
@@ -327,7 +366,13 @@ function OreForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiu
       <form onSubmit={salva}>
         <SheetStagger className="grid gap-3">
           <SheetRow><div className="rounded-[18px] border border-operatore-100 bg-operatore-50/50 p-4"><Stepper tinta="operatore" value={v.ore} onChange={(val) => setV((s) => ({ ...s, ore: val }))} presets={[1, 2, 4, 8]} /></div></SheetRow>
-          <SheetRow><div><Etichetta>Cliente</Etichetta><ChipPicker tinta="cliente" items={clientiChip(db)} value={v.clienteId} onChange={(id) => setV((s) => ({ ...s, clienteId: id }))} vuoto="Crea prima un cliente." /></div></SheetRow>
+          <SheetRow><div><Etichetta>Cliente</Etichetta><ChipPicker tinta="cliente" items={clientiChip(db)} value={v.clienteId} onChange={(id) => setV((s) => ({ ...s, clienteId: id, lavoroId: "" }))} vuoto="Crea prima un cliente." /></div></SheetRow>
+          {v.clienteId && lavoriCliente.length > 0 && (
+            <SheetRow><div><Etichetta>Su quale lavoro (facoltativo)</Etichetta>
+              <Select value={v.lavoroId} onChange={(val) => setV((s) => ({ ...s, lavoroId: val }))} placeholder="— nessun lavoro —"
+                options={[{ value: "", label: "— nessun lavoro —" }, ...lavoriCliente.map((l) => ({ value: l.id, label: `${new Date(l.data).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} · ${l.titolo}` }))]} />
+            </div></SheetRow>
+          )}
           <SheetRow><div><Etichetta>Chi ha lavorato</Etichetta><ChipPicker tinta="operatore" items={operatoriChip(db)} value={v.operatoreId} onChange={(id) => setV((s) => ({ ...s, operatoreId: id }))} consentiNessuno vuoto="Nessun operatore." /></div></SheetRow>
           <SheetRow><div><Etichetta>Giorno</Etichetta><QuickDate tinta="operatore" value={v.data} onChange={(dd) => setV((s) => ({ ...s, data: dd }))} /></div></SheetRow>
           <SheetRow><CampoIcona icona={<StickyNote size={17} />} label="Nota" value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} placeholder="es. manutenzione verde" /></SheetRow>

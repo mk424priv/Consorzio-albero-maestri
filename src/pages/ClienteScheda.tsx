@@ -244,17 +244,24 @@ function SezioneLavori({ id }: { id: string }) {
         <Card className="divide-y divide-line overflow-hidden">
           {lavori.map((l) => {
             const op = operatore(l.operatoreId);
+            const oreReali = db.ore.filter((o) => o.lavoroId === l.id).reduce((a, o) => a + o.ore, 0);
             return (
               <div key={l.id} className="flex items-center gap-3 p-3.5">
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold text-ink">{l.titolo}</div>
-                  <div className="flex items-center gap-2 text-[0.76rem] text-muted">
+                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[0.76rem] text-muted">
                     {dataIT(l.data)} · {etichetta(l.tipoCompenso)}
                     {op && <span className="inline-flex items-center gap-1"><Avatar nome={op.nome} size="sm" grad={ENTITA.operatore.grad} className="!h-4 !w-4 !text-[0.5rem]" /> {op.nome}</span>}
+                    {(oreReali > 0 || l.durataPrevistaOre != null) && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-operatore-50 px-2 py-0.5 font-semibold text-operatore-600">
+                        <Clock size={11} /> {oreReali > 0 ? `${oreReali}h` : "0h"}{l.durataPrevistaOre != null ? ` / ${l.durataPrevistaOre}h` : ""}
+                      </span>
+                    )}
                   </div>
                 </div>
                 <button onClick={() => cambia(l.id, CICLO[l.stato])} title="Cambia stato"><StatusBadge genere="lavoro" valore={l.stato} /></button>
                 <Menu trigger={<button className="grid h-8 w-8 place-items-center rounded-[10px] text-muted hover:bg-canvas"><MoreVertical size={16} /></button>} voci={[
+                  { label: "Registra ore", icona: <Clock size={15} />, onClick: () => apri("ore", { clienteId: id, operatoreId: l.operatoreId ?? undefined, lavoroId: l.id, data: l.data }) },
                   { label: "Modifica", icona: <Pencil size={15} />, onClick: () => apri("lavoro", { id: l.id }) },
                   { label: "Elimina", icona: <Trash2 size={15} />, pericolo: true, separa: true, onClick: () => chiediConferma({ titolo: "Eliminare il lavoro?", pericolo: true, testoConferma: "Elimina", onConfirm: () => elimina(l.id) }) },
                 ]} />
