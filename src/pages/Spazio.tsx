@@ -2,7 +2,9 @@ import { useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
+  ArrowRight,
   CalendarClock,
+  Check,
   ChevronDown,
   Clock,
   LayoutGrid,
@@ -25,6 +27,7 @@ import type { Cliente, Lavoro } from "@/lib/types";
 import {
   Avatar,
   Badge,
+  Barra,
   Button,
   Cifra,
   Codice,
@@ -178,68 +181,87 @@ function ClienteCard({ cliente, codice, parti, saldo, prossimo, inRitardo }: Rig
   const db = useStore((s) => s.db);
   const [aperto, setAperto] = useState(false);
 
-  const pagamenti = useMemo(
-    () => db.pagamenti.filter((p) => p.clienteId === cliente.id).sort((a, b) => b.dataEmissione.localeCompare(a.dataEmissione)).slice(0, 3),
-    [db, cliente.id],
-  );
+  const { pagamenti, atteso, incassato } = useMemo(() => {
+    const pags = db.pagamenti.filter((p) => p.clienteId === cliente.id);
+    return {
+      pagamenti: [...pags].sort((a, b) => b.dataEmissione.localeCompare(a.dataEmissione)).slice(0, 3),
+      atteso: pags.reduce((a, p) => a + p.importoAtteso, 0),
+      incassato: pags.reduce((a, p) => a + p.importoIncassato, 0),
+    };
+  }, [db, cliente.id]);
+  const ratio = atteso > 0 ? incassato / atteso : 1;
+  const operatore = (oid?: string | null) => db.operatori.find((o) => o.id === oid)?.nome;
 
   return (
-    <motion.div variants={listaElemento} className="flex flex-col rounded-[var(--radius-lg)] border border-line bg-surface shadow-[var(--shadow-sm)] transition-shadow hover:shadow-[var(--shadow-md)]">
-      <Link to={`/cliente/${cliente.id}`} className="flex items-start gap-3 p-4 pb-3">
+    <motion.div variants={listaElemento} className="flex flex-col overflow-hidden rounded-[var(--radius-lg)] border border-line bg-surface shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]">
+      {/* header tinta cliente */}
+      <Link to={`/cliente/${cliente.id}`} className="relative flex items-start gap-3 bg-gradient-to-br from-cliente-50 to-surface p-4 pb-3">
         <Avatar nome={`${cliente.nome} ${cliente.cognome}`} grad="bg-gradient-to-br from-cliente-500 to-brand-700" size="lg" />
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="truncate font-bold text-ink">{cliente.nome} {cliente.cognome}</h3>
-          </div>
-          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+          <h3 className="truncate font-display text-[1.05rem] font-bold leading-tight text-ink">{cliente.nome} {cliente.cognome}</h3>
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <Codice codice={codice} />
             <span className="text-[0.72rem] text-muted">{etichetta(cliente.modalitaPredefinita)}</span>
           </div>
         </div>
+        {saldo > 0 ? (
+          <Badge tono={inRitardo ? "danger" : "warn"}>{euro(saldo)}</Badge>
+        ) : (
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-success-soft text-success"><Check size={15} /></span>
+        )}
       </Link>
 
-      <div className="grid grid-cols-3 gap-2 px-4">
+      {/* mini-stat dal codice */}
+      <div className="grid grid-cols-3 gap-2 px-4 pt-1">
         {[
           { l: "Paga in", v: `${parti.giorni}g` },
-          { l: "Spesa media", v: euro(parti.spesaMedia) },
-          { l: "Insieme da", v: `${parti.anni}a` },
+          { l: "Media", v: euro(parti.spesaMedia) },
+          { l: "Da", v: `${parti.anni}a` },
         ].map((s) => (
           <div key={s.l} className="rounded-[11px] bg-surface-2 px-2 py-1.5 text-center">
-            <div className="text-[0.62rem] font-semibold uppercase tracking-wide text-muted">{s.l}</div>
-            <div className="text-[0.82rem] font-bold text-ink">{s.v}</div>
+            <div className="text-[0.6rem] font-semibold uppercase tracking-wide text-muted">{s.l}</div>
+            <div className="font-display text-[0.84rem] font-bold text-ink">{s.v}</div>
           </div>
         ))}
       </div>
 
-      <div className="flex items-center justify-between gap-2 px-4 py-3">
-        {saldo > 0 ? (
-          <Badge tono={inRitardo ? "danger" : "warn"}>{euro(saldo)} da incassare</Badge>
-        ) : (
-          <Badge tono="success">In pari</Badge>
-        )}
-        <div className="flex items-center gap-1 text-[0.74rem] text-muted">
-          <CalendarClock size={13} />
-          {prossimo ? <span className="truncate">{dataIT(prossimo.data).slice(0, 5)} · {prossimo.titolo}</span> : "nessun lavoro"}
+      {/* barra incassi */}
+      <div className="px-4 pt-3">
+        <div className="mb-1 flex items-center justify-between text-[0.66rem] font-semibold">
+          <span className="text-muted">Incassato</span>
+          <span className="text-ink">{euro(incassato)} <span className="text-muted">/ {euro(atteso)}</span></span>
         </div>
+        <Barra accent="entrata" ratio={ratio} />
       </div>
 
-      <div className="mt-auto flex items-center gap-1 border-t border-line p-2">
-        <LinkButton to={`/cliente/${cliente.id}`} variante="soft" dim="sm" className="flex-1">Apri</LinkButton>
-        <IconButton label="Registra ore" onClick={() => apri("ore", { clienteId: cliente.id })}><Clock size={16} /></IconButton>
-        <IconButton label="Nuovo preventivo" onClick={() => apri("preventivo", { clienteId: cliente.id })}><ReceiptText size={16} /></IconButton>
+      {/* prossimo lavoro + telefono */}
+      <div className="flex items-center justify-between gap-2 px-4 py-3">
+        <span className="flex min-w-0 items-center gap-1.5 text-[0.74rem] text-muted">
+          <CalendarClock size={13} className="shrink-0" />
+          {prossimo ? <span className="truncate">{dataIT(prossimo.data).slice(0, 5)} · {prossimo.titolo}{operatore(prossimo.operatoreId) ? ` · ${operatore(prossimo.operatoreId)}` : ""}</span> : "nessun lavoro"}
+        </span>
         {cliente.telefono && (
-          <a href={`tel:${cliente.telefono}`} className="grid h-9 w-9 place-items-center rounded-[11px] text-muted transition hover:bg-brand-50 hover:text-brand-600" aria-label="Chiama"><Phone size={16} /></a>
+          <a href={`tel:${cliente.telefono}`} onClick={(e) => e.stopPropagation()} className="inline-flex shrink-0 items-center gap-1 rounded-full bg-cliente-50 px-2 py-1 text-[0.7rem] font-semibold text-cliente-600">
+            <Phone size={12} /> Chiama
+          </a>
         )}
-        <IconButton label="Espandi" onClick={() => setAperto((a) => !a)}>
-          <motion.span animate={{ rotate: aperto ? 180 : 0 }}><ChevronDown size={16} /></motion.span>
+      </div>
+
+      {/* azioni */}
+      <div className="mt-auto flex items-center gap-1.5 border-t border-line p-2.5">
+        <LinkButton to={`/cliente/${cliente.id}`} variante="soft" dim="sm" className="flex-1"><ArrowRight size={15} /> Apri scheda</LinkButton>
+        <IconButton label="Registra ore" onClick={() => apri("ore", { clienteId: cliente.id })} className="bg-operatore-50 text-operatore-600 hover:bg-operatore-100"><Clock size={16} /></IconButton>
+        <IconButton label="Nuovo preventivo" onClick={() => apri("preventivo", { clienteId: cliente.id })} className="bg-preventivo-50 text-preventivo-600 hover:bg-preventivo-100"><ReceiptText size={16} /></IconButton>
+        <IconButton label={aperto ? "Comprimi" : "Espandi"} onClick={() => setAperto((a) => !a)}>
+          <motion.span animate={{ rotate: aperto ? 180 : 0 }} className="grid place-items-center"><ChevronDown size={16} /></motion.span>
         </IconButton>
       </div>
 
       <AnimatePresence initial={false}>
         {aperto && (
-          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden border-t border-line">
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }} className="overflow-hidden border-t border-line bg-surface-2/40">
             <div className="p-4">
-              <div className="mb-2 text-[0.7rem] font-bold uppercase tracking-wide text-muted">Ultimi pagamenti</div>
+              <div className="mb-2 text-[0.68rem] font-bold uppercase tracking-wide text-muted">Ultimi pagamenti</div>
               {pagamenti.length === 0 ? (
                 <p className="text-sm text-muted">Nessun pagamento.</p>
               ) : (
@@ -252,7 +274,6 @@ function ClienteCard({ cliente, codice, parti, saldo, prossimo, inRitardo }: Rig
                   ))}
                 </div>
               )}
-              <Link to={`/cliente/${cliente.id}`} className="mt-3 inline-block text-sm font-semibold text-brand-600 hover:underline">Apri scheda completa →</Link>
             </div>
           </motion.div>
         )}

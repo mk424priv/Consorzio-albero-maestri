@@ -1,7 +1,7 @@
 // Mattoni di input "gamificati": selezione a tessere, scelta a chip con
 // avatar, stepper, importo grande, date rapide. Interazioni STABILI
 // (niente scale al tocco): solo colore/ombra/translate.
-import type { ReactNode } from "react";
+import type { InputHTMLAttributes, ReactNode, TextareaHTMLAttributes } from "react";
 import { Delete, Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { Avatar } from "./primitives";
@@ -342,6 +342,70 @@ export function AmountPad({
         </div>
       )}
       <NumberPad value={value} onChange={onChange} />
+    </div>
+  );
+}
+
+/* ----------------------- Campo con icona (field card) ---------------- */
+// Un campo "disegnato": chip-icona + etichetta + input, in un'unica card.
+// font 16px → niente zoom iOS al focus.
+export function CampoIcona({
+  icona,
+  label,
+  suffix,
+  className,
+  ...props
+}: InputHTMLAttributes<HTMLInputElement> & { icona?: ReactNode; label: string; suffix?: ReactNode }) {
+  return (
+    <label className={cn("flex items-center gap-2.5 rounded-[13px] border border-line-strong bg-surface px-3 py-2 transition-colors focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100", className)}>
+      {icona && <span className="grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-surface-2 text-muted">{icona}</span>}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[0.6rem] font-bold uppercase tracking-wide text-muted">{label}</span>
+        <input {...props} className="w-full bg-transparent text-[1rem] font-semibold leading-tight text-ink outline-none placeholder:font-normal placeholder:text-muted/70" />
+      </span>
+      {suffix}
+    </label>
+  );
+}
+
+export function AreaIcona({
+  icona,
+  label,
+  className,
+  ...props
+}: TextareaHTMLAttributes<HTMLTextAreaElement> & { icona?: ReactNode; label: string }) {
+  return (
+    <label className={cn("flex gap-2.5 rounded-[13px] border border-line-strong bg-surface px-3 py-2 transition-colors focus-within:border-brand-400 focus-within:ring-4 focus-within:ring-brand-100", className)}>
+      {icona && <span className="mt-1 grid h-9 w-9 shrink-0 place-items-center rounded-[10px] bg-surface-2 text-muted">{icona}</span>}
+      <span className="flex min-w-0 flex-1 flex-col">
+        <span className="text-[0.6rem] font-bold uppercase tracking-wide text-muted">{label}</span>
+        <textarea {...props} className="w-full resize-none bg-transparent text-[1rem] font-medium leading-snug text-ink outline-none placeholder:text-muted/70" />
+      </span>
+    </label>
+  );
+}
+
+/* ------------------------------- Sezione ----------------------------- */
+// Raggruppa campi affini in un blocco con intestazione: la finestra diventa
+// composta, non una lista piatta.
+export function Sezione({
+  icona,
+  titolo,
+  children,
+  className,
+}: {
+  icona?: ReactNode;
+  titolo: string;
+  children: ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={cn("rounded-[18px] border border-line bg-surface-2/50 p-3", className)}>
+      <div className="mb-2.5 flex items-center gap-2 px-0.5">
+        {icona && <span className="text-brand-500">{icona}</span>}
+        <span className="text-[0.7rem] font-bold uppercase tracking-wide text-ink-soft">{titolo}</span>
+      </div>
+      <div className="grid gap-2">{children}</div>
     </div>
   );
 }
