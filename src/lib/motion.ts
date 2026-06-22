@@ -32,11 +32,12 @@ export const sheetMobile: Variants = {
   show: { y: 0, transition: springSoft },
   exit: { y: "100%", transition: { duration: 0.2 } },
 };
-// Dialog centrato su desktop
+// Dialog centrato su desktop — solo dissolvenza + lieve scorrimento (niente
+// "scale" che dà l'effetto di zoom al tocco/apertura).
 export const dialogVar: Variants = {
-  hidden: { opacity: 0, scale: 0.96, y: 8 },
-  show: { opacity: 1, scale: 1, y: 0, transition: springSnappy },
-  exit: { opacity: 0, scale: 0.97, y: 6, transition: { duration: 0.15 } },
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: springSoft },
+  exit: { opacity: 0, y: 8, transition: { duration: 0.15 } },
 };
 export const overlayVar: Variants = {
   hidden: { opacity: 0 },
