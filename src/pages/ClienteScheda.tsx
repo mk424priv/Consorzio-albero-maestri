@@ -32,7 +32,9 @@ import {
   Badge,
   Button,
   Card,
+  Cifra,
   Codice,
+  Conta,
   EmptyState,
   Menu,
   RingStat,
@@ -146,12 +148,12 @@ export function ClienteScheda() {
           accent="entrata"
           ratio={r.totaleAtteso > 0 ? r.totaleIncassato / r.totaleAtteso : 0}
           label="Incassato"
-          valore={euro(r.totaleIncassato)}
+          valore={<Cifra valore={r.totaleIncassato} />}
           sub={`su ${euro(r.totaleAtteso)} attesi`}
         />
-        <StatCard accent="uscita" label="Da incassare" valore={euro(r.saldoDaIncassare)} icona={<Hourglass size={15} />} nota={r.saldoDaIncassare > 0 ? "ancora aperto" : "tutto in regola"} />
-        <StatCard accent="lavoro" label="Lavori" valore={String(r.numeroLavori)} icona={<Hammer size={15} />} />
-        <StatCard accent="operatore" label="Ore totali" valore={fmtOre(r.oreTotali)} icona={<Clock size={15} />} />
+        <StatCard accent="uscita" label="Da incassare" valore={<Cifra valore={r.saldoDaIncassare} />} icona={<Hourglass size={15} />} nota={r.saldoDaIncassare > 0 ? "ancora aperto" : "tutto in regola"} />
+        <StatCard accent="lavoro" label="Lavori" valore={<Conta valore={r.numeroLavori} />} icona={<Hammer size={15} />} />
+        <StatCard accent="operatore" label="Ore totali" valore={<Conta valore={r.oreTotali} suffix=" h" />} icona={<Clock size={15} />} />
       </div>
 
       <Segmented voci={TABS} attivo={tab} onChange={setTab} className="mb-5" />

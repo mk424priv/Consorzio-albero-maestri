@@ -8,7 +8,7 @@ import { libroOperatore } from "@/lib/squadra";
 import { dataIT, euro, ore as fmtOre } from "@/lib/format";
 import { etichetta } from "@/lib/dominio";
 import { ENTITA } from "@/lib/entita";
-import { Avatar, Badge, Button, Card, EmptyState, Menu, RingStat, StatCard, StatusBadge } from "@/components/ui";
+import { Avatar, Badge, Button, Card, Cifra, Conta, EmptyState, Menu, RingStat, StatCard, StatusBadge } from "@/components/ui";
 
 export function OperatoreScheda() {
   const { id = "" } = useParams();
@@ -68,12 +68,12 @@ export function OperatoreScheda() {
           accent="uscita"
           ratio={libro.dovuto > 0 ? libro.pagato / libro.dovuto : 1}
           label="Saldato"
-          valore={euro(libro.pagato)}
+          valore={<Cifra valore={libro.pagato} />}
           sub={`su ${euro(libro.dovuto)} dovuti`}
         />
-        <StatCard accent="uscita" label="Da pagare" valore={euro(libro.saldo)} icona={<HandCoins size={15} />} nota={libro.saldo > 0 ? "in sospeso" : "saldato"} />
-        <StatCard accent="lavoro" label="Dovuto" valore={euro(libro.dovuto)} />
-        <StatCard accent="operatore" label="Ore" valore={fmtOre(libro.ore)} icona={<Clock size={15} />} />
+        <StatCard accent="uscita" label="Da pagare" valore={<Cifra valore={libro.saldo} />} icona={<HandCoins size={15} />} nota={libro.saldo > 0 ? "in sospeso" : "saldato"} />
+        <StatCard accent="lavoro" label="Dovuto" valore={<Cifra valore={libro.dovuto} />} />
+        <StatCard accent="operatore" label="Ore" valore={<Conta valore={libro.ore} suffix=" h" />} icona={<Clock size={15} />} />
       </div>
       <Button variante="primary" onClick={() => apri("compenso", { operatoreId: id })} className="mb-6 w-full sm:w-auto"><HandCoins size={16} /> Paga operatore</Button>
 

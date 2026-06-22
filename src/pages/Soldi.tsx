@@ -26,6 +26,8 @@ import {
   Badge,
   Button,
   Card,
+  Cifra,
+  Donut,
   EmptyState,
   FilterChip,
   HeroStat,
@@ -33,6 +35,7 @@ import {
   PageHero,
   RigaEditabile,
   Segmented,
+  Sparkline,
   StatusBadge,
   Table,
   Th,
@@ -80,11 +83,11 @@ export function Soldi() {
         }
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
-          <HeroStat label="Incassato" valore={euro(r.incassato)} />
-          <HeroStat label="Uscite" valore={euro(r.uscite)} nota="spese + compensi" />
-          <HeroStat label="Saldo" valore={euro(r.saldo)} />
-          <HeroStat label="Da incassare" valore={euro(r.daIncassare)} />
-          <HeroStat label="Da pagare team" valore={euro(r.daPagareSquadra)} />
+          <HeroStat label="Incassato" valore={<Cifra valore={r.incassato} />} />
+          <HeroStat label="Uscite" valore={<Cifra valore={r.uscite} />} nota="spese + compensi" />
+          <HeroStat label="Saldo" valore={<Cifra valore={r.saldo} />} />
+          <HeroStat label="Da incassare" valore={<Cifra valore={r.daIncassare} />} />
+          <HeroStat label="Da pagare team" valore={<Cifra valore={r.daPagareSquadra} />} />
         </div>
       </PageHero>
 
@@ -109,7 +112,13 @@ function Movimenti({ periodo }: { periodo: string }) {
   const db = useStore((s) => s.db);
   const apri = useUI((s) => s.apri);
   const [filtro, setFiltro] = useState<"tutti" | TipoMovimento>("tutti");
-  const lista = useMemo(() => movimenti(db, periodo).filter((m) => filtro === "tutti" || m.tipo === filtro), [db, periodo, filtro]);
+  const tutti = useMemo(() => movimenti(db, periodo), [db, periodo]);
+  const lista = useMemo(() => tutti.filter((m) => filtro === "tutti" || m.tipo === filtro), [tutti, filtro]);
+  const tot = useMemo(() => {
+    const acc = { incasso: 0, compenso: 0, spesa: 0 };
+    for (const m of tutti) acc[m.tipo] += m.importo;
+    return acc;
+  }, [tutti]);
 
   const FILTRI: { k: "tutti" | TipoMovimento; label: string }[] = [
     { k: "tutti", label: "Tutti" },
@@ -127,6 +136,32 @@ function Movimenti({ periodo }: { periodo: string }) {
           <Button variante="soft" dim="sm" onClick={() => apri("compenso")}><HandCoins size={15} /> Compenso</Button>
         </div>
       </div>
+      {tutti.length > 0 && (
+        <Card className="mb-4 flex items-center gap-4 p-4">
+          <Donut
+            size={84}
+            segmenti={[
+              { valore: tot.incasso, classe: "text-entrata-500", label: "Incassi" },
+              { valore: tot.compenso, classe: "text-uscita-500", label: "Compensi" },
+              { valore: tot.spesa, classe: "text-spesa-500", label: "Spese" },
+            ]}
+            centro={<div className="text-center"><div className="text-[1rem] font-extrabold text-ink">{tutti.length}</div><div className="text-[0.52rem] font-bold uppercase tracking-wide text-muted">mov.</div></div>}
+          />
+          <div className="grid flex-1 gap-1.5">
+            {[
+              { l: "Incassi", v: tot.incasso, c: "bg-entrata-500" },
+              { l: "Compensi", v: tot.compenso, c: "bg-uscita-500" },
+              { l: "Spese", v: tot.spesa, c: "bg-spesa-500" },
+            ].map((x) => (
+              <div key={x.l} className="flex items-center gap-2 text-sm">
+                <span className={cn("h-2.5 w-2.5 rounded-full", x.c)} />
+                <span className="text-ink-soft">{x.l}</span>
+                <span className="ml-auto font-bold tabular-nums text-ink">{euro(x.v)}</span>
+              </div>
+            ))}
+          </div>
+        </Card>
+      )}
       {lista.length === 0 ? <EmptyState icona={<Wallet size={24} />} testo="Nessun movimento in questo mese." /> : (
         <Card className="divide-y divide-line overflow-hidden">
           {lista.map((m) => {
@@ -152,9 +187,19 @@ function Storico() {
   const db = useStore((s) => s.db);
   const righe = useMemo(() => storicoMensile(db), [db]);
   const max = Math.max(1, ...righe.map((r) => Math.max(r.incassato, r.uscite)));
+  const andamento = [...righe].reverse().map((r) => r.saldo);
   if (righe.length === 0) return <EmptyState testo="Ancora nessun movimento registrato." />;
   return (
     <div className="grid gap-3">
+      {righe.length > 1 && (
+        <Card className="p-4">
+          <div className="mb-1.5 flex items-center justify-between">
+            <span className="text-[0.82rem] font-bold text-ink">Andamento del saldo</span>
+            <span className="text-[0.7rem] text-muted">ultimi {andamento.length} mesi</span>
+          </div>
+          <Sparkline accent="entrata" valori={andamento} height={52} />
+        </Card>
+      )}
       {righe.map((r, i) => (
         <Card key={r.chiave} className={cn("p-4", i === 0 && "ring-2 ring-brand-200")}>
           <div className="mb-3 flex items-center justify-between">

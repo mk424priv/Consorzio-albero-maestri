@@ -236,7 +236,7 @@ export function Metric({
   onClick,
 }: {
   label: string;
-  valore: string;
+  valore: ReactNode;
   tono?: Tono;
   icona?: ReactNode;
   nota?: string;
@@ -270,7 +270,7 @@ export function HeroStat({
   onClick,
 }: {
   label: string;
-  valore: string;
+  valore: ReactNode;
   nota?: string;
   onClick?: () => void;
 }) {

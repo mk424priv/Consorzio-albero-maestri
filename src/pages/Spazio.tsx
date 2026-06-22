@@ -26,7 +26,9 @@ import {
   Avatar,
   Badge,
   Button,
+  Cifra,
   Codice,
+  Conta,
   EmptyState,
   FilterChip,
   HeroStat,
@@ -117,10 +119,10 @@ export function Spazio() {
         }
       >
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          <HeroStat label="Da incassare" valore={euro(pan.daIncassare)} nota={pan.clientiInRitardo ? `${pan.clientiInRitardo} in ritardo` : "in regola"} onClick={() => setFiltro("da_incassare")} />
-          <HeroStat label="Incassato mese" valore={euro(pan.incassatoMese)} onClick={() => navigate("/soldi")} />
-          <HeroStat label="Lavori oggi" valore={String(pan.lavoriOggi)} onClick={() => navigate("/agenda")} />
-          <HeroStat label="Da pagare team" valore={euro(pan.daPagareSquadra)} onClick={() => navigate("/squadra")} />
+          <HeroStat label="Da incassare" valore={<Cifra valore={pan.daIncassare} />} nota={pan.clientiInRitardo ? `${pan.clientiInRitardo} in ritardo` : "in regola"} onClick={() => setFiltro("da_incassare")} />
+          <HeroStat label="Incassato mese" valore={<Cifra valore={pan.incassatoMese} />} onClick={() => navigate("/soldi")} />
+          <HeroStat label="Lavori oggi" valore={<Conta valore={pan.lavoriOggi} />} onClick={() => navigate("/agenda")} />
+          <HeroStat label="Da pagare team" valore={<Cifra valore={pan.daPagareSquadra} />} onClick={() => navigate("/squadra")} />
         </div>
       </PageHero>
 

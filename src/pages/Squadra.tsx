@@ -9,7 +9,7 @@ import { libroOperatore } from "@/lib/squadra";
 import { euro, ore as fmtOre } from "@/lib/format";
 import { etichetta } from "@/lib/dominio";
 import { ENTITA } from "@/lib/entita";
-import { Avatar, Badge, Barra, Button, EmptyState, HeroStat, LinkButton, PageHero, StatusBadge } from "@/components/ui";
+import { Avatar, Badge, Barra, Button, Cifra, Conta, EmptyState, HeroStat, LinkButton, PageHero, StatusBadge } from "@/components/ui";
 import { panoramicaSpazio } from "@/lib/movimenti";
 
 export function Squadra() {
@@ -34,9 +34,9 @@ export function Squadra() {
         azione={<Button variante="glass" onClick={() => apri("operatore")} className="hidden sm:inline-flex"><Plus size={16} /> Nuovo operatore</Button>}
       >
         <div className="grid grid-cols-3 gap-2">
-          <HeroStat label="Attivi" valore={String(db.operatori.filter((o) => o.attivo).length)} />
-          <HeroStat label="Dovuto totale" valore={euro(totDovuto)} />
-          <HeroStat label="Da pagare" valore={euro(pan.daPagareSquadra)} />
+          <HeroStat label="Attivi" valore={<Conta valore={db.operatori.filter((o) => o.attivo).length} />} />
+          <HeroStat label="Dovuto totale" valore={<Cifra valore={totDovuto} />} />
+          <HeroStat label="Da pagare" valore={<Cifra valore={pan.daPagareSquadra} />} />
         </div>
       </PageHero>
 
