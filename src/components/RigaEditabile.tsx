@@ -1,7 +1,8 @@
-"use client";
-
-import { useState, useTransition, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+// Riga di tabella con modifica inline: si tocca la matita ✏️, i campi
+// diventano editabili, ✓ salva e ✕ annulla.
+import { useState, type ReactNode } from "react";
+import { Check, Pencil, X } from "lucide-react";
+import { clsx } from "clsx";
 
 type Opzione = { v: string; l: string };
 
@@ -26,66 +27,51 @@ export type Cella =
     };
 
 export default function RigaEditabile({
-  id,
-  azione,
   celle,
+  onSave,
 }: {
-  id: string;
-  azione: (fd: FormData) => Promise<void>;
   celle: Cella[];
+  onSave: (valori: Record<string, string>) => void;
 }) {
-  const router = useRouter();
-  const [edit, setEdit] = useState(false);
-  const [pending, start] = useTransition();
-  const [vals, setVals] = useState<Record<string, string>>(() =>
+  const inizial = () =>
     Object.fromEntries(
       celle.filter((c) => c.tipo !== "statico").map((c) => [c.nome, c.valore]),
-    ),
-  );
+    );
+
+  const [edit, setEdit] = useState(false);
+  const [vals, setVals] = useState<Record<string, string>>(inizial);
 
   function annulla() {
-    setVals(
-      Object.fromEntries(
-        celle.filter((c) => c.tipo !== "statico").map((c) => [c.nome, c.valore]),
-      ),
-    );
+    setVals(inizial());
+    setEdit(false);
+  }
+  function salva() {
+    onSave(vals);
     setEdit(false);
   }
 
-  function salva() {
-    const fd = new FormData();
-    fd.set("id", id);
-    for (const [k, v] of Object.entries(vals)) fd.set(k, v);
-    start(async () => {
-      await azione(fd);
-      setEdit(false);
-      router.refresh();
-    });
-  }
-
   return (
-    <tr className={pending ? "opacity-50" : undefined}>
-      <td className="w-9 align-middle">
+    <tr className={clsx(edit && "bg-brand-50/60")}>
+      <td className="w-10">
         {edit ? (
           <div className="flex gap-1">
             <button
               type="button"
               onClick={salva}
-              disabled={pending}
               title="Salva"
               aria-label="Salva"
-              className="text-[var(--success)] hover:opacity-70 text-base leading-none"
+              className="grid h-7 w-7 place-items-center rounded-lg bg-success-soft text-success transition hover:brightness-95"
             >
-              ✓
+              <Check size={15} />
             </button>
             <button
               type="button"
               onClick={annulla}
               title="Annulla"
               aria-label="Annulla"
-              className="text-[var(--muted)] hover:opacity-70 text-base leading-none"
+              className="grid h-7 w-7 place-items-center rounded-lg bg-[#eef1ea] text-muted transition hover:brightness-95"
             >
-              ✕
+              <X size={15} />
             </button>
           </div>
         ) : (
@@ -94,9 +80,9 @@ export default function RigaEditabile({
             onClick={() => setEdit(true)}
             title="Modifica"
             aria-label="Modifica"
-            className="text-[var(--muted)] hover:text-[var(--primary)] opacity-60 hover:opacity-100"
+            className="grid h-7 w-7 place-items-center rounded-lg text-muted opacity-60 transition hover:bg-brand-50 hover:text-brand-500 hover:opacity-100"
           >
-            ✏️
+            <Pencil size={14} />
           </button>
         )}
       </td>
@@ -120,7 +106,7 @@ export default function RigaEditabile({
           <td key={i} className={c.classe}>
             {c.tipo === "select" ? (
               <select
-                className="input"
+                className="field !py-1.5 !text-sm"
                 value={vals[c.nome] ?? ""}
                 onChange={(e) => setVals((s) => ({ ...s, [c.nome]: e.target.value }))}
               >
@@ -132,7 +118,7 @@ export default function RigaEditabile({
               </select>
             ) : (
               <input
-                className="input"
+                className="field !py-1.5 !text-sm"
                 type={c.tipo === "numero" ? "number" : c.tipo === "data" ? "date" : "text"}
                 step={c.step}
                 placeholder={c.placeholder}

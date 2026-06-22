@@ -4,11 +4,10 @@ Centro di Comando del lavoro per un'attività nel verde (potatura, abbattimento,
 manutenzione giardini). Clienti, lavori, preventivi, ore, pagamenti, spese e
 quadro economico — tutto in un posto solo, che vive nei dati.
 
-- **Concezione**: [Presentazione-Concezione.md](Presentazione-Concezione.md)
-- **Requisiti**: [PRD.md](PRD.md)
-- **Deploy su Vercel**: [DEPLOY.md](DEPLOY.md)
+Interfaccia moderna, curata in ogni dettaglio: ogni campo, pulsante, badge,
+dashboard e icona è parte di un unico design system coerente.
 
-## Cosa fa (Fase 1)
+## Cosa fa
 
 | Stanza | Funzione |
 |---|---|
@@ -28,46 +27,43 @@ ricalcolato dai dati reali.
 
 ## Stack
 
-Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS · Prisma ·
-PostgreSQL. Mutazioni via Server Actions. Deploy nativo su Vercel.
+**Vite · React 19 · TypeScript · Tailwind CSS v4 · Zustand · React Router ·
+Lucide.** SPA che gira interamente nel browser: i dati sono persistiti in
+`localStorage` (con dati d'esempio già pronti), nessun backend richiesto.
 
-## Avvio locale
+## Avvio
 
-Serve Node 20+ e Docker (per il Postgres di sviluppo).
+Serve Node 20+.
 
 ```bash
 npm install
-docker compose up -d        # Postgres su localhost:5432
-cp .env.example .env        # poi controlla i valori
-npm run db:push             # crea le tabelle
-npm run db:seed             # dati d'esempio
-npm run dev                 # http://localhost:3000
+npm run dev        # http://localhost:3000
 ```
 
-Accesso: password dal valore `APP_PASSWORD` in `.env` (default `albero`).
-
-> Senza Docker puoi usare un Postgres qualsiasi (es. Neon) impostando
-> `DATABASE_URL` in `.env`. In alternativa, per una prova rapida, cambia
-> `provider = "sqlite"` in `prisma/schema.prisma` e `DATABASE_URL="file:./dev.db"`.
+Accesso: password predefinita `albero`.
 
 ## Script
 
 | Comando | Azione |
 |---|---|
 | `npm run dev` | Server di sviluppo |
-| `npm run build` | Genera client, sincronizza schema e build di produzione |
-| `npm run db:push` | Crea/aggiorna le tabelle dallo schema |
-| `npm run db:seed` | Inserisce dati d'esempio |
-| `npm run db:studio` | Apre Prisma Studio |
+| `npm run build` | Type-check + build di produzione (`dist/`) |
+| `npm run preview` | Anteprima della build |
+
+## Dati
+
+I dati vivono nel browser (`localStorage`, chiave `albero-maestri`). Allo
+start trovi uno scenario d'esempio (quattro clienti dell'Isola d'Elba con
+storie diverse). Per ripartire da zero puoi svuotare i dati del sito dal
+browser, oppure richiamare le azioni `reseed()` / `svuota()` dello store.
 
 ## Struttura
 
 ```
-prisma/schema.prisma     modello dati
-prisma/seed.ts           dati d'esempio
-src/lib/                 db, dominio, codice-parlante, conti (motore), format
-src/actions/             mutazioni (Server Actions)
-src/app/(app)/           le stanze (pagine protette)
-src/app/login            accesso
-src/proxy.ts             protezione delle rotte
+src/lib/          dominio, format, codice-parlante, conti (motore), types
+src/data/seed.ts  dati d'esempio
+src/store/        store Zustand (dati + CRUD) e toast
+src/components/   Layout, UI, Modal, Toaster, modifica inline
+src/pages/        le stanze (una pagina ciascuna)
+src/App.tsx       rotte + accesso
 ```

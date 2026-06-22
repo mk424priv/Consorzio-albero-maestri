@@ -1,5 +1,4 @@
-// Valori "enum" del dominio (modellati come stringhe per portabilità DB)
-// + etichette in italiano per l'interfaccia.
+// Valori "enum" del dominio (stringhe) + etichette in italiano per l'interfaccia.
 
 export const MODALITA = ["preventivo", "ore", "misto"] as const;
 export type Modalita = (typeof MODALITA)[number];

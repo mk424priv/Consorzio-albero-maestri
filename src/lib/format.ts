@@ -10,6 +10,20 @@ export function euro(n: number | null | undefined): string {
   }).format(v);
 }
 
+export function euroCompatto(n: number | null | undefined): string {
+  const v = typeof n === "number" && Number.isFinite(n) ? n : 0;
+  if (Math.abs(v) >= 1000) {
+    return (
+      "€ " +
+      new Intl.NumberFormat("it-IT", {
+        notation: "compact",
+        maximumFractionDigits: 1,
+      }).format(v)
+    );
+  }
+  return euro(v);
+}
+
 export function arrotonda(n: number): number {
   return Math.round((n + Number.EPSILON) * 100) / 100;
 }
