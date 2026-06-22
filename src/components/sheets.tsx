@@ -17,7 +17,7 @@ import {
   Sezione, Sheet, SheetFooter, SheetRow, SheetStagger, Stepper, TileSelect, type Tile,
 } from "@/components/ui";
 import { etichetta } from "@/lib/dominio";
-import type { CategoriaSpesa, MetodoPagamento, Modalita, RuoloOperatore, StatoAttrezzo, TipoCompenso, TipoPreventivo } from "@/lib/dominio";
+import type { CategoriaSpesa, MetodoPagamento, RuoloOperatore, StatoAttrezzo, TipoCompenso, TipoPreventivo } from "@/lib/dominio";
 import { ENTITA } from "@/lib/entita";
 import { inizialiDa } from "@/lib/codice-parlante";
 import { libroOperatore } from "@/lib/squadra";
@@ -82,11 +82,6 @@ function CreaMenu() {
 }
 
 /* ============================== CLIENTE ============================= */
-const MODALITA_TILE: Tile[] = [
-  { value: "preventivo", label: "A preventivo", icona: <ReceiptText size={18} /> },
-  { value: "ore", label: "A ore", icona: <Clock size={18} /> },
-  { value: "misto", label: "Misto", icona: <Layers size={18} /> },
-];
 function ClienteSheet() { const { aperto, ctx, seq, chiudi } = useSheet("cliente"); return <ClienteForm key={seq} aperto={aperto} ctx={ctx} chiudi={chiudi} />; }
 function ClienteForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; chiudi: () => void }) {
   const db = useStore((s) => s.db);
@@ -98,7 +93,6 @@ function ClienteForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
   const [v, setV] = useState({
     nome: esistente?.nome ?? "", cognome: esistente?.cognome ?? "", telefono: esistente?.telefono ?? "",
     email: esistente?.email ?? "", luogo: esistente?.luogo ?? "",
-    modalitaPredefinita: (esistente?.modalitaPredefinita ?? "preventivo") as Modalita,
     tariffaOraria: esistente?.tariffaOraria != null ? String(esistente.tariffaOraria) : "",
   });
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
@@ -108,7 +102,7 @@ function ClienteForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
     e.preventDefault();
     const nome = v.nome.trim() || "Cliente";
     const cognome = v.cognome.trim();
-    const dati = { telefono: v.telefono || null, email: v.email || null, luogo: v.luogo || null, tariffaOraria: num(v.tariffaOraria), modalitaPredefinita: v.modalitaPredefinita, note: esistente?.note ?? null };
+    const dati = { telefono: v.telefono || null, email: v.email || null, luogo: v.luogo || null, tariffaOraria: num(v.tariffaOraria), modalitaPredefinita: esistente?.modalitaPredefinita ?? "misto", note: esistente?.note ?? null };
     if (esistente) { aggiornaCliente(esistente.id, { nome, cognome, ...dati }); mostra("Cliente aggiornato!"); chiudi(); }
     else { const id = creaCliente({ nome, cognome, ...dati }); festa("cliente"); mostra("Radice piantata 🌱"); chiudi(); navigate(`/cliente/${id}`); }
   }
@@ -118,7 +112,7 @@ function ClienteForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
         <AvatarBianco nome={nomeCompl} />
         <div className="min-w-0"><div className="truncate font-display font-bold leading-tight">{nomeCompl}</div><div className="mt-1 inline-block rounded-md bg-white/15 px-2 py-0.5 font-mono text-[0.7rem]">{codiceProvv}</div></div>
       </div>
-      <div className="mt-3 text-[0.72rem] text-white/80">{etichetta(v.modalitaPredefinita)}{v.tariffaOraria ? ` · ${v.tariffaOraria} €/h` : ""}</div>
+      {v.tariffaOraria && <div className="mt-3 text-[0.72rem] text-white/80">{v.tariffaOraria} €/h</div>}
     </ScenaCard>
   );
   return (
@@ -136,9 +130,9 @@ function ClienteForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
             <CampoIcona icona={<Mail size={17} />} label="Email" type="email" value={v.email} onChange={set("email")} placeholder="mario@email.it" />
             <CampoIcona icona={<MapPin size={17} />} label="Luogo" value={v.luogo} onChange={set("luogo")} placeholder="Villa Rossi, Marina di Campo" />
           </Sezione></SheetRow>
-          <SheetRow><Sezione icona={<ReceiptText size={15} />} titolo="Accordo economico">
-            <TileSelect tinta="cliente" cols={3} value={v.modalitaPredefinita} onChange={(val) => setV((s) => ({ ...s, modalitaPredefinita: val as Modalita }))} options={MODALITA_TILE} />
-            <CampoIcona icona={<Euro size={17} />} label="Tariffa oraria (€/h)" type="number" step="0.01" inputMode="decimal" value={v.tariffaOraria} onChange={set("tariffaOraria")} placeholder="30" />
+          <SheetRow><Sezione icona={<Euro size={15} />} titolo="Tariffa oraria">
+            <CampoIcona icona={<Euro size={17} />} label="€/ora (per i lavori a ore)" type="number" step="0.01" inputMode="decimal" value={v.tariffaOraria} onChange={set("tariffaOraria")} placeholder="30" />
+            <p className="px-1 text-[0.72rem] text-muted">Il tipo (preventivo o a ore) lo scegli quando crei il lavoro.</p>
           </Sezione></SheetRow>
           <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Crea cliente"}</Button></SheetFooter></SheetRow>
         </SheetStagger>

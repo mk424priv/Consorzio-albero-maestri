@@ -153,8 +153,7 @@ export function ClienteScheda() {
                 <span className={`inline-flex items-center gap-1 rounded-full bg-gradient-to-r ${livello.grad} px-2 py-0.5 text-[0.66rem] font-bold text-white shadow-sm`}>
                   <Sparkles size={11} /> {livello.nome}
                 </span>
-                <Badge tono="brand">{etichetta(cliente.modalitaPredefinita)}</Badge>
-                {cliente.tariffaOraria ? <span className="text-[0.76rem] text-muted">{euro(cliente.tariffaOraria)}/h</span> : null}
+                {cliente.tariffaOraria ? <Badge tono="brand">{euro(cliente.tariffaOraria)}/h</Badge> : null}
               </div>
 
               {/* contatti */}

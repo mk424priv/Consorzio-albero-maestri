@@ -51,7 +51,7 @@ import {
   Tr,
 } from "@/components/ui";
 
-type Filtro = "tutti" | "da_incassare" | "in_ritardo" | "ore" | "preventivo";
+type Filtro = "tutti" | "da_incassare" | "in_ritardo";
 type Ordine = "nome" | "saldo" | "recente";
 
 function prossimoLavoro(lavori: Lavoro[]): Lavoro | undefined {
@@ -88,8 +88,6 @@ export function Spazio() {
       if (fl && !`${d.cliente.nome} ${d.cliente.cognome} ${d.cliente.luogo ?? ""}`.toLowerCase().includes(fl)) return false;
       if (filtro === "da_incassare") return d.saldo > 0;
       if (filtro === "in_ritardo") return d.inRitardo;
-      if (filtro === "ore") return d.cliente.modalitaPredefinita === "ore";
-      if (filtro === "preventivo") return d.cliente.modalitaPredefinita === "preventivo";
       return true;
     });
     out = out.sort((a, b) => {
@@ -104,8 +102,6 @@ export function Spazio() {
     { k: "tutti", label: "Tutti" },
     { k: "da_incassare", label: "Da incassare" },
     { k: "in_ritardo", label: "In ritardo" },
-    { k: "ore", label: "A ore" },
-    { k: "preventivo", label: "A preventivo" },
   ];
 
   // dati per i widget del cruscotto
@@ -279,7 +275,7 @@ function ClienteCard({ cliente, codice, parti, saldo, prossimo, inRitardo }: Rig
           <h3 className="truncate font-display text-[1.05rem] font-bold leading-tight text-ink">{cliente.nome} {cliente.cognome}</h3>
           <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
             <Codice codice={codice} />
-            <span className="text-[0.72rem] text-muted">{etichetta(cliente.modalitaPredefinita)}</span>
+            {cliente.tariffaOraria ? <span className="text-[0.72rem] text-muted">{euro(cliente.tariffaOraria)}/h</span> : null}
           </div>
         </div>
         {saldo > 0 ? (
@@ -375,7 +371,7 @@ function TabellaClienti({ righe }: { righe: RigaCliente[] }) {
         <tr>
           <Th>Cliente</Th>
           <Th>Codice</Th>
-          <Th className="hidden md:table-cell">Accordo</Th>
+          <Th className="hidden md:table-cell">Tariffa</Th>
           <Th className="hidden md:table-cell">Prossimo lavoro</Th>
           <Th className="text-right">Saldo</Th>
           <Th>Stato</Th>
@@ -391,7 +387,7 @@ function TabellaClienti({ righe }: { righe: RigaCliente[] }) {
               </div>
             </Td>
             <Td><Codice codice={codice} /></Td>
-            <Td className="hidden text-muted md:table-cell">{etichetta(cliente.modalitaPredefinita)}</Td>
+            <Td className="hidden text-muted md:table-cell">{cliente.tariffaOraria ? `${euro(cliente.tariffaOraria)}/h` : "—"}</Td>
             <Td className="hidden text-muted md:table-cell">{prossimo ? `${dataIT(prossimo.data).slice(0, 5)} · ${prossimo.titolo}` : "—"}</Td>
             <Td className="text-right">{saldo > 0 ? <b className="text-danger">{euro(saldo)}</b> : <span className="text-muted">—</span>}</Td>
             <Td>{saldo > 0 ? <Badge tono={inRitardo ? "danger" : "warn"}>{inRitardo ? "In ritardo" : "Aperto"}</Badge> : <Badge tono="success">In pari</Badge>}</Td>
