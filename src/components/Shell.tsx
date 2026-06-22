@@ -3,7 +3,10 @@ import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "reac
 import { motion } from "framer-motion";
 import {
   CalendarDays,
+  Cloud,
+  CloudOff,
   LayoutDashboard,
+  Loader2,
   LogOut,
   Plus,
   RefreshCw,
@@ -19,6 +22,7 @@ import { tap } from "@/lib/motion";
 import { useStore } from "@/store/store";
 import { useUI } from "@/store/ui";
 import { useToast } from "@/store/toast";
+import { useSync } from "@/lib/sync";
 import { Menu } from "@/components/ui";
 import { SheetHost } from "@/components/sheets";
 import { ConfirmHost } from "@/components/ui";
@@ -70,6 +74,14 @@ function ProfiloMenu() {
       ]}
     />
   );
+}
+
+function SyncBadge() {
+  const stato = useSync((s) => s.stato);
+  if (stato === "off") return null;
+  if (stato === "collego") return <span title="Sincronizzo…" className="grid h-9 w-9 place-items-center text-muted"><Loader2 size={17} className="animate-spin" /></span>;
+  if (stato === "errore") return <span title="Errore di sincronizzazione" className="grid h-9 w-9 place-items-center text-danger"><CloudOff size={17} /></span>;
+  return <span title="Sincronizzato sul cloud" className="grid h-9 w-9 place-items-center text-brand-500"><Cloud size={17} /></span>;
 }
 
 function RicercaInput() {
@@ -171,6 +183,7 @@ function AppBar() {
     <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-surface/80 px-4 py-2.5 backdrop-blur pt-safe">
       <div className="lg:hidden"><Logo compact /></div>
       <div className="flex flex-1 justify-center lg:justify-start"><RicercaInput /></div>
+      <SyncBadge />
       <div className="lg:hidden"><ProfiloMenu /></div>
     </header>
   );
