@@ -224,7 +224,7 @@ function LavoroForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; c
     durata: esistente?.durataPrevistaOre != null ? String(esistente.durataPrevistaOre) : "",
     tipoCompenso: (esistente?.tipoCompenso ?? "preventivo") as TipoCompenso,
     stato: (esistente?.stato ?? "da_fare") as "da_fare" | "in_corso" | "fatto",
-    operatoreId: esistente?.operatoreId ?? "",
+    operatoreId: esistente?.operatoreId ?? ctx.operatoreId ?? "",
     luogo: esistente?.luogo ?? "",
   });
   const oreReali = esistente ? db.ore.filter((o) => o.lavoroId === esistente.id).reduce((a, o) => a + o.ore, 0) : 0;

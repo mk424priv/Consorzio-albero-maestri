@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowLeft, ChevronRight, Clock, HandCoins, Hammer, MoreVertical, Pencil, Trash2, Users } from "lucide-react";
+import { ArrowLeft, ChevronRight, Clock, HandCoins, Hammer, MoreVertical, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { useStore } from "@/store/store";
 import { useUI } from "@/store/ui";
 import { useToast } from "@/store/toast";
@@ -80,12 +80,16 @@ export function OperatoreScheda() {
         <StatCard accent="operatore" label="Ore" valore={<Conta valore={libro.ore} suffix=" h" />} icona={<Clock size={15} />} />
       </div>
 
-      {/* azione primaria */}
-      {libro.saldo > 0 ? (
-        <Button variante="primary" onClick={() => apri("compenso", { operatoreId: id })} className="mb-5 w-full sm:w-auto"><HandCoins size={16} /> Paga {euro(libro.saldo)}</Button>
-      ) : (
-        <Button variante="soft" onClick={() => apri("compenso", { operatoreId: id })} className="mb-5 w-full sm:w-auto"><HandCoins size={16} /> Registra compenso</Button>
-      )}
+      {/* azioni rapide — tutto ciò che riguarda l'operatore, da qui */}
+      <div className="mb-5 grid grid-cols-3 gap-2">
+        <Button variante="soft" onClick={() => apri("lavoro", { operatoreId: id })}><Hammer size={16} /> Lavoro</Button>
+        <Button variante="soft" onClick={() => apri("ore", { operatoreId: id })}><Clock size={16} /> Ore</Button>
+        {libro.saldo > 0 ? (
+          <Button variante="primary" onClick={() => apri("compenso", { operatoreId: id })}><HandCoins size={16} /> Paga</Button>
+        ) : (
+          <Button variante="soft" onClick={() => apri("compenso", { operatoreId: id })}><HandCoins size={16} /> Compenso</Button>
+        )}
+      </div>
 
       {/* TUTTO SU UNO SCHERMO — schede */}
       <Segmented voci={TABS} attivo={tab} onChange={setTab} className="mb-4" />
@@ -102,10 +106,13 @@ export function OperatoreScheda() {
 function SezioneLavori({ id }: { id: string }) {
   const db = useStore((s) => s.db);
   const apriScheda = useUI((s) => s.apriSchedaLavoro);
+  const apri = useUI((s) => s.apri);
   const lavori = useMemo(() => db.lavori.filter((l) => l.operatoreId === id).sort((a, b) => b.data.localeCompare(a.data)), [db, id]);
   const nomeCliente = (cid: string) => { const c = db.clienti.find((x) => x.id === cid); return c ? `${c.nome} ${c.cognome}` : "—"; };
-  if (lavori.length === 0) return <EmptyState icona={<Hammer size={24} />} testo="Nessun lavoro assegnato." />;
   return (
+    <div>
+      <div className="mb-3 flex justify-end"><Button variante="soft" dim="sm" onClick={() => apri("lavoro", { operatoreId: id })}><Plus size={15} /> Lavoro</Button></div>
+      {lavori.length === 0 ? <EmptyState icona={<Hammer size={24} />} testo="Nessun lavoro assegnato." /> : (
     <Card className="divide-y divide-line overflow-hidden">
       {lavori.map((l) => (
         <button key={l.id} onClick={() => apriScheda(l.id)} className="flex w-full items-center gap-3 p-3.5 text-left transition hover:bg-brand-50/50">
@@ -119,6 +126,8 @@ function SezioneLavori({ id }: { id: string }) {
         </button>
       ))}
     </Card>
+      )}
+    </div>
   );
 }
 
