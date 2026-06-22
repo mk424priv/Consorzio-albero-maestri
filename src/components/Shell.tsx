@@ -181,10 +181,10 @@ export function AppShell() {
         <AppBar />
         <motion.main
           key={sezione}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
-          className="mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-5 lg:px-8 lg:pb-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.18, ease: "easeOut" }}
+          className="mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom,0px))] pt-4 lg:px-8 lg:pb-10"
         >
           <Outlet />
         </motion.main>

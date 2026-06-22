@@ -9,7 +9,7 @@ import { useUI } from "@/store/ui";
 import { dataIT } from "@/lib/format";
 import type { StatoLavoro } from "@/lib/dominio";
 import { ENTITA } from "@/lib/entita";
-import { Button, Card, FilterChip, IconButton, Menu, PageHeader, StatusBadge } from "@/components/ui";
+import { Button, Card, FilterChip, Menu, PageHero, StatusBadge } from "@/components/ui";
 
 const NOMI = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
 const CICLO = { da_fare: "in_corso", in_corso: "fatto", fatto: "da_fare" } as const;
@@ -53,16 +53,20 @@ export function Agenda() {
 
   return (
     <div>
-      <PageHeader
-        titolo="Agenda"
+      <PageHero
+        grad="bg-gradient-to-br from-lavoro-500 via-lavoro-500 to-lavoro-700"
+        eyebrow="Agenda"
+        titolo="La settimana"
         sottotitolo={`${dataIT(inizio)} — ${dataIT(fine)}`}
         icona={<CalendarDays size={22} />}
         azione={
-          <div className="flex items-center gap-2">
-            <IconButton label="Settimana precedente" onClick={() => setOffset((o) => o - 1)}><ChevronLeft size={18} /></IconButton>
-            {offset !== 0 && <Button dim="sm" onClick={() => setOffset(0)}>Oggi</Button>}
-            <IconButton label="Settimana successiva" onClick={() => setOffset((o) => o + 1)}><ChevronRight size={18} /></IconButton>
-            <Button variante="primary" onClick={() => apri("lavoro", { data: iso(oggi) })} className="hidden sm:inline-flex"><Plus size={16} /> Lavoro</Button>
+          <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 rounded-[11px] bg-white/12 p-1 backdrop-blur">
+              <button onClick={() => setOffset((o) => o - 1)} aria-label="Settimana precedente" className="grid h-8 w-8 place-items-center rounded-[8px] text-white/80 transition hover:bg-white/20"><ChevronLeft size={16} /></button>
+              {offset !== 0 && <button onClick={() => setOffset(0)} className="rounded-[8px] px-2 text-[0.78rem] font-bold text-white transition hover:bg-white/20">Oggi</button>}
+              <button onClick={() => setOffset((o) => o + 1)} aria-label="Settimana successiva" className="grid h-8 w-8 place-items-center rounded-[8px] text-white/80 transition hover:bg-white/20"><ChevronRight size={16} /></button>
+            </div>
+            <Button variante="glass" onClick={() => apri("lavoro", { data: iso(oggi) })} className="hidden sm:inline-flex"><Plus size={16} /> Lavoro</Button>
           </div>
         }
       />

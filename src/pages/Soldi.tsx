@@ -28,10 +28,9 @@ import {
   Card,
   EmptyState,
   FilterChip,
-  IconButton,
+  HeroStat,
   Importo,
-  Metric,
-  PageHeader,
+  PageHero,
   RigaEditabile,
   Segmented,
   StatusBadge,
@@ -66,22 +65,28 @@ export function Soldi() {
 
   return (
     <div>
-      <PageHeader titolo="Soldi" sottotitolo="Il flusso del denaro" icona={<Wallet size={22} />} />
-
-      {/* selettore mese */}
-      <div className="mb-4 flex items-center justify-between rounded-[14px] border border-line bg-surface p-1.5">
-        <IconButton label="Mese precedente" onClick={() => cambiaMese(-1)}><ChevronLeft size={18} /></IconButton>
-        <span className="text-sm font-bold text-ink">{meseAnnoIT(anno, mese)}</span>
-        <IconButton label="Mese successivo" onClick={() => cambiaMese(1)}><ChevronRight size={18} /></IconButton>
-      </div>
-
-      <div className="mb-5 grid grid-cols-2 gap-2.5 lg:grid-cols-5">
-        <Metric label="Incassato" valore={euro(r.incassato)} tono="success" />
-        <Metric label="Uscite" valore={euro(r.uscite)} tono="danger" nota="spese + compensi" />
-        <Metric label="Saldo" valore={euro(r.saldo)} tono={r.saldo >= 0 ? "success" : "danger"} />
-        <Metric label="Da incassare" valore={euro(r.daIncassare)} tono="warn" />
-        <Metric label="Da pagare squadra" valore={euro(r.daPagareSquadra)} tono="warn" />
-      </div>
+      <PageHero
+        grad="bg-gradient-to-br from-uscita-400 via-entrata-500 to-entrata-700"
+        eyebrow="Soldi"
+        titolo="Flusso del denaro"
+        sottotitolo="Entrate, uscite e saldo del mese"
+        icona={<Wallet size={22} />}
+        azione={
+          <div className="flex items-center gap-1 rounded-[11px] bg-white/12 p-1 backdrop-blur">
+            <button onClick={() => cambiaMese(-1)} aria-label="Mese precedente" className="grid h-8 w-8 place-items-center rounded-[8px] text-white/80 transition hover:bg-white/20"><ChevronLeft size={16} /></button>
+            <span className="min-w-[7.5rem] px-1 text-center text-[0.8rem] font-bold text-white">{meseAnnoIT(anno, mese)}</span>
+            <button onClick={() => cambiaMese(1)} aria-label="Mese successivo" className="grid h-8 w-8 place-items-center rounded-[8px] text-white/80 transition hover:bg-white/20"><ChevronRight size={16} /></button>
+          </div>
+        }
+      >
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
+          <HeroStat label="Incassato" valore={euro(r.incassato)} />
+          <HeroStat label="Uscite" valore={euro(r.uscite)} nota="spese + compensi" />
+          <HeroStat label="Saldo" valore={euro(r.saldo)} />
+          <HeroStat label="Da incassare" valore={euro(r.daIncassare)} />
+          <HeroStat label="Da pagare team" valore={euro(r.daPagareSquadra)} />
+        </div>
+      </PageHero>
 
       <Segmented voci={TABS} attivo={tab} onChange={setTab} className="mb-5" />
 

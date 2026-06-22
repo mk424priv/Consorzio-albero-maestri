@@ -5,15 +5,12 @@ import {
   CalendarClock,
   ChevronDown,
   Clock,
-  Hourglass,
   LayoutGrid,
   Phone,
   Plus,
   ReceiptText,
   Rows3,
   Sprout,
-  TrendingUp,
-  Users,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { listaContenitore, listaElemento } from "@/lib/motion";
@@ -32,10 +29,11 @@ import {
   Codice,
   EmptyState,
   FilterChip,
+  HeroStat,
   IconButton,
   LinkButton,
-  Metric,
-  PageHeader,
+  PageHero,
+  Select,
   StatusBadge,
   Table,
   Td,
@@ -102,38 +100,45 @@ export function Spazio() {
 
   return (
     <div>
-      <PageHeader
-        titolo="Spazio"
-        sottotitolo="I tuoi clienti, il cuore del lavoro"
+      <PageHero
+        grad="bg-gradient-to-br from-brand-500 via-brand-500 to-cliente-700"
+        eyebrow="Spazio di lavoro"
+        titolo="I tuoi clienti"
+        sottotitolo="Il cuore di tutto. Tocca un indicatore per filtrare."
         icona={<Sprout size={22} />}
         azione={
           <div className="hidden items-center gap-2 sm:flex">
-            <div className="flex rounded-[12px] border border-line bg-surface p-1">
-              <IconButton label="Carte" onClick={() => setVista("carte")} className={cn("h-8 w-8", vista === "carte" && "bg-brand-50 text-brand-600")}><LayoutGrid size={17} /></IconButton>
-              <IconButton label="Tabella" onClick={() => setVista("tabella")} className={cn("h-8 w-8", vista === "tabella" && "bg-brand-50 text-brand-600")}><Rows3 size={17} /></IconButton>
+            <div className="flex rounded-[11px] bg-white/12 p-1 backdrop-blur">
+              <button onClick={() => setVista("carte")} aria-label="Carte" className={cn("grid h-8 w-8 place-items-center rounded-[8px] text-white/75 transition", vista === "carte" && "bg-white/25 text-white")}><LayoutGrid size={16} /></button>
+              <button onClick={() => setVista("tabella")} aria-label="Tabella" className={cn("grid h-8 w-8 place-items-center rounded-[8px] text-white/75 transition", vista === "tabella" && "bg-white/25 text-white")}><Rows3 size={16} /></button>
             </div>
-            <Button variante="primary" onClick={() => apri("cliente")}><Plus size={17} /> Nuovo cliente</Button>
+            <Button variante="glass" onClick={() => apri("cliente")}><Plus size={16} /> Nuovo cliente</Button>
           </div>
         }
-      />
-
-      {/* micro-indicatori */}
-      <div className="mb-5 grid grid-cols-2 gap-2.5 lg:grid-cols-4">
-        <Metric label="Da incassare" valore={euro(pan.daIncassare)} tono="warn" icona={<Hourglass size={15} />} onClick={() => setFiltro("da_incassare")} nota={pan.clientiInRitardo ? `${pan.clientiInRitardo} in ritardo` : "tutto in regola"} />
-        <Metric label="Incassato (mese)" valore={euro(pan.incassatoMese)} tono="success" icona={<TrendingUp size={15} />} onClick={() => navigate("/soldi")} />
-        <Metric label="Lavori oggi" valore={String(pan.lavoriOggi)} tono="brand" icona={<CalendarClock size={15} />} onClick={() => navigate("/agenda")} />
-        <Metric label="Da pagare squadra" valore={euro(pan.daPagareSquadra)} tono="warn" icona={<Users size={15} />} onClick={() => navigate("/squadra")} />
-      </div>
+      >
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <HeroStat label="Da incassare" valore={euro(pan.daIncassare)} nota={pan.clientiInRitardo ? `${pan.clientiInRitardo} in ritardo` : "in regola"} onClick={() => setFiltro("da_incassare")} />
+          <HeroStat label="Incassato mese" valore={euro(pan.incassatoMese)} onClick={() => navigate("/soldi")} />
+          <HeroStat label="Lavori oggi" valore={String(pan.lavoriOggi)} onClick={() => navigate("/agenda")} />
+          <HeroStat label="Da pagare team" valore={euro(pan.daPagareSquadra)} onClick={() => navigate("/squadra")} />
+        </div>
+      </PageHero>
 
       {/* filtri */}
       <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         {FILTRI.map((f) => <FilterChip key={f.k} attivo={filtro === f.k} onClick={() => setFiltro(f.k)}>{f.label}</FilterChip>)}
-        <div className="ml-auto flex shrink-0 items-center gap-2">
-          <select value={ordine} onChange={(e) => setOrdine(e.target.value as Ordine)} className="h-9 rounded-full border border-line bg-surface px-3 text-[0.8rem] font-semibold text-muted">
-            <option value="nome">Ordina: Nome</option>
-            <option value="saldo">Ordina: Saldo</option>
-            <option value="recente">Ordina: Recente</option>
-          </select>
+        <div className="ml-auto w-36 shrink-0">
+          <Select
+            value={ordine}
+            onChange={(v) => setOrdine(v as Ordine)}
+            className="!h-9 !rounded-full"
+            ariaLabel="Ordina"
+            options={[
+              { value: "nome", label: "Ordina: Nome" },
+              { value: "saldo", label: "Ordina: Saldo" },
+              { value: "recente", label: "Ordina: Recente" },
+            ]}
+          />
         </div>
       </div>
 

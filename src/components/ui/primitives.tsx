@@ -15,7 +15,7 @@ import { etichetta } from "@/lib/dominio";
 import { euro } from "@/lib/format";
 
 /* ------------------------------- Button ------------------------------- */
-type Variante = "primary" | "soft" | "ghost" | "outline" | "danger";
+type Variante = "primary" | "soft" | "ghost" | "outline" | "danger" | "glass";
 type Dim = "sm" | "md" | "lg" | "icon";
 
 const VAR: Record<Variante, string> = {
@@ -25,12 +25,13 @@ const VAR: Record<Variante, string> = {
   ghost: "bg-transparent text-ink-soft hover:bg-brand-50 hover:text-brand-600 border border-transparent",
   outline: "bg-surface text-ink hover:bg-surface-2 border border-line-strong",
   danger: "bg-danger-soft text-danger hover:brightness-95 border border-transparent",
+  glass: "bg-white/15 text-white hover:bg-white/25 border border-white/25 backdrop-blur",
 };
 const DIM: Record<Dim, string> = {
-  sm: "h-9 px-3 text-[0.8rem] rounded-[10px] gap-1.5",
-  md: "h-11 px-4 text-sm rounded-[12px] gap-2",
-  lg: "h-12 px-5 text-[0.95rem] rounded-[14px] gap-2",
-  icon: "h-10 w-10 rounded-[12px] justify-center",
+  sm: "h-8 px-2.5 text-[0.78rem] rounded-[9px] gap-1.5",
+  md: "h-10 px-3.5 text-[0.82rem] rounded-[10px] gap-1.5",
+  lg: "h-11 px-5 text-sm rounded-[12px] gap-2",
+  icon: "h-9 w-9 rounded-[10px] justify-center",
 };
 
 export function Button({
@@ -146,10 +147,10 @@ export function Avatar({
     .map((p) => p[0]?.toUpperCase())
     .join("");
   const dims = {
-    sm: "h-8 w-8 text-[0.7rem]",
-    md: "h-10 w-10 text-xs",
-    lg: "h-12 w-12 text-sm",
-    xl: "h-16 w-16 text-lg",
+    sm: "h-7 w-7 text-[0.62rem]",
+    md: "h-9 w-9 text-[0.7rem]",
+    lg: "h-11 w-11 text-[0.8rem]",
+    xl: "h-14 w-14 text-base",
   }[size];
   return (
     <span
@@ -244,16 +245,45 @@ export function Metric({
   const body = (
     <>
       <div className="flex items-start justify-between gap-2">
-        <span className="text-[0.72rem] font-semibold uppercase tracking-wide text-muted">{label}</span>
-        {icona && <span className={cn("grid h-7 w-7 place-items-center rounded-[9px]", TONO_CLASSI[tono])}>{icona}</span>}
+        <span className="text-[0.68rem] font-semibold uppercase tracking-wide text-muted">{label}</span>
+        {icona && <span className={cn("grid h-7 w-7 place-items-center rounded-[8px]", TONO_CLASSI[tono])}>{icona}</span>}
       </div>
-      <div className="mt-1.5 text-[1.45rem] font-extrabold leading-none tracking-tight text-ink">{valore}</div>
-      {nota && <div className="mt-1 text-[0.72rem] text-muted">{nota}</div>}
+      <div className="mt-1 text-[1.2rem] font-extrabold leading-none tracking-tight text-ink">{valore}</div>
+      {nota && <div className="mt-1 text-[0.68rem] text-muted">{nota}</div>}
     </>
   );
-  const cls = "rounded-[var(--radius-md)] border border-line bg-surface p-3.5 text-left shadow-[var(--shadow-sm)]";
+  const cls = "rounded-[var(--radius-md)] border border-line bg-surface p-3 text-left shadow-[var(--shadow-sm)]";
   return onClick ? (
     <motion.button whileTap={tapSoft} onClick={onClick} className={cn(cls, "transition-shadow hover:shadow-[var(--shadow-md)]")}>
+      {body}
+    </motion.button>
+  ) : (
+    <div className={cls}>{body}</div>
+  );
+}
+
+// Tile statistica dentro un PageHero (sfondo colorato).
+export function HeroStat({
+  label,
+  valore,
+  nota,
+  onClick,
+}: {
+  label: string;
+  valore: string;
+  nota?: string;
+  onClick?: () => void;
+}) {
+  const body = (
+    <>
+      <div className="text-[0.6rem] font-bold uppercase tracking-wide text-white/65">{label}</div>
+      <div className="mt-0.5 text-[1.02rem] font-extrabold leading-none text-white">{valore}</div>
+      {nota && <div className="mt-0.5 text-[0.62rem] text-white/65">{nota}</div>}
+    </>
+  );
+  const cls = "rounded-[13px] border border-white/15 bg-white/12 px-3 py-2.5 text-left backdrop-blur";
+  return onClick ? (
+    <motion.button whileTap={tapSoft} onClick={onClick} className={cn(cls, "transition-colors hover:bg-white/20")}>
       {body}
     </motion.button>
   ) : (
@@ -308,20 +338,63 @@ export function PageHeader({
   azione?: ReactNode;
 }) {
   return (
-    <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-      <div className="flex items-center gap-3">
+    <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+      <div className="flex items-center gap-2.5">
         {icona && (
-          <span className="grid h-11 w-11 place-items-center rounded-[var(--radius-md)] bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-[var(--shadow-glow)]">
+          <span className="grid h-9 w-9 place-items-center rounded-[11px] bg-gradient-to-br from-brand-400 to-brand-600 text-white shadow-[var(--shadow-glow)]">
             {icona}
           </span>
         )}
         <div>
-          <h1 className="text-[1.55rem] font-extrabold leading-tight text-ink">{titolo}</h1>
-          {sottotitolo && <p className="mt-0.5 text-sm text-muted">{sottotitolo}</p>}
+          <h1 className="text-[1.3rem] font-extrabold leading-tight text-ink">{titolo}</h1>
+          {sottotitolo && <p className="mt-0.5 text-[0.82rem] text-muted">{sottotitolo}</p>}
         </div>
       </div>
       {azione && <div className="flex flex-wrap items-center gap-2">{azione}</div>}
     </div>
+  );
+}
+
+// Hero a tutta larghezza con tinta della pagina: dà identità a ogni schermata.
+export function PageHero({
+  grad,
+  eyebrow,
+  titolo,
+  sottotitolo,
+  icona,
+  azione,
+  children,
+}: {
+  grad: string;
+  eyebrow?: string;
+  titolo: string;
+  sottotitolo?: string;
+  icona?: ReactNode;
+  azione?: ReactNode;
+  children?: ReactNode;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
+      className={cn("relative mb-5 overflow-hidden rounded-[var(--radius-xl)] p-5 text-white shadow-[var(--shadow-md)]", grad)}
+    >
+      <div className="pointer-events-none absolute -right-14 -top-16 h-44 w-44 rounded-full bg-white/15 blur-2xl" />
+      <div className="pointer-events-none absolute -bottom-20 -left-10 h-44 w-44 rounded-full bg-black/10 blur-2xl" />
+      <div className="relative flex items-start justify-between gap-3">
+        <div className="flex items-center gap-3">
+          {icona && <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] bg-white/15 backdrop-blur">{icona}</span>}
+          <div className="min-w-0">
+            {eyebrow && <div className="text-[0.66rem] font-bold uppercase tracking-[0.12em] text-white/70">{eyebrow}</div>}
+            <h1 className="text-xl font-extrabold leading-tight">{titolo}</h1>
+            {sottotitolo && <p className="mt-0.5 text-[0.82rem] text-white/85">{sottotitolo}</p>}
+          </div>
+        </div>
+        {azione && <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">{azione}</div>}
+      </div>
+      {children && <div className="relative mt-4">{children}</div>}
+    </motion.div>
   );
 }
 

@@ -18,7 +18,7 @@ import {
 import { useStore } from "@/store/store";
 import { useUI, type SheetCtx, type SheetTipo } from "@/store/ui";
 import { useToast } from "@/store/toast";
-import { Button, Field, Input, Select, Sheet, SheetFooter, Textarea } from "@/components/ui";
+import { Button, Field, Input, Select, Sheet, SheetFooter, Textarea, type OpzioneSelect } from "@/components/ui";
 import {
   CATEGORIA_SPESA,
   METODO_PAGAMENTO,
@@ -33,6 +33,7 @@ import type { CategoriaSpesa, MetodoPagamento, Modalita, RuoloOperatore, StatoAt
 import { ENTITA } from "@/lib/entita";
 import { libroOperatore } from "@/lib/squadra";
 import { euro } from "@/lib/format";
+import type { Database } from "@/lib/types";
 
 const oggiISO = () => new Date().toISOString().slice(0, 10);
 const num = (s: string): number | null => {
@@ -41,6 +42,15 @@ const num = (s: string): number | null => {
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
 };
+const opzEnum = (arr: readonly string[]): OpzioneSelect[] => arr.map((x) => ({ value: x, label: etichetta(x) }));
+const opzClienti = (db: Database, nessuno?: string): OpzioneSelect[] => [
+  ...(nessuno ? [{ value: "", label: nessuno }] : []),
+  ...db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` })),
+];
+const opzOperatori = (db: Database, nessuno?: string): OpzioneSelect[] => [
+  ...(nessuno ? [{ value: "", label: nessuno }] : []),
+  ...db.operatori.filter((o) => o.attivo).map((o) => ({ value: o.id, label: o.nome })),
+];
 
 function useSheet(tipo: SheetTipo) {
   const sheet = useUI((s) => s.sheet);
@@ -69,7 +79,7 @@ function CreaMenu() {
           <button
             key={v.tipo}
             onClick={() => apri(v.tipo)}
-            className="flex flex-col items-center gap-2 rounded-[16px] border border-line bg-surface p-4 text-sm font-semibold text-ink transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--shadow-md)]"
+            className="flex flex-col items-center gap-2 rounded-[16px] border border-line bg-surface p-4 text-[0.82rem] font-semibold text-ink transition hover:-translate-y-0.5 hover:border-line-strong hover:shadow-[var(--shadow-md)]"
           >
             <span className={`grid h-11 w-11 place-items-center rounded-[13px] ${v.classi}`}><v.Icona size={20} /></span>
             {v.label}
@@ -107,41 +117,29 @@ function ClienteBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     tariffaOraria: esistente?.tariffaOraria != null ? String(esistente.tariffaOraria) : "",
     note: esistente?.note ?? "",
   });
-  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
 
   function salva(e: React.FormEvent) {
     e.preventDefault();
     if (!v.nome.trim() || !v.cognome.trim()) return mostra("Nome e cognome obbligatori.", "error");
-    const dati = {
-      telefono: v.telefono || null, email: v.email || null, luogo: v.luogo || null,
-      tariffaOraria: num(v.tariffaOraria), modalitaPredefinita: v.modalitaPredefinita, note: v.note || null,
-    };
-    if (esistente) {
-      aggiornaCliente(esistente.id, { nome: v.nome.trim(), cognome: v.cognome.trim(), ...dati });
-      mostra("Cliente aggiornato!");
-    } else {
-      const id = creaCliente({ nome: v.nome, cognome: v.cognome, ...dati });
-      mostra("Cliente creato!");
-      chiudi();
-      navigate(`/cliente/${id}`);
-      return;
-    }
-    chiudi();
+    const dati = { telefono: v.telefono || null, email: v.email || null, luogo: v.luogo || null, tariffaOraria: num(v.tariffaOraria), modalitaPredefinita: v.modalitaPredefinita, note: v.note || null };
+    if (esistente) { aggiornaCliente(esistente.id, { nome: v.nome.trim(), cognome: v.cognome.trim(), ...dati }); mostra("Cliente aggiornato!"); chiudi(); }
+    else { const id = creaCliente({ nome: v.nome, cognome: v.cognome, ...dati }); mostra("Cliente creato!"); chiudi(); navigate(`/cliente/${id}`); }
   }
 
   return (
-    <form className="grid gap-4" onSubmit={salva}>
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form className="grid gap-3.5" onSubmit={salva}>
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <Field label="Nome *"><Input value={v.nome} onChange={set("nome")} autoFocus /></Field>
         <Field label="Cognome *"><Input value={v.cognome} onChange={set("cognome")} /></Field>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <Field label="Telefono"><Input value={v.telefono} onChange={set("telefono")} /></Field>
         <Field label="Email"><Input type="email" value={v.email} onChange={set("email")} /></Field>
       </div>
       <Field label="Luogo"><Input value={v.luogo} onChange={set("luogo")} placeholder="es. Villa Rossi, Marina di Campo" /></Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Accordo economico"><Select value={v.modalitaPredefinita} onChange={set("modalitaPredefinita")}>{MODALITA.map((m) => <option key={m} value={m}>{etichetta(m)}</option>)}</Select></Field>
+      <div className="grid gap-3.5 sm:grid-cols-2">
+        <Field label="Accordo economico"><Select value={v.modalitaPredefinita} onChange={(val) => setV((s) => ({ ...s, modalitaPredefinita: val as Modalita }))} options={opzEnum(MODALITA)} /></Field>
         <Field label="Tariffa oraria (€/h)"><Input type="number" step="0.01" value={v.tariffaOraria} onChange={set("tariffaOraria")} placeholder="es. 30" /></Field>
       </div>
       <Field label="Note"><Textarea rows={2} value={v.note} onChange={set("note")} /></Field>
@@ -176,7 +174,7 @@ function OperatoreBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     telefono: esistente?.telefono ?? "",
     note: esistente?.note ?? "",
   });
-  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
 
   function salva(e: React.FormEvent) {
     e.preventDefault();
@@ -186,10 +184,10 @@ function OperatoreBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     else { const id = crea({ nome: v.nome, ...dati }); mostra("Operatore creato!"); chiudi(); navigate(`/operatore/${id}`); }
   }
   return (
-    <form className="grid gap-4" onSubmit={salva}>
+    <form className="grid gap-3.5" onSubmit={salva}>
       <Field label="Nome *"><Input value={v.nome} onChange={set("nome")} autoFocus /></Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Ruolo"><Select value={v.ruolo} onChange={set("ruolo")}>{RUOLO_OPERATORE.map((r) => <option key={r} value={r}>{etichetta(r)}</option>)}</Select></Field>
+      <div className="grid gap-3.5 sm:grid-cols-2">
+        <Field label="Ruolo"><Select value={v.ruolo} onChange={(val) => setV((s) => ({ ...s, ruolo: val as RuoloOperatore }))} options={opzEnum(RUOLO_OPERATORE)} /></Field>
         <Field label="Tariffa oraria (€/h)" hint="Quanto gli riconosci all'ora"><Input type="number" step="0.01" value={v.tariffaOraria} onChange={set("tariffaOraria")} placeholder="es. 16" /></Field>
       </div>
       <Field label="Telefono"><Input value={v.telefono} onChange={set("telefono")} /></Field>
@@ -225,28 +223,26 @@ function LavoroBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     operatoreId: esistente?.operatoreId ?? "",
     luogo: esistente?.luogo ?? "",
   });
-  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const sel = (k: keyof typeof v) => (val: string) => setV((s) => ({ ...s, [k]: val }));
 
   function salva(e: React.FormEvent) {
     e.preventDefault();
     if (!v.clienteId || !v.titolo.trim()) return mostra("Cliente e titolo obbligatori.", "error");
     const dati = { clienteId: v.clienteId, titolo: v.titolo.trim(), data: v.data, tipoCompenso: v.tipoCompenso, operatoreId: v.operatoreId || null, luogo: v.luogo || null };
-    if (esistente) { aggiorna(esistente.id, dati); mostra("Lavoro aggiornato!"); }
-    else { crea(dati); mostra("Lavoro aggiunto!"); }
+    if (esistente) { aggiorna(esistente.id, dati); mostra("Lavoro aggiornato!"); } else { crea(dati); mostra("Lavoro aggiunto!"); }
     chiudi();
   }
   return (
-    <form className="grid gap-4" onSubmit={salva}>
-      <Field label="Cliente *">
-        <Select value={v.clienteId} onChange={set("clienteId")}><option value="">— scegli —</option>{db.clienti.map((c) => <option key={c.id} value={c.id}>{c.nome} {c.cognome}</option>)}</Select>
-      </Field>
+    <form className="grid gap-3.5" onSubmit={salva}>
+      <Field label="Cliente *"><Select value={v.clienteId} onChange={sel("clienteId")} options={opzClienti(db)} /></Field>
       <Field label="Titolo *"><Input value={v.titolo} onChange={set("titolo")} placeholder="es. Potatura olivi" autoFocus /></Field>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <Field label="Data *"><Input type="date" value={v.data} onChange={set("data")} /></Field>
-        <Field label="Tipo compenso"><Select value={v.tipoCompenso} onChange={set("tipoCompenso")}>{TIPO_COMPENSO.map((t) => <option key={t} value={t}>{etichetta(t)}</option>)}</Select></Field>
+        <Field label="Tipo compenso"><Select value={v.tipoCompenso} onChange={(val) => setV((s) => ({ ...s, tipoCompenso: val as TipoCompenso }))} options={opzEnum(TIPO_COMPENSO)} /></Field>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Assegnato a"><Select value={v.operatoreId} onChange={set("operatoreId")}><option value="">— nessuno —</option>{db.operatori.filter((o) => o.attivo).map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}</Select></Field>
+      <div className="grid gap-3.5 sm:grid-cols-2">
+        <Field label="Assegnato a"><Select value={v.operatoreId} onChange={sel("operatoreId")} options={opzOperatori(db, "— nessuno —")} placeholder="— nessuno —" /></Field>
         <Field label="Luogo"><Input value={v.luogo} onChange={set("luogo")} /></Field>
       </div>
       <SheetFooter>
@@ -279,7 +275,7 @@ function PreventivoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) 
     dataScadenza: "",
     note: "",
   });
-  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
   function salva(e: React.FormEvent) {
     e.preventDefault();
     const tot = num(v.importoTotale);
@@ -289,16 +285,16 @@ function PreventivoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) 
     chiudi();
   }
   return (
-    <form className="grid gap-4" onSubmit={salva}>
-      <Field label="Cliente *"><Select value={v.clienteId} onChange={set("clienteId")}><option value="">— scegli —</option>{db.clienti.map((c) => <option key={c.id} value={c.id}>{c.nome} {c.cognome}</option>)}</Select></Field>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Tipo *"><Select value={v.tipo} onChange={set("tipo")}>{TIPO_PREVENTIVO.map((t) => <option key={t} value={t}>{etichetta(t)}</option>)}</Select></Field>
+    <form className="grid gap-3.5" onSubmit={salva}>
+      <Field label="Cliente *"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={opzClienti(db)} /></Field>
+      <div className="grid gap-3.5 sm:grid-cols-2">
+        <Field label="Tipo *"><Select value={v.tipo} onChange={(val) => setV((s) => ({ ...s, tipo: val as TipoPreventivo }))} options={opzEnum(TIPO_PREVENTIVO)} /></Field>
         <Field label="Importo totale (€) *"><Input type="number" step="0.01" value={v.importoTotale} onChange={set("importoTotale")} /></Field>
       </div>
       {v.tipo === "acconto_saldo" && (
         <Field label="Acconto (€)" hint="Saldo = totale − acconto. Vuoto = metà."><Input type="number" step="0.01" value={v.importoAcconto} onChange={set("importoAcconto")} /></Field>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <Field label="Data emissione"><Input type="date" value={v.dataEmissione} onChange={set("dataEmissione")} /></Field>
         <Field label="Scadenza incasso"><Input type="date" value={v.dataScadenza} onChange={set("dataScadenza")} /></Field>
       </div>
@@ -331,7 +327,7 @@ function OreBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     ore: "",
     note: "",
   });
-  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
   function salva(e: React.FormEvent) {
     e.preventDefault();
     const ore = num(v.ore);
@@ -341,13 +337,13 @@ function OreBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     chiudi();
   }
   return (
-    <form className="grid gap-4" onSubmit={salva}>
-      <Field label="Cliente *"><Select value={v.clienteId} onChange={set("clienteId")}><option value="">— scegli —</option>{db.clienti.map((c) => <option key={c.id} value={c.id}>{c.nome} {c.cognome}</option>)}</Select></Field>
-      <div className="grid grid-cols-2 gap-4">
+    <form className="grid gap-3.5" onSubmit={salva}>
+      <Field label="Cliente *"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={opzClienti(db)} /></Field>
+      <div className="grid grid-cols-2 gap-3.5">
         <Field label="Data"><Input type="date" value={v.data} onChange={set("data")} /></Field>
         <Field label="Ore *"><Input type="number" step="0.5" value={v.ore} onChange={set("ore")} placeholder="es. 3.5" autoFocus /></Field>
       </div>
-      <Field label="Operatore"><Select value={v.operatoreId} onChange={set("operatoreId")}><option value="">— nessuno —</option>{db.operatori.filter((o) => o.attivo).map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}</Select></Field>
+      <Field label="Operatore"><Select value={v.operatoreId} onChange={(val) => setV((s) => ({ ...s, operatoreId: val }))} options={opzOperatori(db, "— nessuno —")} placeholder="— nessuno —" /></Field>
       <Field label="Nota"><Input value={v.note} onChange={set("note")} /></Field>
       <SheetFooter>
         <Button type="button" onClick={chiudi}>Annulla</Button>
@@ -377,7 +373,7 @@ function SpesaBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     clienteId: ctx.clienteId ?? "",
     descrizione: "",
   });
-  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
   function salva(e: React.FormEvent) {
     e.preventDefault();
     const importo = num(v.importo);
@@ -387,14 +383,14 @@ function SpesaBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     chiudi();
   }
   return (
-    <form className="grid gap-4" onSubmit={salva}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Categoria"><Select value={v.categoria} onChange={set("categoria")}>{CATEGORIA_SPESA.map((c) => <option key={c} value={c}>{etichetta(c)}</option>)}</Select></Field>
+    <form className="grid gap-3.5" onSubmit={salva}>
+      <div className="grid gap-3.5 sm:grid-cols-2">
+        <Field label="Categoria"><Select value={v.categoria} onChange={(val) => setV((s) => ({ ...s, categoria: val as CategoriaSpesa }))} options={opzEnum(CATEGORIA_SPESA)} /></Field>
         <Field label="Importo (€) *"><Input type="number" step="0.01" value={v.importo} onChange={set("importo")} autoFocus /></Field>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <Field label="Data"><Input type="date" value={v.data} onChange={set("data")} /></Field>
-        <Field label="Cliente (facoltativo)"><Select value={v.clienteId} onChange={set("clienteId")}><option value="">— nessuno —</option>{db.clienti.map((c) => <option key={c.id} value={c.id}>{c.nome} {c.cognome}</option>)}</Select></Field>
+        <Field label="Cliente (facoltativo)"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={opzClienti(db, "— nessuno —")} placeholder="— nessuno —" /></Field>
       </div>
       <Field label="Descrizione"><Input value={v.descrizione} onChange={set("descrizione")} placeholder="es. Pieno furgone" /></Field>
       <SheetFooter>
@@ -419,7 +415,7 @@ function IncassoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
   const crea = useStore((s) => s.creaPagamento);
   const mostra = useToast((s) => s.mostra);
   const [v, setV] = useState({ clienteId: ctx.clienteId ?? "", importoAtteso: "", dataScadenza: "", note: "" });
-  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
   function salva(e: React.FormEvent) {
     e.preventDefault();
     const importo = num(v.importoAtteso);
@@ -429,9 +425,9 @@ function IncassoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     chiudi();
   }
   return (
-    <form className="grid gap-4" onSubmit={salva}>
-      <Field label="Cliente *"><Select value={v.clienteId} onChange={set("clienteId")}><option value="">— scegli —</option>{db.clienti.map((c) => <option key={c.id} value={c.id}>{c.nome} {c.cognome}</option>)}</Select></Field>
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form className="grid gap-3.5" onSubmit={salva}>
+      <Field label="Cliente *"><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={opzClienti(db)} /></Field>
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <Field label="Importo atteso (€) *"><Input type="number" step="0.01" value={v.importoAtteso} onChange={set("importoAtteso")} autoFocus /></Field>
         <Field label="Scadenza"><Input type="date" value={v.dataScadenza} onChange={set("dataScadenza")} /></Field>
       </div>
@@ -465,7 +461,7 @@ function CompensoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     metodo: "contanti" as MetodoPagamento,
     note: "",
   });
-  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
   function salva(e: React.FormEvent) {
     e.preventDefault();
     const importo = num(v.importo);
@@ -475,16 +471,22 @@ function CompensoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     chiudi();
   }
   return (
-    <form className="grid gap-4" onSubmit={salva}>
-      <Field label="Operatore *"><Select value={v.operatoreId} onChange={(e) => setV((s) => ({ ...s, operatoreId: e.target.value, importo: libroOperatore(db, e.target.value).saldo > 0 ? String(libroOperatore(db, e.target.value).saldo) : s.importo }))}><option value="">— scegli —</option>{db.operatori.filter((o) => o.attivo).map((o) => <option key={o.id} value={o.id}>{o.nome}</option>)}</Select></Field>
+    <form className="grid gap-3.5" onSubmit={salva}>
+      <Field label="Operatore *">
+        <Select
+          value={v.operatoreId}
+          onChange={(val) => setV((s) => ({ ...s, operatoreId: val, importo: libroOperatore(db, val).saldo > 0 ? String(libroOperatore(db, val).saldo) : s.importo }))}
+          options={opzOperatori(db)}
+        />
+      </Field>
       {v.operatoreId && (
-        <div className="rounded-[12px] bg-uscita-50 px-3.5 py-2.5 text-sm text-uscita-600">Saldo da pagare: <b>{euro(libroOperatore(db, v.operatoreId).saldo)}</b></div>
+        <div className="rounded-[11px] bg-uscita-50 px-3.5 py-2.5 text-[0.85rem] text-uscita-600">Saldo da pagare: <b>{euro(libroOperatore(db, v.operatoreId).saldo)}</b></div>
       )}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <Field label="Importo (€) *"><Input type="number" step="0.01" value={v.importo} onChange={set("importo")} autoFocus /></Field>
         <Field label="Data"><Input type="date" value={v.data} onChange={set("data")} /></Field>
       </div>
-      <Field label="Metodo"><Select value={v.metodo} onChange={set("metodo")}>{METODO_PAGAMENTO.map((m) => <option key={m} value={m}>{etichetta(m)}</option>)}</Select></Field>
+      <Field label="Metodo"><Select value={v.metodo} onChange={(val) => setV((s) => ({ ...s, metodo: val as MetodoPagamento }))} options={opzEnum(METODO_PAGAMENTO)} /></Field>
       <Field label="Note"><Input value={v.note} onChange={set("note")} /></Field>
       <SheetFooter>
         <Button type="button" onClick={chiudi}>Annulla</Button>
@@ -515,23 +517,22 @@ function AttrezzoBody({ ctx, chiudi }: { ctx: SheetCtx; chiudi: () => void }) {
     dataAcquisto: esistente?.dataAcquisto ?? "",
     stato: (esistente?.stato ?? "ok") as StatoAttrezzo,
   });
-  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
+  const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV((s) => ({ ...s, [k]: e.target.value }));
   function salva(e: React.FormEvent) {
     e.preventDefault();
     if (!v.nome.trim()) return mostra("Il nome è obbligatorio.", "error");
     const dati = { nome: v.nome.trim(), costoAcquisto: num(v.costoAcquisto), dataAcquisto: v.dataAcquisto || null, stato: v.stato };
-    if (esistente) { aggiorna(esistente.id, dati); mostra("Attrezzo aggiornato!"); }
-    else { crea(dati); mostra("Attrezzo aggiunto!"); }
+    if (esistente) { aggiorna(esistente.id, dati); mostra("Attrezzo aggiornato!"); } else { crea(dati); mostra("Attrezzo aggiunto!"); }
     chiudi();
   }
   return (
-    <form className="grid gap-4" onSubmit={salva}>
+    <form className="grid gap-3.5" onSubmit={salva}>
       <Field label="Nome *"><Input value={v.nome} onChange={set("nome")} autoFocus /></Field>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-3.5 sm:grid-cols-2">
         <Field label="Costo (€)"><Input type="number" step="0.01" value={v.costoAcquisto} onChange={set("costoAcquisto")} /></Field>
         <Field label="Data acquisto"><Input type="date" value={v.dataAcquisto} onChange={set("dataAcquisto")} /></Field>
       </div>
-      <Field label="Stato"><Select value={v.stato} onChange={set("stato")}>{STATO_ATTREZZO.map((s) => <option key={s} value={s}>{etichetta(s)}</option>)}</Select></Field>
+      <Field label="Stato"><Select value={v.stato} onChange={(val) => setV((s) => ({ ...s, stato: val as StatoAttrezzo }))} options={opzEnum(STATO_ATTREZZO)} /></Field>
       <SheetFooter>
         <Button type="button" onClick={chiudi}>Annulla</Button>
         <Button variante="primary" type="submit"><Save size={16} /> {esistente ? "Salva" : "Aggiungi"}</Button>

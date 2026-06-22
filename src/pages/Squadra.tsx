@@ -9,7 +9,7 @@ import { libroOperatore } from "@/lib/squadra";
 import { euro, ore as fmtOre } from "@/lib/format";
 import { etichetta } from "@/lib/dominio";
 import { ENTITA } from "@/lib/entita";
-import { Avatar, Badge, Button, EmptyState, LinkButton, Metric, PageHeader, StatusBadge } from "@/components/ui";
+import { Avatar, Badge, Button, EmptyState, HeroStat, LinkButton, PageHero, StatusBadge } from "@/components/ui";
 import { panoramicaSpazio } from "@/lib/movimenti";
 
 export function Squadra() {
@@ -25,18 +25,20 @@ export function Squadra() {
 
   return (
     <div>
-      <PageHeader
-        titolo="Squadra"
-        sottotitolo="Chi lavora con te e quanto gli devi"
+      <PageHero
+        grad="bg-gradient-to-br from-operatore-500 via-operatore-500 to-operatore-700"
+        eyebrow="Squadra"
+        titolo="Chi lavora con te"
+        sottotitolo="Ore, compensi e quanto resta da pagare"
         icona={<Users size={22} />}
-        azione={<Button variante="primary" onClick={() => apri("operatore")} className="hidden sm:inline-flex"><Plus size={17} /> Nuovo operatore</Button>}
-      />
-
-      <div className="mb-5 grid grid-cols-2 gap-2.5 lg:grid-cols-3">
-        <Metric label="Operatori attivi" valore={String(db.operatori.filter((o) => o.attivo).length)} tono="brand" icona={<Users size={15} />} />
-        <Metric label="Dovuto totale" valore={euro(totDovuto)} tono="neutral" />
-        <Metric label="Da pagare" valore={euro(pan.daPagareSquadra)} tono="warn" icona={<HandCoins size={15} />} />
-      </div>
+        azione={<Button variante="glass" onClick={() => apri("operatore")} className="hidden sm:inline-flex"><Plus size={16} /> Nuovo operatore</Button>}
+      >
+        <div className="grid grid-cols-3 gap-2">
+          <HeroStat label="Attivi" valore={String(db.operatori.filter((o) => o.attivo).length)} />
+          <HeroStat label="Dovuto totale" valore={euro(totDovuto)} />
+          <HeroStat label="Da pagare" valore={euro(pan.daPagareSquadra)} />
+        </div>
+      </PageHero>
 
       {operatori.length === 0 ? (
         <EmptyState icona={<Users size={26} />} titolo="Nessun operatore" testo="Aggiungi chi lavora con te per tracciare ore e compensi." azione={<Button variante="primary" onClick={() => apri("operatore")}><Plus size={16} /> Nuovo operatore</Button>} />

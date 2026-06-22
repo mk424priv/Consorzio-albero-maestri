@@ -33,46 +33,78 @@
   --color-lime: #84cc16;
   --color-lime-bright: #a3e635;
 
-  /* ---- Tinte entità ---- */
+  /* ---- Tinte entità (palette ampia) ---- */
   --color-cliente-50: #e9fbf0;
   --color-cliente-100: #cbf4dc;
+  --color-cliente-200: #a7e8c2;
+  --color-cliente-300: #6fd29c;
+  --color-cliente-400: #2fbd72;
   --color-cliente-500: #169d55;
   --color-cliente-600: #117f45;
+  --color-cliente-700: #0d5e34;
 
   --color-operatore-50: #e4fbf5;
   --color-operatore-100: #bff3e7;
+  --color-operatore-200: #92e6d6;
+  --color-operatore-300: #54d3bf;
+  --color-operatore-400: #1bb3a1;
   --color-operatore-500: #0d9488;
   --color-operatore-600: #0a766c;
+  --color-operatore-700: #08544c;
 
   --color-lavoro-50: #f0ecff;
   --color-lavoro-100: #e0d8ff;
+  --color-lavoro-200: #cbbcff;
+  --color-lavoro-300: #a78bff;
+  --color-lavoro-400: #8b6bfc;
   --color-lavoro-500: #7857fb;
   --color-lavoro-600: #6840ef;
+  --color-lavoro-700: #4f2fc0;
 
   --color-preventivo-50: #e7f3ff;
   --color-preventivo-100: #cce5ff;
+  --color-preventivo-200: #aed5ff;
+  --color-preventivo-300: #7bbcff;
+  --color-preventivo-400: #4aa1f7;
   --color-preventivo-500: #2589f5;
   --color-preventivo-600: #1a6fd0;
+  --color-preventivo-700: #1559a8;
 
   --color-entrata-50: #e7f8ec;
   --color-entrata-100: #c7efd3;
+  --color-entrata-200: #a7e3ba;
+  --color-entrata-300: #6ace8d;
+  --color-entrata-400: #34b563;
   --color-entrata-500: #16a34a;
   --color-entrata-600: #12803c;
+  --color-entrata-700: #0e6233;
 
   --color-uscita-50: #fff4e1;
   --color-uscita-100: #ffe5b8;
+  --color-uscita-200: #ffd98c;
+  --color-uscita-300: #ffc24d;
+  --color-uscita-400: #f5a300;
   --color-uscita-500: #e08600;
   --color-uscita-600: #b86b00;
+  --color-uscita-700: #8f5500;
 
   --color-spesa-50: #ffebef;
   --color-spesa-100: #ffd0d9;
+  --color-spesa-200: #ffb3c0;
+  --color-spesa-300: #ff7d92;
+  --color-spesa-400: #f2566f;
   --color-spesa-500: #e23a55;
   --color-spesa-600: #c12442;
+  --color-spesa-700: #971a33;
 
   --color-patrimonio-50: #f4f3f0;
   --color-patrimonio-100: #e6e3db;
+  --color-patrimonio-200: #d8d3c8;
+  --color-patrimonio-300: #b9b2a4;
+  --color-patrimonio-400: #968d7e;
   --color-patrimonio-500: #7c756a;
   --color-patrimonio-600: #5f594f;
+  --color-patrimonio-700: #45413a;
 
   /* ---- Semantici ---- */
   --color-success: #16a34a;
@@ -107,6 +139,8 @@
   }
   html {
     -webkit-text-size-adjust: 100%;
+    font-size: 15px; /* scala globale più compatta */
+    overflow-y: scroll; /* scrollbar sempre presente: niente "salto" tra pagine */
   }
   body {
     margin: 0;

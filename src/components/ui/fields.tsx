@@ -1,14 +1,15 @@
 import type {
   InputHTMLAttributes,
   ReactNode,
-  SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from "react";
 import * as SwitchPrimitive from "@radix-ui/react-switch";
+import * as SelectPrimitive from "@radix-ui/react-select";
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/cn";
 
 export const fieldCls =
-  "w-full rounded-[12px] border border-line-strong bg-surface px-3.5 text-sm text-ink transition-colors placeholder:text-muted/80 hover:border-brand-300 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100";
+  "w-full rounded-[11px] border border-line-strong bg-surface px-3 text-[0.85rem] text-ink transition-colors placeholder:text-muted/80 hover:border-brand-300 focus:border-brand-400 focus:outline-none focus:ring-4 focus:ring-brand-100";
 
 export function Field({
   label,
@@ -25,39 +26,92 @@ export function Field({
 }) {
   return (
     <div className={className}>
-      {label && <label className="mb-1.5 block text-[0.78rem] font-semibold text-ink-soft">{label}</label>}
+      {label && <label className="mb-1 block text-[0.74rem] font-semibold text-ink-soft">{label}</label>}
       {children}
       {errore ? (
-        <p className="mt-1 text-xs font-medium text-danger">{errore}</p>
+        <p className="mt-1 text-[0.74rem] font-medium text-danger">{errore}</p>
       ) : (
-        hint && <p className="mt-1 text-xs text-muted">{hint}</p>
+        hint && <p className="mt-1 text-[0.72rem] text-muted">{hint}</p>
       )}
     </div>
   );
 }
 
 export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
-  return <input {...props} className={cn(fieldCls, "h-11", props.className)} />;
+  return <input {...props} className={cn(fieldCls, "h-10", props.className)} />;
 }
 
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea {...props} className={cn(fieldCls, "py-2.5 leading-relaxed", props.className)} />;
+  return <textarea {...props} className={cn(fieldCls, "py-2 leading-relaxed", props.className)} />;
 }
 
-export function Select({ className, children, ...props }: SelectHTMLAttributes<HTMLSelectElement>) {
+/* ----------------------- Select custom (Radix) ----------------------- */
+export interface OpzioneSelect {
+  value: string;
+  label: string;
+  icona?: ReactNode;
+}
+
+const NONE = "∅"; // sentinella per il valore vuoto
+
+export function Select({
+  value,
+  onChange,
+  options,
+  placeholder = "— scegli —",
+  className,
+  ariaLabel,
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: OpzioneSelect[];
+  placeholder?: string;
+  className?: string;
+  ariaLabel?: string;
+}) {
+  const hasEmpty = options.some((o) => o.value === "");
+  const rootValue = value === "" ? (hasEmpty ? NONE : undefined) : value;
+
   return (
-    <div className="relative">
-      <select
-        {...props}
+    <SelectPrimitive.Root value={rootValue} onValueChange={(v) => onChange(v === NONE ? "" : v)}>
+      <SelectPrimitive.Trigger
+        aria-label={ariaLabel}
         className={cn(
           fieldCls,
-          "h-11 cursor-pointer appearance-none bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2216%22 height=%2216%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236a7a70%22 stroke-width=%222.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><polyline points=%226 9 12 15 18 9%22/></svg>')] bg-[length:16px] bg-[right_0.75rem_center] bg-no-repeat pr-9",
+          "inline-flex h-10 items-center justify-between gap-2 data-[placeholder]:text-muted",
           className,
         )}
       >
-        {children}
-      </select>
-    </div>
+        <span className="truncate"><SelectPrimitive.Value placeholder={placeholder} /></span>
+        <SelectPrimitive.Icon className="shrink-0 text-muted transition-transform data-[state=open]:rotate-180">
+          <ChevronDown size={16} />
+        </SelectPrimitive.Icon>
+      </SelectPrimitive.Trigger>
+
+      <SelectPrimitive.Portal>
+        <SelectPrimitive.Content
+          position="popper"
+          sideOffset={6}
+          className="z-[90] max-h-[18rem] min-w-[var(--radix-select-trigger-width)] origin-[var(--radix-select-content-transform-origin)] overflow-hidden rounded-[14px] border border-line bg-surface shadow-[var(--shadow-lg)] data-[state=open]:animate-[am-scale-in_0.16s_ease]"
+        >
+          <SelectPrimitive.Viewport className="p-1.5">
+            {options.map((o) => (
+              <SelectPrimitive.Item
+                key={o.value || NONE}
+                value={o.value === "" ? NONE : o.value}
+                className="relative flex cursor-pointer select-none items-center gap-2 rounded-[9px] py-2 pl-2.5 pr-8 text-[0.85rem] font-medium text-ink-soft outline-none transition-colors data-[highlighted]:bg-brand-50 data-[highlighted]:text-brand-600 data-[state=checked]:font-semibold data-[state=checked]:text-brand-600"
+              >
+                {o.icona && <span className="shrink-0">{o.icona}</span>}
+                <SelectPrimitive.ItemText>{o.label}</SelectPrimitive.ItemText>
+                <SelectPrimitive.ItemIndicator className="absolute right-2.5 inline-flex">
+                  <Check size={15} />
+                </SelectPrimitive.ItemIndicator>
+              </SelectPrimitive.Item>
+            ))}
+          </SelectPrimitive.Viewport>
+        </SelectPrimitive.Content>
+      </SelectPrimitive.Portal>
+    </SelectPrimitive.Root>
   );
 }
 
