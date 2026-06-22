@@ -85,7 +85,7 @@ interface Stato {
   generaCompensoCliente: (clienteId: string, anno: number, mese: number) => { ok: boolean; messaggio: string };
 
   // pagamenti (incassi)
-  creaPagamento: (i: { clienteId: string; importoAtteso: number; dataEmissione?: string; dataScadenza?: string | null; note?: string | null }) => void;
+  creaPagamento: (i: { clienteId: string; lavoroId?: string | null; importoAtteso: number; dataEmissione?: string; dataScadenza?: string | null; note?: string | null }) => void;
   registraIncasso: (id: string, importo?: number, dataIncasso?: string) => void;
   aggiornaPagamento: (id: string, patch: Parziale<Pagamento>) => void;
   eliminaPagamento: (id: string) => void;
@@ -287,7 +287,7 @@ export const useStore = create<Stato>()(
       // ---------------- pagamenti ----------------
       creaPagamento: (i) => {
         const pagamento: Pagamento = {
-          id: nuovoId("pa"), clienteId: i.clienteId, origine: "manuale", importoAtteso: i.importoAtteso,
+          id: nuovoId("pa"), clienteId: i.clienteId, lavoroId: i.lavoroId ?? null, origine: "manuale", importoAtteso: i.importoAtteso,
           importoIncassato: 0, stato: "in_attesa", dataEmissione: i.dataEmissione ?? oggiISO(),
           dataScadenza: i.dataScadenza ?? null, dataIncasso: null, note: i.note ?? null,
         };

@@ -65,6 +65,78 @@ export function riepilogoCliente(db: Database, clienteId: string): RiepilogoClie
   };
 }
 
+// Riepilogo economico di un singolo lavoro: ore, manodopera, valore,
+// incassato, residuo, margine. Tutto derivato dai collegamenti (lavoroId).
+export type RiepilogoLavoro = {
+  oreReali: number;
+  durataPrevista: number | null;
+  costoManodopera: number; // ore reali × tariffa operatore
+  valoreFatturabile: number; // ore reali × tariffa cliente
+  valorePreventivo: number; // Σ preventivi collegati
+  daPrendere: number; // quanto si dovrebbe incassare per il lavoro
+  atteso: number; // Σ importoAtteso dei pagamenti collegati
+  incassato: number; // Σ importoIncassato dei pagamenti collegati
+  residuo: number; // daPrendere − incassato
+  spese: number; // spese collegate al lavoro
+  margine: number; // incassato − manodopera − spese
+  numPagamenti: number;
+  numPreventivi: number;
+  pagamentoApertoId?: string; // primo pagamento collegato con residuo > 0
+};
+
+export function riepilogoLavoro(
+  db: Database,
+  lavoroId: string,
+): RiepilogoLavoro {
+  const lavoro = db.lavori.find((l) => l.id === lavoroId);
+  const cliente = lavoro ? db.clienti.find((c) => c.id === lavoro.clienteId) : undefined;
+  const tariffaCliente = cliente?.tariffaOraria ?? 0;
+  const tariffaOp = new Map(db.operatori.map((o) => [o.id, o.tariffaOraria ?? 0]));
+
+  const ore = db.ore.filter((o) => o.lavoroId === lavoroId);
+  const oreReali = arrotonda(ore.reduce((a, o) => a + o.ore, 0));
+  const costoManodopera = arrotonda(
+    ore.reduce((a, o) => a + o.ore * (tariffaOp.get(o.operatoreId ?? "") ?? 0), 0),
+  );
+  const valoreFatturabile = arrotonda(oreReali * tariffaCliente);
+
+  const preventivi = db.preventivi.filter((p) => p.lavoroId === lavoroId);
+  const valorePreventivo = arrotonda(preventivi.reduce((a, p) => a + p.importoTotale, 0));
+
+  const pagamenti = db.pagamenti.filter((p) => p.lavoroId === lavoroId);
+  const atteso = arrotonda(pagamenti.reduce((a, p) => a + p.importoAtteso, 0));
+  const incassato = arrotonda(pagamenti.reduce((a, p) => a + p.importoIncassato, 0));
+
+  const stimato =
+    lavoro?.tipoCompenso === "preventivo"
+      ? valorePreventivo
+      : lavoro?.tipoCompenso === "ore"
+        ? valoreFatturabile
+        : arrotonda(valorePreventivo + valoreFatturabile);
+  const daPrendere = atteso > 0 ? atteso : stimato;
+
+  const spese = arrotonda(db.spese.filter((s) => s.lavoroId === lavoroId).reduce((a, s) => a + s.importo, 0));
+
+  const aperto = pagamenti.find((p) => p.importoAtteso - p.importoIncassato > 0.005);
+
+  return {
+    oreReali,
+    durataPrevista: lavoro?.durataPrevistaOre ?? null,
+    costoManodopera,
+    valoreFatturabile,
+    valorePreventivo,
+    daPrendere,
+    atteso,
+    incassato,
+    residuo: arrotonda(Math.max(0, daPrendere - incassato)),
+    spese,
+    margine: arrotonda(incassato - costoManodopera - spese),
+    numPagamenti: pagamenti.length,
+    numPreventivi: preventivi.length,
+    pagamentoApertoId: aperto?.id,
+  };
+}
+
 export type RigaMese = {
   chiave: string;
   anno: number;

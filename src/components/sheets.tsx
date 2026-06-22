@@ -433,12 +433,13 @@ function IncassoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
   const db = useStore((s) => s.db);
   const crea = useStore((s) => s.creaPagamento);
   const mostra = useToast((s) => s.mostra);
-  const [v, setV] = useState({ clienteId: ctx.clienteId ?? "", importoAtteso: "", dataScadenza: "", note: "" });
+  const [v, setV] = useState({ clienteId: ctx.clienteId ?? "", lavoroId: ctx.lavoroId ?? "", importoAtteso: "", dataScadenza: "", note: "" });
+  const lavoriCliente = db.lavori.filter((l) => l.clienteId === v.clienteId).sort((a, b) => b.data.localeCompare(a.data));
   function salva(e: React.FormEvent) {
     e.preventDefault();
     const importo = num(v.importoAtteso);
     if (!v.clienteId || importo === null || importo <= 0) return mostra("Cliente e importo richiesti.", "error");
-    crea({ clienteId: v.clienteId, importoAtteso: importo, dataScadenza: v.dataScadenza || null, note: v.note || null });
+    crea({ clienteId: v.clienteId, lavoroId: v.lavoroId || null, importoAtteso: importo, dataScadenza: v.dataScadenza || null, note: v.note || null });
     festaDoppia("entrata"); mostra("Incasso atteso 💶"); chiudi();
   }
   const scena = (
@@ -453,7 +454,13 @@ function IncassoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
     <Sheet aperto={aperto} onClose={chiudi} titolo="Incasso atteso" sottotitolo="Un pagamento da segnare" accent={ENTITA.entrata.grad} pattern="dots" icona={<Banknote size={20} />} motivo={<Banknote size={120} strokeWidth={1.1} />} scena={scena}>
       <form onSubmit={salva}>
         <SheetStagger className="grid gap-3">
-          <SheetRow><div><Etichetta>Cliente</Etichetta><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val }))} options={db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` }))} /></div></SheetRow>
+          <SheetRow><div><Etichetta>Cliente</Etichetta><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val, lavoroId: "" }))} options={db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` }))} /></div></SheetRow>
+          {v.clienteId && lavoriCliente.length > 0 && (
+            <SheetRow><div><Etichetta>Per quale lavoro (facoltativo)</Etichetta>
+              <Select value={v.lavoroId} onChange={(val) => setV((s) => ({ ...s, lavoroId: val }))} placeholder="— nessun lavoro —"
+                options={[{ value: "", label: "— nessun lavoro —" }, ...lavoriCliente.map((l) => ({ value: l.id, label: `${new Date(l.data).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} · ${l.titolo}` }))]} />
+            </div></SheetRow>
+          )}
           <SheetRow><div><Etichetta>Importo atteso</Etichetta><AmountPad tinta="entrata" value={v.importoAtteso} onChange={(val) => setV((s) => ({ ...s, importoAtteso: val }))} suggerimenti={[{ label: "100", valore: 100 }, { label: "200", valore: 200 }, { label: "500", valore: 500 }]} /></div></SheetRow>
           <SheetRow><div><Etichetta>Scadenza</Etichetta><QuickDate tinta="entrata" value={v.dataScadenza} onChange={(dd) => setV((s) => ({ ...s, dataScadenza: dd }))} /></div></SheetRow>
           <SheetRow><CampoIcona icona={<StickyNote size={17} />} label="Note" value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} /></SheetRow>
