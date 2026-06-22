@@ -1,8 +1,10 @@
 import { db } from "@/lib/db";
-import { euro, dataIT } from "@/lib/format";
+import { euro, dataIT, inputData } from "@/lib/format";
 import { etichetta, STATO_ATTREZZO } from "@/lib/dominio";
 import { Titolo, Vuoto, Stat } from "@/components/ui";
+import RigaEditabile, { type Cella } from "@/components/RigaEditabile";
 import { creaAttrezzo, eliminaAttrezzo } from "@/actions/officina";
+import { modificaAttrezzo } from "@/actions/modifica";
 
 export const dynamic = "force-dynamic";
 
@@ -52,27 +54,30 @@ export default async function OfficinaPage() {
         <div className="card overflow-x-auto">
           <table className="tbl">
             <thead>
-              <tr><th>Attrezzo</th><th>Acquisto</th><th className="text-right">Costo</th><th>Stato</th><th></th></tr>
+              <tr><th></th><th>Attrezzo</th><th>Acquisto</th><th className="text-right">Costo</th><th>Stato</th><th></th></tr>
             </thead>
             <tbody>
-              {attrezzi.map((a) => (
-                <tr key={a.id}>
-                  <td className="font-medium">{a.nome}</td>
-                  <td>{a.dataAcquisto ? dataIT(a.dataAcquisto) : "—"}</td>
-                  <td className="text-right">{a.costoAcquisto ? euro(a.costoAcquisto) : "—"}</td>
-                  <td>
-                    <span className={`badge ${a.stato === "ok" ? "badge-success" : a.stato === "manutenzione" ? "badge-warning" : "badge-muted"}`}>
-                      {etichetta(a.stato)}
-                    </span>
-                  </td>
-                  <td className="text-right">
-                    <form action={eliminaAttrezzo}>
-                      <input type="hidden" name="id" value={a.id} />
-                      <button type="submit" className="text-xs text-[var(--danger)] hover:underline">Elimina</button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
+              {attrezzi.map((a) => {
+                const celle: Cella[] = [
+                  { tipo: "testo", nome: "nome", valore: a.nome, classe: "font-medium", display: a.nome },
+                  { tipo: "data", nome: "dataAcquisto", valore: inputData(a.dataAcquisto), display: a.dataAcquisto ? dataIT(a.dataAcquisto) : "—" },
+                  { tipo: "numero", nome: "costoAcquisto", valore: a.costoAcquisto != null ? String(a.costoAcquisto) : "", step: "0.01", classe: "text-right", display: a.costoAcquisto ? euro(a.costoAcquisto) : "—" },
+                  {
+                    tipo: "select", nome: "stato", valore: a.stato, opzioni: STATO_ATTREZZO.map((s) => ({ v: s, l: etichetta(s) })),
+                    display: <span className={`badge ${a.stato === "ok" ? "badge-success" : a.stato === "manutenzione" ? "badge-warning" : "badge-muted"}`}>{etichetta(a.stato)}</span>,
+                  },
+                  {
+                    tipo: "statico", classe: "text-right",
+                    nodo: (
+                      <form action={eliminaAttrezzo}>
+                        <input type="hidden" name="id" value={a.id} />
+                        <button type="submit" className="text-xs text-[var(--danger)] hover:underline">Elimina</button>
+                      </form>
+                    ),
+                  },
+                ];
+                return <RigaEditabile key={a.id} id={a.id} azione={modificaAttrezzo} celle={celle} />;
+              })}
             </tbody>
           </table>
         </div>

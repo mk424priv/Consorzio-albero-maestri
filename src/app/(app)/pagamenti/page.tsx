@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { db } from "@/lib/db";
-import { euro, dataIT } from "@/lib/format";
-import { etichetta } from "@/lib/dominio";
+import { euro, dataIT, inputData } from "@/lib/format";
+import { etichetta, ORIGINE_PAGAMENTO } from "@/lib/dominio";
 import { statoCalcolato, giorniRitardo } from "@/lib/conti";
 import { Titolo, Vuoto, BadgePagamento, LinkCliente } from "@/components/ui";
+import RigaEditabile, { type Cella } from "@/components/RigaEditabile";
 import { registraIncasso } from "@/actions/pagamenti";
+import { modificaPagamento } from "@/actions/modifica";
 
 export const dynamic = "force-dynamic";
 
@@ -39,11 +41,7 @@ export default async function PagamentiPage({
 
       <div className="flex gap-2 mb-5 flex-wrap">
         {FILTRI.map((f) => (
-          <Link
-            key={f.k}
-            href={`/pagamenti?stato=${f.k}`}
-            className={`badge ${filtro === f.k ? "badge-success" : "badge-muted"}`}
-          >
+          <Link key={f.k} href={`/pagamenti?stato=${f.k}`} className={`badge ${filtro === f.k ? "badge-success" : "badge-muted"}`}>
             {f.label}
           </Link>
         ))}
@@ -56,40 +54,47 @@ export default async function PagamentiPage({
           <table className="tbl">
             <thead>
               <tr>
-                <th>Cliente</th><th>Origine</th><th>Emesso</th><th>Scadenza</th>
+                <th></th><th>Cliente</th><th>Origine</th><th>Emesso</th><th>Scadenza</th>
                 <th className="text-right">Atteso</th><th className="text-right">Incassato</th><th>Stato</th><th></th>
               </tr>
             </thead>
             <tbody>
               {righe.map(({ p, st }) => {
                 const gr = st === "in_ritardo" ? giorniRitardo(p.dataScadenza) : 0;
-                return (
-                  <tr key={p.id}>
-                    <td><LinkCliente id={p.clienteId} nome={`${p.cliente.nome} ${p.cliente.cognome}`} /></td>
-                    <td>{etichetta(p.origine)}</td>
-                    <td>{dataIT(p.dataEmissione)}</td>
-                    <td>{p.dataScadenza ? dataIT(p.dataScadenza) : "—"}</td>
-                    <td className="text-right">{euro(p.importoAtteso)}</td>
-                    <td className="text-right">{euro(p.importoIncassato)}</td>
-                    <td>
-                      <BadgePagamento stato={st} />
-                      {gr > 0 && <span className="text-xs text-[var(--danger)] block">{gr} gg</span>}
-                    </td>
-                    <td className="text-right">
-                      {st !== "pagato" && (
-                        <form action={registraIncasso}>
-                          <input type="hidden" name="id" value={p.id} />
-                          <button type="submit" className="btn text-xs py-1">Segna incassato</button>
-                        </form>
-                      )}
-                    </td>
-                  </tr>
-                );
+                const celle: Cella[] = [
+                  { tipo: "statico", nodo: <LinkCliente id={p.clienteId} nome={`${p.cliente.nome} ${p.cliente.cognome}`} /> },
+                  { tipo: "select", nome: "origine", valore: p.origine, opzioni: ORIGINE_PAGAMENTO.map((o) => ({ v: o, l: etichetta(o) })), display: etichetta(p.origine) },
+                  { tipo: "data", nome: "dataEmissione", valore: inputData(p.dataEmissione), display: dataIT(p.dataEmissione) },
+                  { tipo: "data", nome: "dataScadenza", valore: inputData(p.dataScadenza), display: p.dataScadenza ? dataIT(p.dataScadenza) : "—" },
+                  { tipo: "numero", nome: "importoAtteso", valore: String(p.importoAtteso), step: "0.01", classe: "text-right", display: euro(p.importoAtteso) },
+                  { tipo: "numero", nome: "importoIncassato", valore: String(p.importoIncassato), step: "0.01", classe: "text-right", display: euro(p.importoIncassato) },
+                  {
+                    tipo: "statico",
+                    nodo: (
+                      <>
+                        <BadgePagamento stato={st} />
+                        {gr > 0 && <span className="text-xs text-[var(--danger)] block">{gr} gg</span>}
+                      </>
+                    ),
+                  },
+                  {
+                    tipo: "statico",
+                    classe: "text-right",
+                    nodo: st !== "pagato" ? (
+                      <form action={registraIncasso}>
+                        <input type="hidden" name="id" value={p.id} />
+                        <button type="submit" className="btn text-xs py-1">Segna incassato</button>
+                      </form>
+                    ) : null,
+                  },
+                ];
+                return <RigaEditabile key={p.id} id={p.id} azione={modificaPagamento} celle={celle} />;
               })}
             </tbody>
           </table>
         </div>
       )}
+      <p className="text-xs text-[var(--muted)] mt-3">Matita ✏️ per modificare importi e date. Lo stato e i totali si aggiornano da soli.</p>
     </div>
   );
 }

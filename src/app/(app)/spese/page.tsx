@@ -1,8 +1,10 @@
 import { db } from "@/lib/db";
-import { euro, dataIT, meseAnnoIT } from "@/lib/format";
+import { euro, dataIT, inputData, meseAnnoIT } from "@/lib/format";
 import { etichetta, CATEGORIA_SPESA } from "@/lib/dominio";
 import { Titolo, Vuoto, Stat } from "@/components/ui";
+import RigaEditabile, { type Cella } from "@/components/RigaEditabile";
 import { creaSpesa, eliminaSpesa } from "@/actions/spese";
+import { modificaSpesa } from "@/actions/modifica";
 
 export const dynamic = "force-dynamic";
 
@@ -67,24 +69,28 @@ export default async function SpesePage() {
         <div className="card overflow-x-auto">
           <table className="tbl">
             <thead>
-              <tr><th>Data</th><th>Categoria</th><th>Descrizione</th><th>Cliente</th><th className="text-right">Importo</th><th></th></tr>
+              <tr><th></th><th>Data</th><th>Categoria</th><th>Descrizione</th><th>Cliente</th><th className="text-right">Importo</th><th></th></tr>
             </thead>
             <tbody>
-              {spese.map((s) => (
-                <tr key={s.id}>
-                  <td>{dataIT(s.data)}</td>
-                  <td>{etichetta(s.categoria)}</td>
-                  <td className="text-[var(--muted)]">{s.descrizione ?? "—"}</td>
-                  <td className="text-[var(--muted)]">{s.cliente ? `${s.cliente.nome} ${s.cliente.cognome}` : "—"}</td>
-                  <td className="text-right font-medium">{euro(s.importo)}</td>
-                  <td className="text-right">
-                    <form action={eliminaSpesa}>
-                      <input type="hidden" name="id" value={s.id} />
-                      <button type="submit" className="text-xs text-[var(--danger)] hover:underline">Elimina</button>
-                    </form>
-                  </td>
-                </tr>
-              ))}
+              {spese.map((s) => {
+                const celle: Cella[] = [
+                  { tipo: "data", nome: "data", valore: inputData(s.data), display: dataIT(s.data) },
+                  { tipo: "select", nome: "categoria", valore: s.categoria, opzioni: CATEGORIA_SPESA.map((c) => ({ v: c, l: etichetta(c) })), display: etichetta(s.categoria) },
+                  { tipo: "testo", nome: "descrizione", valore: s.descrizione ?? "", classe: "text-[var(--muted)]", display: s.descrizione ?? "—" },
+                  { tipo: "statico", classe: "text-[var(--muted)]", nodo: s.cliente ? `${s.cliente.nome} ${s.cliente.cognome}` : "—" },
+                  { tipo: "numero", nome: "importo", valore: String(s.importo), step: "0.01", classe: "text-right", display: <span className="font-medium">{euro(s.importo)}</span> },
+                  {
+                    tipo: "statico", classe: "text-right",
+                    nodo: (
+                      <form action={eliminaSpesa}>
+                        <input type="hidden" name="id" value={s.id} />
+                        <button type="submit" className="text-xs text-[var(--danger)] hover:underline">Elimina</button>
+                      </form>
+                    ),
+                  },
+                ];
+                return <RigaEditabile key={s.id} id={s.id} azione={modificaSpesa} celle={celle} />;
+              })}
             </tbody>
           </table>
         </div>

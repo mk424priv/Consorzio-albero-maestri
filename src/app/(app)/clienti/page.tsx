@@ -3,8 +3,10 @@ import { db } from "@/lib/db";
 import { codiceClienteDaDB } from "@/lib/codice-parlante";
 import { riepilogoCliente } from "@/lib/conti";
 import { euro } from "@/lib/format";
-import { etichetta } from "@/lib/dominio";
-import { Titolo, Vuoto, CodiceCliente } from "@/components/ui";
+import { etichetta, MODALITA } from "@/lib/dominio";
+import { Titolo, Vuoto, CodiceCliente, LinkCliente } from "@/components/ui";
+import RigaEditabile, { type Cella } from "@/components/RigaEditabile";
+import { modificaCliente } from "@/actions/modifica";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +37,7 @@ export default async function ClientiPage() {
           <table className="tbl">
             <thead>
               <tr>
+                <th></th>
                 <th>Cliente</th>
                 <th>Codice</th>
                 <th>Luogo</th>
@@ -43,25 +46,21 @@ export default async function ClientiPage() {
               </tr>
             </thead>
             <tbody>
-              {righe.map(({ cliente, codice, riepilogo }) => (
-                <tr key={cliente.id}>
-                  <td>
-                    <Link href={`/clienti/${cliente.id}`} className="text-[var(--primary)] hover:underline font-medium">
-                      {cliente.nome} {cliente.cognome}
-                    </Link>
-                  </td>
-                  <td><CodiceCliente codice={codice} /></td>
-                  <td className="text-[var(--muted)]">{cliente.luogo ?? "—"}</td>
-                  <td>{etichetta(cliente.modalitaPredefinita)}</td>
-                  <td className="text-right">
-                    {riepilogo.saldoDaIncassare > 0 ? (
-                      <span className="text-[var(--danger)] font-medium">{euro(riepilogo.saldoDaIncassare)}</span>
-                    ) : (
-                      <span className="text-[var(--muted)]">—</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+              {righe.map(({ cliente, codice, riepilogo }) => {
+                const celle: Cella[] = [
+                  { tipo: "statico", nodo: <LinkCliente id={cliente.id} nome={`${cliente.nome} ${cliente.cognome}`} /> },
+                  { tipo: "statico", nodo: <CodiceCliente codice={codice} /> },
+                  { tipo: "testo", nome: "luogo", valore: cliente.luogo ?? "", classe: "text-[var(--muted)]", display: cliente.luogo ?? "—" },
+                  { tipo: "select", nome: "modalitaPredefinita", valore: cliente.modalitaPredefinita, opzioni: MODALITA.map((m) => ({ v: m, l: etichetta(m) })), display: etichetta(cliente.modalitaPredefinita) },
+                  {
+                    tipo: "statico", classe: "text-right",
+                    nodo: riepilogo.saldoDaIncassare > 0
+                      ? <span className="text-[var(--danger)] font-medium">{euro(riepilogo.saldoDaIncassare)}</span>
+                      : <span className="text-[var(--muted)]">—</span>,
+                  },
+                ];
+                return <RigaEditabile key={cliente.id} id={cliente.id} azione={modificaCliente} celle={celle} />;
+              })}
             </tbody>
           </table>
         </div>
