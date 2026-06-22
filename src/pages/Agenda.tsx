@@ -1,15 +1,17 @@
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
+  Banknote,
   CalendarDays,
+  Check,
   ChevronLeft,
   ChevronRight,
   Clock,
   Columns3,
   Hammer,
   LayoutList,
+  Play,
   Plus,
-  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { listaContenitore, listaElemento, tapSoft } from "@/lib/motion";
@@ -17,23 +19,12 @@ import { useStore } from "@/store/store";
 import { useUI } from "@/store/ui";
 import { dataIT, euro, meseAnnoIT } from "@/lib/format";
 import { etichetta, STATO_LAVORO, type StatoLavoro } from "@/lib/dominio";
-import { ENTITA, STATO_LAVORO_TONO, type ChiaveEntita } from "@/lib/entita";
+import { ENTITA, STATO_LAVORO_TONO } from "@/lib/entita";
 import { riepilogoLavoro } from "@/lib/conti";
 import type { Lavoro } from "@/lib/types";
-import {
-  Avatar,
-  Badge,
-  Button,
-  Card,
-  EmptyState,
-  FilterChip,
-  PageHero,
-  Segmented,
-  StatusBadge,
-} from "@/components/ui";
+import { Avatar, Badge, Barra, Button, Card, EmptyState, FilterChip, PageHero, Segmented } from "@/components/ui";
 
 const NOMI = ["Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato", "Domenica"];
-const CICLO = { da_fare: "in_corso", in_corso: "fatto", fatto: "da_fare" } as const;
 
 function lunedi(offset: number): Date {
   const d = new Date();
@@ -57,65 +48,96 @@ const SPINA: Record<StatoLavoro, string> = {
   fatto: "bg-success",
 };
 
-/* ----------------------- Carta del singolo lavoro -----------------------
-   Compatta e tutta cliccabile: un tocco apre la scheda dedicata del lavoro.
-   L'unico controllo rapido è il badge di stato (avanza lo stato).            */
+/* =========================================================================
+   CARTA LAVORO — il cuore di tutto. Tutta cliccabile (apre lo schermo del
+   lavoro). Mostra a colpo d'occhio cliente, squadra, ore e soldi, e propone
+   sempre la "prossima mossa" giusta in base allo stato.
+   ========================================================================= */
 function CartaLavoro({ l, mostraData = false }: { l: Lavoro; mostraData?: boolean }) {
   const db = useStore((s) => s.db);
-  const apriScheda = useUI((s) => s.apriSchedaLavoro);
   const cambia = useStore((s) => s.cambiaStatoLavoro);
+  const apriScheda = useUI((s) => s.apriSchedaLavoro);
+  const apri = useUI((s) => s.apri);
   const r = riepilogoLavoro(db, l.id);
   const cli = db.clienti.find((c) => c.id === l.clienteId);
   const op = db.operatori.find((o) => o.id === l.operatoreId);
+
+  function riscuoti() {
+    if (r.pagamentoApertoId) apri("riscuoti", { pagamentoId: r.pagamentoApertoId });
+    else apri("incasso", { clienteId: l.clienteId, lavoroId: l.id });
+  }
+
+  // La "prossima mossa": un'unica azione chiara, contestuale allo stato.
+  const mossa =
+    l.stato === "da_fare"
+      ? { label: "Inizia", Icon: Play, cls: "bg-lavoro-500 text-white hover:bg-lavoro-600", run: () => cambia(l.id, "in_corso") }
+      : l.stato === "in_corso"
+        ? { label: "Completa", Icon: Check, cls: "bg-success text-white hover:brightness-95", run: () => cambia(l.id, "fatto") }
+        : l.stato === "fatto" && r.residuo > 0
+          ? { label: `Incassa ${euro(r.residuo)}`, Icon: Banknote, cls: "bg-entrata-500 text-white hover:bg-entrata-600", run: riscuoti }
+          : null;
+
+  // Barra di avanzamento contestuale: ore (in corso) o incasso (fatto).
+  const prog =
+    l.stato === "in_corso" && r.durataPrevista && r.durataPrevista > 0
+      ? { ratio: r.oreReali / r.durataPrevista, accent: "operatore" as const, label: `${r.oreReali}/${r.durataPrevista} h` }
+      : l.stato === "fatto" && r.daPrendere > 0
+        ? { ratio: r.incassato / r.daPrendere, accent: "entrata" as const, label: r.residuo > 0 ? `${euro(r.incassato)} / ${euro(r.daPrendere)}` : "Saldato" }
+        : null;
 
   return (
     <motion.div
       whileTap={tapSoft}
       onClick={() => apriScheda(l.id)}
-      className="group relative flex cursor-pointer items-center gap-3 overflow-hidden rounded-[14px] border border-line bg-surface py-2.5 pl-3 pr-2.5 shadow-[var(--shadow-sm)] transition hover:border-lavoro-200 hover:shadow-[var(--shadow-md)]"
+      className="group relative cursor-pointer overflow-hidden rounded-[15px] border border-line bg-surface p-3 pl-3.5 shadow-[var(--shadow-sm)] transition hover:border-lavoro-200 hover:shadow-[var(--shadow-md)]"
     >
-      <span className={cn("absolute inset-y-0 left-0 w-1", SPINA[l.stato])} />
-      <div className="min-w-0 flex-1 pl-1">
-        <div className="flex items-center gap-2">
-          <span className="min-w-0 truncate text-sm font-bold text-ink">{l.titolo}</span>
-          {r.residuo > 0 ? (
-            <span className="ml-auto shrink-0 rounded-full bg-uscita-50 px-2 py-0.5 text-[0.7rem] font-bold text-uscita-600">{euro(r.residuo)}</span>
-          ) : r.daPrendere > 0 ? (
-            <span className="ml-auto shrink-0 rounded-full bg-entrata-50 px-2 py-0.5 text-[0.7rem] font-bold text-entrata-600">Saldato</span>
-          ) : null}
-        </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.72rem] text-muted">
-          <span className="truncate font-semibold text-cliente-600">{cli ? `${cli.nome} ${cli.cognome}` : "—"}</span>
-          {mostraData && <span>· {dataIT(l.data)}</span>}
-          {op && <span className="inline-flex items-center gap-1"><Avatar nome={op.nome} size="sm" grad={ENTITA.operatore.grad} className="!h-4 !w-4 !text-[0.5rem]" /> {op.nome}</span>}
-          {(r.oreReali > 0 || r.durataPrevista != null) && (
-            <span className="inline-flex items-center gap-1 text-operatore-600"><Clock size={11} /> {r.oreReali}h{r.durataPrevista != null ? `/${r.durataPrevista}` : ""}</span>
-          )}
-        </div>
-      </div>
-      <button
-        onClick={(e) => { e.stopPropagation(); cambia(l.id, CICLO[l.stato]); }}
-        title="Avanza stato"
-        className="shrink-0"
-      >
-        <StatusBadge genere="lavoro" valore={l.stato} />
-      </button>
-      <ChevronRight size={16} className="shrink-0 text-muted/40 transition-colors group-hover:text-lavoro-400" />
-    </motion.div>
-  );
-}
+      <span className={cn("absolute inset-y-0 left-0 w-1.5", SPINA[l.stato])} />
 
-/* ----------------------------- Mini statistica ----------------------------- */
-function MiniStat({ tinta, label, valore, sub }: { tinta: ChiaveEntita; label: string; valore: string; sub?: string }) {
-  return (
-    <div className="rounded-[12px] border border-line bg-surface px-3 py-2 shadow-[var(--shadow-sm)]">
-      <div className="flex items-center gap-1.5 text-[0.6rem] font-bold uppercase tracking-wide text-muted">
-        <span className={cn("h-1.5 w-1.5 rounded-full", ENTITA[tinta].dot)} /> {label}
+      {/* riga 1 — titolo + stato soldi */}
+      <div className="flex items-start gap-2">
+        <h4 className="min-w-0 flex-1 truncate text-[0.92rem] font-bold leading-snug text-ink">{l.titolo}</h4>
+        {r.residuo > 0 ? (
+          <span className="shrink-0 rounded-full bg-uscita-50 px-2 py-0.5 text-[0.7rem] font-bold text-uscita-600">{euro(r.residuo)}</span>
+        ) : r.daPrendere > 0 ? (
+          <span className="shrink-0 rounded-full bg-entrata-50 px-2 py-0.5 text-[0.7rem] font-bold text-entrata-600">Saldato</span>
+        ) : null}
       </div>
-      <div className="mt-0.5 text-[0.98rem] font-extrabold leading-none text-ink">
-        {valore} {sub && <span className="text-[0.7rem] font-medium text-muted">{sub}</span>}
+
+      {/* riga 2 — chi / quando / ore */}
+      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[0.72rem] text-muted">
+        <span className="truncate font-semibold text-cliente-600">{cli ? `${cli.nome} ${cli.cognome}` : "—"}</span>
+        {mostraData && <span>· {dataIT(l.data)}</span>}
+        {op && <span className="inline-flex items-center gap-1"><Avatar nome={op.nome} size="sm" grad={ENTITA.operatore.grad} className="!h-4 !w-4 !text-[0.5rem]" /> {op.nome}</span>}
+        {(r.oreReali > 0 || r.durataPrevista != null) && (
+          <span className="inline-flex items-center gap-1 text-operatore-600"><Clock size={11} /> {r.oreReali}h{r.durataPrevista != null ? `/${r.durataPrevista}` : ""}</span>
+        )}
       </div>
-    </div>
+
+      {/* riga 3 — avanzamento contestuale */}
+      {prog && (
+        <div className="mt-2 flex items-center gap-2">
+          <Barra ratio={prog.ratio} accent={prog.accent} className="h-1.5 flex-1" />
+          <span className="shrink-0 text-[0.66rem] font-semibold text-muted">{prog.label}</span>
+        </div>
+      )}
+
+      {/* riga 4 — prossima mossa + invito ad aprire */}
+      <div className="mt-2.5 flex items-center gap-2">
+        {mossa ? (
+          <button
+            onClick={(e) => { e.stopPropagation(); mossa.run(); }}
+            className={cn("inline-flex items-center gap-1.5 rounded-[10px] px-3 py-1.5 text-[0.76rem] font-bold shadow-sm transition active:scale-95", mossa.cls)}
+          >
+            <mossa.Icon size={14} /> {mossa.label}
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-[0.74rem] font-bold text-success"><Check size={14} /> Concluso</span>
+        )}
+        <span className="ml-auto inline-flex items-center gap-0.5 text-[0.68rem] font-semibold text-muted/55 transition-colors group-hover:text-lavoro-500">
+          Apri <ChevronRight size={13} />
+        </span>
+      </div>
+    </motion.div>
   );
 }
 
@@ -156,17 +178,6 @@ export function Agenda() {
       })
       .sort((a, b) => b.data.localeCompare(a.data) || (a.ordineNelGiorno ?? 99) - (b.ordineNelGiorno ?? 99));
   }, [db.lavori, opFiltro, vista, settimana, tutto, mese.key]);
-
-  const stat = useMemo(() => {
-    let daFare = 0, inCorso = 0, fatti = 0, oreReali = 0, orePrev = 0, daPrendere = 0, incassato = 0, residuo = 0, margine = 0;
-    for (const l of lavoriScope) {
-      if (l.stato === "da_fare") daFare++; else if (l.stato === "in_corso") inCorso++; else fatti++;
-      const r = riepilogoLavoro(db, l.id);
-      oreReali += r.oreReali; orePrev += r.durataPrevista ?? 0;
-      daPrendere += r.daPrendere; incassato += r.incassato; residuo += r.residuo; margine += r.margine;
-    }
-    return { totale: lavoriScope.length, daFare, inCorso, fatti, oreReali, orePrev, daPrendere, incassato, residuo, margine };
-  }, [lavoriScope, db]);
 
   const giorni = useMemo(() => {
     return Array.from({ length: 7 }, (_, i) => {
@@ -213,67 +224,51 @@ export function Agenda() {
 
       <Segmented voci={VISTE} attivo={vista} onChange={(k) => setVista(k as Vista)} className="mb-3" />
 
-      <div className="mb-3 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
+      <div className="mb-4 flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
         <FilterChip attivo={opFiltro === "tutti"} onClick={() => setOpFiltro("tutti")}>Tutta la squadra</FilterChip>
         {db.operatori.filter((o) => o.attivo).map((o) => (
           <FilterChip key={o.id} attivo={opFiltro === o.id} onClick={() => setOpFiltro(o.id)}>{o.nome}</FilterChip>
         ))}
       </div>
 
-      {/* riepilogo compatto del periodo (secondario rispetto ai lavori) */}
-      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <MiniStat tinta="lavoro" label="Lavori" valore={String(stat.totale)} sub={`${stat.daFare}·${stat.inCorso}·${stat.fatti}`} />
-        <MiniStat tinta="operatore" label="Ore" valore={`${stat.oreReali} h`} sub={stat.orePrev > 0 ? `/ ${stat.orePrev}h` : undefined} />
-        <MiniStat tinta="uscita" label="Da incassare" valore={euro(stat.residuo)} />
-        <MiniStat tinta="entrata" label="Incassato" valore={euro(stat.incassato)} />
-      </div>
-
       {vista === "settimana" && <VistaSettimana giorni={giorni} isOggi={isOggi} />}
       {vista === "bacheca" && <VistaBacheca lavori={lavoriScope} />}
-      {vista === "lista" && <VistaLista lavori={lavoriScope} statoFiltro={statoFiltro} setStatoFiltro={setStatoFiltro} margine={stat.margine} />}
+      {vista === "lista" && <VistaLista lavori={lavoriScope} statoFiltro={statoFiltro} setStatoFiltro={setStatoFiltro} />}
     </div>
   );
 }
 
 /* ----------------------------- Vista settimana ----------------------------- */
 function VistaSettimana({ giorni, isOggi }: { giorni: { d: Date; lavori: Lavoro[] }[]; isOggi: (d: Date) => boolean }) {
-  const db = useStore((s) => s.db);
   const apri = useUI((s) => s.apri);
   return (
     <motion.div variants={listaContenitore} initial="hidden" animate="show" className="grid gap-3 lg:grid-cols-2">
-      {giorni.map(({ d, lavori }) => {
-        const residuoGiorno = lavori.reduce((a, l) => a + riepilogoLavoro(db, l.id).residuo, 0);
-        return (
-          <motion.div key={d.toISOString()} variants={listaElemento}>
-            <Card className={cn("overflow-hidden", isOggi(d) && "ring-2 ring-brand-300")}>
-              <div className="flex items-center justify-between border-b border-line bg-surface-2 px-4 py-2.5">
-                <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
-                  <span className={cn("grid h-8 w-8 place-items-center rounded-[10px] text-[0.7rem]", isOggi(d) ? "bg-brand-500 text-white" : "bg-surface text-muted")}>{d.getDate()}</span>
-                  {NOMI[(d.getDay() + 6) % 7]}
-                </h3>
-                <div className="flex items-center gap-2">
-                  {residuoGiorno > 0 && <span className="rounded-full bg-uscita-50 px-2 py-0.5 text-[0.66rem] font-bold text-uscita-600">{euro(residuoGiorno)}</span>}
-                  <button onClick={() => apri("lavoro", { data: iso(d) })} className="grid h-7 w-7 place-items-center rounded-[9px] text-muted transition hover:bg-brand-50 hover:text-brand-600"><Plus size={16} /></button>
-                </div>
+      {giorni.map(({ d, lavori }) => (
+        <motion.div key={d.toISOString()} variants={listaElemento}>
+          <Card className={cn("overflow-hidden", isOggi(d) && "ring-2 ring-brand-300")}>
+            <div className="flex items-center justify-between border-b border-line bg-surface-2 px-4 py-2.5">
+              <h3 className="flex items-center gap-2 text-sm font-bold text-ink">
+                <span className={cn("grid h-8 w-8 place-items-center rounded-[10px] text-[0.7rem]", isOggi(d) ? "bg-brand-500 text-white" : "bg-surface text-muted")}>{d.getDate()}</span>
+                {NOMI[(d.getDay() + 6) % 7]}
+              </h3>
+              <button onClick={() => apri("lavoro", { data: iso(d) })} className="grid h-7 w-7 place-items-center rounded-[9px] text-muted transition hover:bg-brand-50 hover:text-brand-600"><Plus size={16} /></button>
+            </div>
+            {lavori.length === 0 ? (
+              <button onClick={() => apri("lavoro", { data: iso(d) })} className="w-full px-4 py-5 text-left text-sm text-muted transition hover:text-brand-600">+ Aggiungi un lavoro</button>
+            ) : (
+              <div className="grid gap-2 p-2.5">
+                {lavori.map((l) => <CartaLavoro key={l.id} l={l} />)}
               </div>
-              {lavori.length === 0 ? (
-                <p className="px-4 py-4 text-sm text-muted">Niente in programma.</p>
-              ) : (
-                <div className="grid gap-2 p-2.5">
-                  {lavori.map((l) => <CartaLavoro key={l.id} l={l} />)}
-                </div>
-              )}
-            </Card>
-          </motion.div>
-        );
-      })}
+            )}
+          </Card>
+        </motion.div>
+      ))}
     </motion.div>
   );
 }
 
 /* ------------------------------ Vista bacheca ------------------------------ */
 function VistaBacheca({ lavori }: { lavori: Lavoro[] }) {
-  const db = useStore((s) => s.db);
   const apri = useUI((s) => s.apri);
   const colonne: { k: StatoLavoro; label: string }[] = [
     { k: "da_fare", label: "Da fare" },
@@ -284,7 +279,6 @@ function VistaBacheca({ lavori }: { lavori: Lavoro[] }) {
     <div className="grid gap-3 md:grid-cols-3">
       {colonne.map((col) => {
         const items = lavori.filter((l) => l.stato === col.k);
-        const residuo = items.reduce((a, l) => a + riepilogoLavoro(db, l.id).residuo, 0);
         return (
           <div key={col.k} className="flex flex-col rounded-[16px] border border-line bg-surface-2/60 p-2.5">
             <div className="mb-2 flex items-center justify-between px-1">
@@ -297,7 +291,6 @@ function VistaBacheca({ lavori }: { lavori: Lavoro[] }) {
                 <button onClick={() => apri("lavoro", { data: iso(new Date()) })} className="grid h-7 w-7 place-items-center rounded-[9px] text-muted transition hover:bg-surface hover:text-brand-600"><Plus size={16} /></button>
               )}
             </div>
-            {residuo > 0 && <div className="mb-2 px-1 text-[0.7rem] font-semibold text-uscita-600">Da incassare {euro(residuo)}</div>}
             {items.length === 0 ? (
               <p className="px-1 py-6 text-center text-[0.78rem] text-muted">Vuoto</p>
             ) : (
@@ -313,11 +306,10 @@ function VistaBacheca({ lavori }: { lavori: Lavoro[] }) {
 }
 
 /* ------------------------------- Vista lista ------------------------------- */
-function VistaLista({ lavori, statoFiltro, setStatoFiltro, margine }: {
+function VistaLista({ lavori, statoFiltro, setStatoFiltro }: {
   lavori: Lavoro[];
   statoFiltro: StatoLavoro | "tutti";
   setStatoFiltro: (s: StatoLavoro | "tutti") => void;
-  margine: number;
 }) {
   const filtrati = statoFiltro === "tutti" ? lavori : lavori.filter((l) => l.stato === statoFiltro);
   return (
@@ -327,9 +319,6 @@ function VistaLista({ lavori, statoFiltro, setStatoFiltro, margine }: {
         {STATO_LAVORO.map((s) => (
           <FilterChip key={s} attivo={statoFiltro === s} onClick={() => setStatoFiltro(s)}>{etichetta(s)}</FilterChip>
         ))}
-        <span className="ml-auto inline-flex shrink-0 items-center gap-1.5 rounded-full bg-surface-2 px-3 py-1.5 text-[0.74rem] font-semibold text-ink-soft">
-          <TrendingUp size={13} className={margine >= 0 ? "text-entrata-500" : "text-spesa-500"} /> Margine {euro(margine)}
-        </span>
       </div>
       {filtrati.length === 0 ? (
         <EmptyState icona={<Hammer size={24} />} testo="Nessun lavoro in questo periodo." />
