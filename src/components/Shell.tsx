@@ -1,8 +1,8 @@
-import { useState } from "react";
-import { NavLink, Outlet, useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
+  ClipboardList,
   Cloud,
   CloudOff,
   HardHat,
@@ -10,11 +10,8 @@ import {
   Loader2,
   LogOut,
   RefreshCw,
-  Search,
-  Sprout,
   Trash2,
   Users,
-  Wallet,
   type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -36,10 +33,10 @@ interface Voce {
   end?: boolean;
 }
 const NAV: Voce[] = [
-  { to: "/clienti", label: "Clienti", Icona: Sprout },
+  { to: "/", label: "Record", Icona: ClipboardList, end: true },
+  { to: "/dashboard", label: "Dashboard", Icona: LayoutDashboard },
+  { to: "/anagrafiche", label: "Rubrica", Icona: Users },
   { to: "/agenda", label: "Agenda", Icona: CalendarDays },
-  { to: "/soldi", label: "Soldi", Icona: Wallet },
-  { to: "/squadra", label: "Squadra", Icona: Users },
 ];
 
 function Logo({ compact }: { compact?: boolean }) {
@@ -69,8 +66,7 @@ function ProfiloMenu() {
         </button>
       }
       voci={[
-        { label: "Pannello di controllo", icona: <LayoutDashboard size={16} />, onClick: () => navigate("/admin") },
-        { label: "Ricarica esempi", icona: <RefreshCw size={16} />, separa: true, onClick: () => { reseed(); mostra("Dati d'esempio ricaricati."); } },
+        { label: "Ricarica esempi", icona: <RefreshCw size={16} />, onClick: () => { reseed(); mostra("Dati d'esempio ricaricati."); } },
         { label: "Svuota tutto", icona: <Trash2 size={16} />, pericolo: true, onClick: () => chiediConferma({ titolo: "Svuotare tutti i dati?", descrizione: "Restano solo gli operatori. Non si può annullare.", pericolo: true, testoConferma: "Svuota", onConfirm: () => { svuota(); mostra("Tutto svuotato.", "info"); } }) },
         { label: "Esci", icona: <LogOut size={16} />, separa: true, onClick: () => { logout(); navigate("/login"); } },
       ]}
@@ -84,33 +80,6 @@ function SyncBadge() {
   if (stato === "collego") return <span title="Sincronizzo…" className="grid h-9 w-9 place-items-center text-muted"><Loader2 size={17} className="animate-spin" /></span>;
   if (stato === "errore") return <span title="Errore di sincronizzazione" className="grid h-9 w-9 place-items-center text-danger"><CloudOff size={17} /></span>;
   return <span title="Sincronizzato sul cloud" className="grid h-9 w-9 place-items-center text-brand-500"><Cloud size={17} /></span>;
-}
-
-function RicercaInput() {
-  const [params, setParams] = useSearchParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [val, setVal] = useState(params.get("q") ?? "");
-  return (
-    <div className="relative w-full max-w-md">
-      <Search size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted" />
-      <input
-        value={val}
-        onChange={(e) => {
-          const q = e.target.value;
-          setVal(q);
-          if (location.pathname !== "/clienti") {
-            navigate(q ? `/clienti?q=${encodeURIComponent(q)}` : "/clienti");
-          } else {
-            if (q) params.set("q", q); else params.delete("q");
-            setParams(params, { replace: true });
-          }
-        }}
-        placeholder="Cerca un cliente…"
-        className="h-10 w-full rounded-full border border-line bg-surface-2 pl-10 pr-3 text-sm text-ink transition placeholder:text-muted/80 focus:border-brand-300 focus:bg-surface focus:outline-none focus:ring-4 focus:ring-brand-100"
-      />
-    </div>
-  );
 }
 
 function SideRail() {
@@ -134,9 +103,6 @@ function SideRail() {
           </NavLink>
         ))}
       </nav>
-      <NavLink to="/admin" className={({ isActive }) => cn("group mt-1 flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-sm font-semibold transition-colors", isActive ? "bg-brand-50 text-brand-600" : "text-ink-soft hover:bg-brand-50/60 hover:text-brand-600")}>
-        {({ isActive }) => (<><LayoutDashboard size={19} className={isActive ? "text-brand-500" : "text-muted group-hover:text-brand-500"} /> Pannello</>)}
-      </NavLink>
       <div className="mt-auto flex items-center justify-between rounded-[14px] border border-line bg-surface-2 p-2.5">
         <div className="flex items-center gap-2">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-br from-operatore-500 to-operatore-600 text-xs font-bold text-white">M</span>
@@ -185,7 +151,7 @@ function AppBar() {
   return (
     <header className="sticky top-0 z-30 flex items-center gap-3 border-b border-line bg-surface/80 px-4 py-2.5 backdrop-blur pt-safe">
       <div className="lg:hidden"><Logo compact /></div>
-      <div className="flex flex-1 justify-center lg:justify-start"><RicercaInput /></div>
+      <div className="flex-1" />
       <SyncBadge />
       <div className="lg:hidden"><ProfiloMenu /></div>
     </header>
