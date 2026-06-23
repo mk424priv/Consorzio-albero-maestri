@@ -9,6 +9,7 @@ import {
   Phone, ReceiptText, Save, Sparkles, Sprout, StickyNote, Tag, Type, User, Users,
   Wallet, Wrench, type LucideIcon,
 } from "lucide-react";
+import { cn } from "@/lib/cn";
 import { useStore } from "@/store/store";
 import { useUI, type SheetCtx, type SheetTipo } from "@/store/ui";
 import { useToast } from "@/store/toast";
@@ -435,7 +436,7 @@ function IncassoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
   const db = useStore((s) => s.db);
   const crea = useStore((s) => s.creaPagamento);
   const mostra = useToast((s) => s.mostra);
-  const [v, setV] = useState({ clienteId: ctx.clienteId ?? "", lavoroId: ctx.lavoroId ?? "", importoAtteso: "", dataScadenza: "", note: "" });
+  const [v, setV] = useState({ clienteId: ctx.clienteId ?? "", lavoroId: ctx.lavoroId ?? "", importoAtteso: "", dataScadenza: "", note: "", incassaSubito: false });
   const lavoriCliente = db.lavori.filter((l) => l.clienteId === v.clienteId).sort((a, b) => b.data.localeCompare(a.data));
   function salva(e: React.FormEvent) {
     e.preventDefault();
@@ -443,19 +444,19 @@ function IncassoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
     if (!clienteId) return mostra("Aggiungi prima un cliente.", "info");
     const importo = num(v.importoAtteso) ?? 0;
     if (importo <= 0) return chiudi();
-    crea({ clienteId, lavoroId: v.lavoroId || null, importoAtteso: importo, dataScadenza: v.dataScadenza || null, note: v.note || null });
-    festaDoppia("entrata"); mostra("Incasso atteso 💶"); chiudi();
+    crea({ clienteId, lavoroId: v.lavoroId || null, importoAtteso: importo, importoIncassato: v.incassaSubito ? importo : 0, dataScadenza: v.incassaSubito ? null : (v.dataScadenza || null), note: v.note || null });
+    festaDoppia("entrata"); mostra(v.incassaSubito ? "Incassato ✓ 💶" : "Incasso atteso 💶"); chiudi();
   }
   const scena = (
     <ScenaCard className="text-center">
       <div className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-white/15"><Banknote size={26} /></div>
-      <div className="mt-2 text-[0.7rem] font-bold uppercase tracking-wide text-white/75">In entrata</div>
+      <div className="mt-2 text-[0.7rem] font-bold uppercase tracking-wide text-white/75">{v.incassaSubito ? "Incassato" : "In entrata"}</div>
       <div className="mt-1 font-display text-[2rem] font-bold leading-none">{euro(num(v.importoAtteso) ?? 0)}</div>
       {v.clienteId && <div className="mt-1 truncate text-[0.74rem] text-white/80">da {nomeCli(db, v.clienteId)}</div>}
     </ScenaCard>
   );
   return (
-    <Sheet aperto={aperto} onClose={chiudi} titolo="Incasso atteso" sottotitolo="Un pagamento da segnare" accent={ENTITA.entrata.grad} pattern="dots" icona={<Banknote size={20} />} motivo={<Banknote size={120} strokeWidth={1.1} />} scena={scena}>
+    <Sheet aperto={aperto} onClose={chiudi} titolo={v.incassaSubito ? "Incasso" : "Incasso atteso"} sottotitolo={v.incassaSubito ? "Già pagato" : "Un pagamento da segnare"} accent={ENTITA.entrata.grad} pattern="dots" icona={<Banknote size={20} />} motivo={<Banknote size={120} strokeWidth={1.1} />} scena={scena}>
       <form onSubmit={salva}>
         <SheetStagger className="grid gap-3">
           <SheetRow><div><Etichetta>Cliente</Etichetta><Select value={v.clienteId} onChange={(val) => setV((s) => ({ ...s, clienteId: val, lavoroId: "" }))} options={db.clienti.map((c) => ({ value: c.id, label: `${c.nome} ${c.cognome}` }))} /></div></SheetRow>
@@ -465,8 +466,14 @@ function IncassoForm({ aperto, ctx, chiudi }: { aperto: boolean; ctx: SheetCtx; 
                 options={[{ value: "", label: "— nessun lavoro —" }, ...lavoriCliente.map((l) => ({ value: l.id, label: `${new Date(l.data).toLocaleDateString("it-IT", { day: "2-digit", month: "2-digit" })} · ${l.titolo}` }))]} />
             </div></SheetRow>
           )}
-          <SheetRow><div><Etichetta>Importo atteso</Etichetta><AmountPad tinta="entrata" value={v.importoAtteso} onChange={(val) => setV((s) => ({ ...s, importoAtteso: val }))} suggerimenti={[{ label: "100", valore: 100 }, { label: "200", valore: 200 }, { label: "500", valore: 500 }]} /></div></SheetRow>
-          <SheetRow><div><Etichetta>Scadenza</Etichetta><QuickDate tinta="entrata" value={v.dataScadenza} onChange={(dd) => setV((s) => ({ ...s, dataScadenza: dd }))} /></div></SheetRow>
+          <SheetRow><div><Etichetta>{v.incassaSubito ? "Importo incassato" : "Importo atteso"}</Etichetta><AmountPad tinta="entrata" value={v.importoAtteso} onChange={(val) => setV((s) => ({ ...s, importoAtteso: val }))} suggerimenti={[{ label: "100", valore: 100 }, { label: "200", valore: 200 }, { label: "500", valore: 500 }]} /></div></SheetRow>
+          <SheetRow>
+            <button type="button" onClick={() => setV((s) => ({ ...s, incassaSubito: !s.incassaSubito }))} className={cn("flex w-full items-center justify-between rounded-[13px] border px-4 py-3 transition-colors", v.incassaSubito ? "border-entrata-300 bg-entrata-50" : "border-line bg-surface")}>
+              <span className="flex items-center gap-2 text-[0.86rem] font-bold text-ink"><Banknote size={16} className="text-entrata-500" /> Incassa subito <span className="font-medium text-muted">(già pagato)</span></span>
+              <span className={cn("relative h-6 w-10 shrink-0 rounded-full transition-colors", v.incassaSubito ? "bg-entrata-500" : "bg-line-strong")}><span className={cn("absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-all", v.incassaSubito ? "left-[1.125rem]" : "left-0.5")} /></span>
+            </button>
+          </SheetRow>
+          {!v.incassaSubito && <SheetRow><div><Etichetta>Scadenza</Etichetta><QuickDate tinta="entrata" value={v.dataScadenza} onChange={(dd) => setV((s) => ({ ...s, dataScadenza: dd }))} /></div></SheetRow>}
           <SheetRow><CampoIcona icona={<StickyNote size={17} />} label="Note" value={v.note} onChange={(e) => setV((s) => ({ ...s, note: e.target.value }))} /></SheetRow>
           <SheetRow><SheetFooter><Button type="button" onClick={chiudi}>Annulla</Button><Button variante="primary" type="submit"><Save size={16} /> Crea</Button></SheetFooter></SheetRow>
         </SheetStagger>
