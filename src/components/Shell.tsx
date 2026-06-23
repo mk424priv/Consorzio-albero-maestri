@@ -2,13 +2,12 @@ import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   CalendarDays,
-  ClipboardList,
   Cloud,
   CloudOff,
-  HardHat,
   LayoutDashboard,
   Loader2,
   LogOut,
+  Plus,
   RefreshCw,
   Trash2,
   Users,
@@ -24,6 +23,7 @@ import { Menu } from "@/components/ui";
 import { SheetHost } from "@/components/sheets";
 import { LavoroSchedaHost } from "@/components/LavoroScheda";
 import { RecordWizardHost } from "@/components/RecordWizard";
+import { CardLavoroEditorHost } from "@/components/CardLavoroEditor";
 import { ConfirmHost } from "@/components/ui";
 
 interface Voce {
@@ -33,10 +33,9 @@ interface Voce {
   end?: boolean;
 }
 const NAV: Voce[] = [
-  { to: "/", label: "Record", Icona: ClipboardList, end: true },
+  { to: "/", label: "Agenda", Icona: CalendarDays, end: true },
   { to: "/dashboard", label: "Dashboard", Icona: LayoutDashboard },
   { to: "/anagrafiche", label: "Rubrica", Icona: Users },
-  { to: "/agenda", label: "Agenda", Icona: CalendarDays },
 ];
 
 function Logo({ compact }: { compact?: boolean }) {
@@ -83,12 +82,12 @@ function SyncBadge() {
 }
 
 function SideRail() {
-  const apriWizard = useUI((s) => s.apriWizard);
+  const apriCard = useUI((s) => s.apriCard);
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-surface/70 p-4 backdrop-blur lg:flex">
       <div className="mb-6 mt-1 px-1"><Logo /></div>
-      <button onClick={() => apriWizard()} className="mb-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-gradient-to-b from-brand-400 to-brand-500 px-4 text-sm font-bold text-white shadow-[var(--shadow-glow)] transition hover:to-brand-600">
-        <HardHat size={18} /> Nuovo intervento
+      <button onClick={() => apriCard()} className="mb-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-gradient-to-b from-brand-400 to-brand-500 px-4 text-sm font-bold text-white shadow-[var(--shadow-glow)] transition hover:to-brand-600">
+        <Plus size={18} /> Nuovo lavoro
       </button>
       <nav className="flex flex-col gap-1">
         {NAV.map(({ to, label, Icona, end }) => (
@@ -118,7 +117,7 @@ function SideRail() {
 }
 
 function BottomNav() {
-  const apriWizard = useUI((s) => s.apriWizard);
+  const apriCard = useUI((s) => s.apriCard);
   const sinistra = NAV.slice(0, 2);
   const destra = NAV.slice(2);
   const item = (v: Voce) => (
@@ -137,8 +136,8 @@ function BottomNav() {
     <nav className="fixed inset-x-0 bottom-0 z-40 flex h-safe-nav items-start justify-around border-t border-line bg-surface/90 px-2 pt-1.5 backdrop-blur lg:hidden">
       {sinistra.map(item)}
       <div className="flex flex-1 flex-col items-center">
-        <motion.button whileTap={tap} onClick={() => apriWizard()} aria-label="Nuovo intervento" className="-mt-5 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-brand-400 to-brand-500 text-white shadow-[var(--shadow-glow)] ring-4 ring-canvas">
-          <HardHat size={24} />
+        <motion.button whileTap={tap} onClick={() => apriCard()} aria-label="Nuovo lavoro" className="-mt-5 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-brand-400 to-brand-500 text-white shadow-[var(--shadow-glow)] ring-4 ring-canvas">
+          <Plus size={26} />
         </motion.button>
         <span className="mt-0.5 text-[0.62rem] font-bold text-muted">Nuovo</span>
       </div>
@@ -177,6 +176,7 @@ export function AppShell() {
         </motion.main>
       </div>
       <BottomNav />
+      <CardLavoroEditorHost />
       <RecordWizardHost />
       <LavoroSchedaHost />
       <SheetHost />

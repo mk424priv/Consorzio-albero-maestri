@@ -19,6 +19,7 @@ import type {
 import { datiIniziali } from "@/data/seed";
 import { assegnaIniziali } from "@/lib/codice-parlante";
 import { arrotonda } from "@/lib/format";
+import { calcoloLavoro } from "@/lib/lavoro-calc";
 import { nuovoId } from "@/lib/id";
 
 const PASSWORD_DEFAULT = "albero";
@@ -35,6 +36,9 @@ export interface SalvaLavoroInput {
   data: string;
   periodo?: { dal: string; al: string } | null;
   prezzo?: number | null;
+  oraInizio?: string | null;
+  oraFine?: string | null;
+  descrizione?: string | null;
   partecipanti: { collaboratoreId: string; oreTotale?: number }[];
   righe?: { data: string; ore: Record<string, number> }[];
   spese?: { descrizione: string; importo: number }[];
@@ -99,6 +103,7 @@ interface Stato {
   salvaLavoro: (i: SalvaLavoroInput) => string;
   segnaFatto: (id: string, dataEffettiva?: string) => void;
   segnaDaFare: (id: string) => void;
+  segnaSaldato: (lavoroId: string, saldato: boolean) => void;
   duplicaLavoro: (id: string, nuovaData?: string) => string;
   aggiornaTariffeLavoro: (id: string) => void;
 
@@ -305,7 +310,7 @@ export const useStore = create<Stato>()(
           id,
           clienteId: i.clienteId,
           titolo: i.titolo?.trim() || `Intervento del ${i.data.split("-").reverse().join("/")}`,
-          descrizione: esistente?.descrizione ?? null,
+          descrizione: i.descrizione !== undefined ? (i.descrizione || null) : (esistente?.descrizione ?? null),
           luogo: esistente?.luogo ?? null,
           data: i.data,
           ordineNelGiorno: esistente?.ordineNelGiorno ?? null,
@@ -320,6 +325,8 @@ export const useStore = create<Stato>()(
           conteggio,
           periodo: i.periodo ?? null,
           prezzo: i.modo === "preventivo" ? (i.prezzo ?? 0) : null,
+          oraInizio: i.oraInizio ?? esistente?.oraInizio ?? null,
+          oraFine: i.oraFine ?? esistente?.oraFine ?? null,
           tariffaClienteSnapshot,
           partecipanti,
           contaMieOreComeCosto: i.contaMieOreComeCosto ?? false,
@@ -361,6 +368,22 @@ export const useStore = create<Stato>()(
             pagamenti: s.db.pagamenti.filter((p) => p.lavoroId !== id || p.importoIncassato > 0),
           },
         })),
+      segnaSaldato: (lavoroId, saldato) =>
+        set((s) => {
+          const l = s.db.lavori.find((x) => x.id === lavoroId);
+          if (!l) return {} as Partial<Stato>;
+          const lordo = calcoloLavoro(s.db, l).lordo;
+          if (lordo <= 0) return {} as Partial<Stato>;
+          const inc = saldato ? lordo : 0;
+          const esiste = s.db.pagamenti.some((p) => p.lavoroId === lavoroId);
+          let pagamenti: Pagamento[];
+          if (esiste) {
+            pagamenti = s.db.pagamenti.map((p) => (p.lavoroId === lavoroId ? ricalcolaPagamento({ ...p, importoAtteso: lordo, importoIncassato: Math.min(inc, lordo), dataIncasso: inc > 0 ? (p.dataIncasso ?? oggiISO()) : null }) : p));
+          } else {
+            pagamenti = [ricalcolaPagamento({ id: nuovoId("pa"), clienteId: l.clienteId, lavoroId, preventivoId: null, origine: "manuale", importoAtteso: lordo, importoIncassato: inc, stato: "in_attesa", dataEmissione: l.data, dataScadenza: null, dataIncasso: inc > 0 ? oggiISO() : null }), ...s.db.pagamenti];
+          }
+          return { db: { ...s.db, pagamenti } };
+        }),
       aggiornaTariffeLavoro: (id) =>
         set((s) => {
           const l = s.db.lavori.find((x) => x.id === id);

@@ -76,6 +76,8 @@ export interface Lavoro {
   conteggio?: "totale" | "per_giorni"; // come si contano le ore
   periodo?: { dal: ISODate; al: ISODate } | null; // etichetta per preventivo
   prezzo?: number | null; // per preventivo
+  oraInizio?: string | null; // HH:MM (fascia oraria)
+  oraFine?: string | null; // HH:MM
   tariffaClienteSnapshot?: number | null; // €/h cliente fissato (calcolo ore stabile)
   partecipanti?: PartecipanteLavoro[]; // min. io
   contaMieOreComeCosto?: boolean; // default false (le mie ore = profitto)
