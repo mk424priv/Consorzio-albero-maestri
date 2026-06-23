@@ -2,7 +2,7 @@
 import type { MetodoPagamento } from "@/lib/dominio";
 import { arrotonda, oggiISO } from "@/lib/format";
 import { nuovoId } from "@/lib/id";
-import { pagamentoApertoLavoro } from "@/lib/lavoro-calc";
+import { operatoreIo, pagamentoApertoLavoro } from "@/lib/lavoro-calc";
 import type { Pagamento } from "@/lib/types";
 import { useStore } from "./store";
 
@@ -51,6 +51,57 @@ export async function riprogramma(lavoroId: string, nuovaData?: string): Promise
 
 export async function eliminaLavoro(lavoroId: string): Promise<void> {
   await useStore.getState().elimina("lavori", lavoroId);
+}
+
+/** Incasso subito: lavoro preventivo fatto + pagamento gia' incassato, zero ore. */
+export async function incassaSubito(opts: {
+  clienteId?: string;
+  titolo: string;
+  importo: number;
+  data?: string;
+  metodo?: MetodoPagamento;
+}): Promise<string> {
+  const { dati, salva } = useStore.getState();
+  const io = operatoreIo(dati);
+  const lavoroId = nuovoId();
+  const data = opts.data ?? oggiISO();
+  await salva("lavori", {
+    id: lavoroId,
+    clienteId: opts.clienteId,
+    titolo: opts.titolo.trim() || "Incasso subito",
+    data,
+    fase: "fatto",
+    modo: "preventivo",
+    conteggio: "totale",
+    prezzo: arrotonda(opts.importo),
+    periodo: null,
+    tariffaClienteSnapshot: null,
+    partecipanti: io ? [{ collaboratoreId: io.id, tariffaSnapshot: io.tariffaOraria ?? 0 }] : [],
+    contaMieOreComeCosto: false,
+    creatoIl: data,
+    updatedAt: "",
+  });
+  await salva("pagamenti", {
+    id: nuovoId(),
+    clienteId: opts.clienteId ?? "",
+    lavoroId,
+    origine: "preventivo",
+    importoAtteso: arrotonda(opts.importo),
+    importoIncassato: arrotonda(opts.importo),
+    dataEmissione: data,
+    dataIncasso: data,
+    note: opts.metodo,
+    updatedAt: "",
+  });
+  return lavoroId;
+}
+
+/** Prelievo del titolare (denaro in uscita): CompensoOperatore(io) con note "prelievo". */
+export async function prelievoTitolare(importo: number, data?: string): Promise<void> {
+  const { dati, salva } = useStore.getState();
+  const io = operatoreIo(dati);
+  if (!io || importo <= 0) return;
+  await salva("compensi", { id: nuovoId(), operatoreId: io.id, importo: arrotonda(importo), data: data ?? oggiISO(), note: "prelievo", updatedAt: "" });
 }
 
 /** Paga un operaio: crea un CompensoOperatore (denaro in uscita). */
