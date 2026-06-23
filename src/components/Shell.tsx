@@ -26,6 +26,7 @@ import { useSync } from "@/lib/sync";
 import { Menu } from "@/components/ui";
 import { SheetHost } from "@/components/sheets";
 import { LavoroSchedaHost } from "@/components/LavoroScheda";
+import { RecordWizardHost } from "@/components/RecordWizard";
 import { ConfirmHost } from "@/components/ui";
 
 interface Voce {
@@ -113,12 +114,13 @@ function RicercaInput() {
 }
 
 function SideRail() {
+  const apriWizard = useUI((s) => s.apriWizard);
   return (
     <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-line bg-surface/70 p-4 backdrop-blur lg:flex">
       <div className="mb-6 mt-1 px-1"><Logo /></div>
-      <NavLink to="/" end className={({ isActive }) => cn("mb-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] px-4 text-sm font-bold text-white shadow-[var(--shadow-glow)] transition", isActive ? "bg-gradient-to-b from-brand-500 to-brand-600" : "bg-gradient-to-b from-brand-400 to-brand-500 hover:to-brand-600")}>
+      <button onClick={() => apriWizard()} className="mb-5 inline-flex h-11 items-center justify-center gap-2 rounded-[14px] bg-gradient-to-b from-brand-400 to-brand-500 px-4 text-sm font-bold text-white shadow-[var(--shadow-glow)] transition hover:to-brand-600">
         <HardHat size={18} /> Nuovo intervento
-      </NavLink>
+      </button>
       <nav className="flex flex-col gap-1">
         {NAV.map(({ to, label, Icona, end }) => (
           <NavLink key={to} to={to} end={end} className={({ isActive }) => cn("group relative flex items-center gap-3 rounded-[12px] px-3 py-2.5 text-sm font-semibold transition-colors", isActive ? "bg-brand-50 text-brand-600" : "text-ink-soft hover:bg-brand-50/60 hover:text-brand-600")}>
@@ -150,9 +152,7 @@ function SideRail() {
 }
 
 function BottomNav() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const suCantiere = location.pathname === "/";
+  const apriWizard = useUI((s) => s.apriWizard);
   const sinistra = NAV.slice(0, 2);
   const destra = NAV.slice(2);
   const item = (v: Voce) => (
@@ -171,10 +171,10 @@ function BottomNav() {
     <nav className="fixed inset-x-0 bottom-0 z-40 flex h-safe-nav items-start justify-around border-t border-line bg-surface/90 px-2 pt-1.5 backdrop-blur lg:hidden">
       {sinistra.map(item)}
       <div className="flex flex-1 flex-col items-center">
-        <motion.button whileTap={tap} onClick={() => navigate("/")} aria-label="Nuovo intervento" className={cn("-mt-5 grid h-14 w-14 place-items-center rounded-full text-white shadow-[var(--shadow-glow)] ring-4 ring-canvas transition", suCantiere ? "bg-gradient-to-b from-brand-500 to-brand-600" : "bg-gradient-to-b from-brand-400 to-brand-500")}>
+        <motion.button whileTap={tap} onClick={() => apriWizard()} aria-label="Nuovo intervento" className="-mt-5 grid h-14 w-14 place-items-center rounded-full bg-gradient-to-b from-brand-400 to-brand-500 text-white shadow-[var(--shadow-glow)] ring-4 ring-canvas">
           <HardHat size={24} />
         </motion.button>
-        <span className={cn("mt-0.5 text-[0.62rem] font-bold", suCantiere ? "text-brand-600" : "text-muted")}>Cantiere</span>
+        <span className="mt-0.5 text-[0.62rem] font-bold text-muted">Nuovo</span>
       </div>
       {destra.map(item)}
     </nav>
@@ -211,6 +211,7 @@ export function AppShell() {
         </motion.main>
       </div>
       <BottomNav />
+      <RecordWizardHost />
       <LavoroSchedaHost />
       <SheetHost />
       <ConfirmHost />

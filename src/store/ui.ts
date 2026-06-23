@@ -39,6 +39,7 @@ interface StatoUI {
   conferma: (Conferma & { id: number }) | null;
   vista: "carte" | "tabella";
   schedaLavoro: string | null; // id del lavoro aperto a tutto schermo
+  wizard: { lavoroId?: string; seq: number } | null; // wizard record (crea/modifica)
 
   apri: (tipo: SheetTipo, ctx?: SheetCtx) => void;
   chiudi: () => void;
@@ -47,6 +48,8 @@ interface StatoUI {
   setVista: (v: "carte" | "tabella") => void;
   apriSchedaLavoro: (id: string) => void;
   chiudiSchedaLavoro: () => void;
+  apriWizard: (lavoroId?: string) => void;
+  chiudiWizard: () => void;
 }
 
 let contatore = 0;
@@ -59,6 +62,7 @@ export const useUI = create<StatoUI>()(
       conferma: null,
       vista: "carte",
       schedaLavoro: null,
+      wizard: null,
       apri: (tipo, ctx = {}) => set({ sheet: { tipo, ctx, seq: ++seqSheet } }),
       chiudi: () => set({ sheet: null }),
       chiediConferma: (c) => set({ conferma: { ...c, id: ++contatore } }),
@@ -66,6 +70,8 @@ export const useUI = create<StatoUI>()(
       setVista: (vista) => set({ vista }),
       apriSchedaLavoro: (id) => set({ schedaLavoro: id }),
       chiudiSchedaLavoro: () => set({ schedaLavoro: null }),
+      apriWizard: (lavoroId) => set({ wizard: { lavoroId, seq: ++seqSheet } }),
+      chiudiWizard: () => set({ wizard: null }),
     }),
     { name: "albero-maestri-ui", partialize: (s) => ({ vista: s.vista }) },
   ),
