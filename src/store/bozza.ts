@@ -69,7 +69,7 @@ function bozzaIniziale(): Bozza {
 
 interface BozzaStore {
   b: Bozza;
-  apri: (ctx?: { data?: string; clienteId?: string; operatoreId?: string }) => void;
+  apri: (ctx?: { data?: string; clienteId?: string; operatoreId?: string; fase?: Fase }) => void;
   set: (patch: Partial<Bozza>) => void;
   reset: () => void;
 }
@@ -80,6 +80,7 @@ export const useBozza = create<BozzaStore>((set) => ({
     const { dati } = useStore.getState();
     const io = operatoreIo(dati);
     const base = bozzaIniziale();
+    if (ctx?.fase) base.fase = ctx.fase;
     if (ctx?.data) base.data = ctx.data;
     if (ctx?.clienteId) {
       base.clienteId = ctx.clienteId;

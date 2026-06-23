@@ -90,7 +90,7 @@ export function CreaLavoro() {
 
   // init bozza all'apertura di /nuovo (sopravvive ai sotto-pannelli interni)
   useEffect(() => {
-    const st = (location.state ?? {}) as { data?: string; clienteId?: string; operatoreId?: string };
+    const st = (location.state ?? {}) as { data?: string; clienteId?: string; operatoreId?: string; fase?: "fatto" | "da_fare" };
     apri(st);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

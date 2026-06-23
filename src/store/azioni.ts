@@ -1,4 +1,5 @@
 // Azioni di dominio: ogni mutazione passa dallo store (canone AGENTS / 02 §6,§9).
+import type { MetodoPagamento } from "@/lib/dominio";
 import { arrotonda, oggiISO } from "@/lib/format";
 import { nuovoId } from "@/lib/id";
 import { pagamentoApertoLavoro } from "@/lib/lavoro-calc";
@@ -50,4 +51,19 @@ export async function riprogramma(lavoroId: string, nuovaData?: string): Promise
 
 export async function eliminaLavoro(lavoroId: string): Promise<void> {
   await useStore.getState().elimina("lavori", lavoroId);
+}
+
+/** Paga un operaio: crea un CompensoOperatore (denaro in uscita). */
+export async function pagaOperaio(operatoreId: string, importo: number, metodo?: MetodoPagamento, periodo?: string): Promise<void> {
+  const { salva } = useStore.getState();
+  if (importo <= 0) return;
+  await salva("compensi", {
+    id: nuovoId(),
+    operatoreId,
+    importo: arrotonda(importo),
+    data: oggiISO(),
+    periodo,
+    metodo,
+    updatedAt: "",
+  });
 }

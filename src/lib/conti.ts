@@ -2,7 +2,7 @@
 import { arrotonda, chiaveMese, SOGLIA } from "./format";
 import { calcoloLavoro } from "./lavoro-calc";
 import type { StatoCompenso, StatoPagamento } from "./dominio";
-import type { Dati, Pagamento } from "./types";
+import type { Dati, Lavoro, Pagamento } from "./types";
 
 /** Stato di un pagamento-come-invoice (scala per-pagamento). */
 export function statoPagamento(p: Pagamento, oggiIso: string): StatoPagamento {
@@ -68,6 +68,30 @@ export function dovutoOperatore(dati: Dati, operatoreId: string): DovutoOperator
   const m = arrotonda(maturato);
   const v = arrotonda(versato);
   return { maturato: m, versato: v, daPagare: arrotonda(Math.max(0, m - v)), stato: statoCompenso(m, v) };
+}
+
+export interface LibroOperatore {
+  ore: number;
+  dovuto: number;
+  pagato: number;
+  saldo: number;
+  stato: StatoCompenso;
+  lavori: Lavoro[];
+}
+
+/** Libro di un operaio: ore, dovuto, pagato, saldo + lavori a cui ha partecipato. */
+export function libroOperatore(dati: Dati, operatoreId: string): LibroOperatore {
+  const d = dovutoOperatore(dati, operatoreId);
+  const lavori = dati.lavori
+    .filter((l) => !l.deleted && l.partecipanti.some((p) => p.collaboratoreId === operatoreId))
+    .sort((a, b) => b.data.localeCompare(a.data));
+  let ore = 0;
+  for (const l of lavori) {
+    ore += dati.ore
+      .filter((o) => o.lavoroId === l.id && o.operatoreId === operatoreId && !o.deleted)
+      .reduce((a, o) => a + o.ore, 0);
+  }
+  return { ore: arrotonda(ore), dovuto: d.maturato, pagato: d.versato, saldo: d.daPagare, stato: d.stato, lavori };
 }
 
 export function statoCompenso(maturato: number, versato: number): StatoCompenso {
