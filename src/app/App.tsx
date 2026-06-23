@@ -9,6 +9,8 @@ import { ClienteScheda } from "@/pages/ClienteScheda";
 import { CreaLavoro } from "@/pages/CreaLavoro";
 import { Dashboard } from "@/pages/Dashboard";
 import { Kitchen } from "@/pages/Kitchen";
+import { NuovoCliente } from "@/pages/NuovoCliente";
+import { NuovoOperaio } from "@/pages/NuovoOperaio";
 import { OperaioScheda } from "@/pages/OperaioScheda";
 import { Soldi } from "@/pages/Soldi";
 import { useStore } from "@/store/store";
@@ -44,7 +46,9 @@ export function App() {
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/nuovo" element={<CreaLavoro />} />
               <Route path="/lavoro/:id" element={<Cantiere />} />
+              <Route path="/cliente/nuovo" element={<NuovoCliente />} />
               <Route path="/cliente/:id" element={<ClienteScheda />} />
+              <Route path="/operaio/nuovo" element={<NuovoOperaio />} />
               <Route path="/operaio/:id" element={<OperaioScheda />} />
             </Route>
           </Routes>

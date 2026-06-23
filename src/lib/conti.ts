@@ -95,6 +95,51 @@ export interface RigaCliente {
   nLavori: number;
 }
 
+export interface RiepilogoCliente {
+  saldoDaIncassare: number;
+  totaleIncassato: number;
+  valoreFatturabile: number;
+  costoManodopera: number;
+  spese: number;
+  margine: number;
+  numeroLavori: number;
+  oreTotali: number;
+}
+
+/** Riepilogo economico di un cliente (solo lavori svolti per i soldi). */
+export function riepilogoCliente(dati: Dati, clienteId: string): RiepilogoCliente {
+  const lavori = dati.lavori.filter((l) => !l.deleted && l.clienteId === clienteId);
+  let fatturabile = 0;
+  let incassato = 0;
+  let daIncassare = 0;
+  let costo = 0;
+  let spese = 0;
+  let margine = 0;
+  let ore = 0;
+  for (const l of lavori) {
+    const c = calcoloLavoro(dati, l);
+    ore += c.oreTotali;
+    if (l.fase === "fatto") {
+      fatturabile += c.lordo;
+      incassato += c.incassato;
+      daIncassare += c.daIncassare;
+      costo += c.costoCollaboratori;
+      spese += c.speseTotali;
+      margine += c.netto;
+    }
+  }
+  return {
+    saldoDaIncassare: arrotonda(daIncassare),
+    totaleIncassato: arrotonda(incassato),
+    valoreFatturabile: arrotonda(fatturabile),
+    costoManodopera: arrotonda(costo),
+    spese: arrotonda(spese),
+    margine: arrotonda(margine),
+    numeroLavori: lavori.length,
+    oreTotali: arrotonda(ore),
+  };
+}
+
 export function perCliente(dati: Dati): RigaCliente[] {
   const map = new Map<string, RigaCliente>();
   for (const l of dati.lavori.filter((l) => !l.deleted && l.fase === "fatto")) {
