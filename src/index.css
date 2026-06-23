@@ -1,0 +1,65 @@
+@import "tailwindcss";
+
+/*
+  Albero Maestri — design tokens (canone 02 §1.1).
+  Ruoli: Carta (superficie), Inchiostro (testo), Ottone (accento), Lichene
+  (stato), piu' i tre stati semantici positivo/attenzione/critico.
+  Palette calda, naturale, "carta da taccuino" — niente cliche' verde-prato.
+*/
+@theme {
+  /* Carta — superfici (dalla piu' alta alla piu' in ombra) */
+  --color-carta: #f4efe6;
+  --color-carta-alta: #fbf8f1;
+  --color-carta-bassa: #ece4d6;
+  --color-carta-ombra: #e2d8c6;
+
+  /* Inchiostro — testo */
+  --color-inchiostro: #2b2a26;
+  --color-inchiostro-soft: #5c574e;
+  --color-inchiostro-tenue: #8a8275;
+
+  /* Ottone — accento "timbro/ottone" */
+  --color-ottone: #a87f3c;
+  --color-ottone-chiaro: #c49a4f;
+
+  /* Lichene — verde oliva-grigio, solo accenti naturali */
+  --color-lichene: #6f7a52;
+
+  /* Stati semantici */
+  --color-positivo: #74803f;   /* pagato — oliva-ottone */
+  --color-attenzione: #b9892f; /* in attesa — ocra/senape */
+  --color-critico: #a8492f;    /* scaduto — terracotta/ruggine */
+
+  /* Tipografia */
+  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+
+  /* Raggi */
+  --radius-carta: 0.875rem;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background-color: var(--color-carta);
+    color: var(--color-inchiostro);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    /* zone sicure per il mobile (notch / barra inferiore) */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right)
+      env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+
+  /* Cifre tabellari ovunque sia mono: colonne di soldi allineate */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
