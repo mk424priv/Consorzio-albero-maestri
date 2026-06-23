@@ -133,6 +133,11 @@ function RecordWizard({ lavoroId, onClose }: { lavoroId?: string; onClose: () =>
   }
 
   function salvaRecord() {
+    // cliente nuovo in modalità ore senza tariffa → chiedi la tariffa prima
+    if (modo === "ore" && !clienteId && nomeCliente && tariffaNuovo.trim() === "") {
+      setTariffaModal(true);
+      return;
+    }
     let cid = clienteId;
     if (!cid && nomeCliente) {
       cid = creaCliente({ nome: nomeCliente, cognome: "", tariffaOraria: tariffaNuovo ? n(tariffaNuovo) : null });
