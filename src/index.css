@@ -1,42 +1,57 @@
 @import "tailwindcss";
 
 /*
-  Albero Maestri — design tokens (canone 02 §1.1).
-  Ruoli: Carta (superficie), Inchiostro (testo), Ottone (accento), Lichene
-  (stato), piu' i tre stati semantici positivo/attenzione/critico.
-  Palette calda, naturale, "carta da taccuino" — niente cliche' verde-prato.
+  Albero Maestri — "Quaderno di bottega" (canone 01 §2.x, 02 §1.1).
+  Materiale, non colore: carta calda, inchiostro sepia, ottone, lichene.
+  Niente "verde prato", niente #000/#fff puri — tutto tonato sul caldo.
+  Personalita' degli schermi su 3 assi: temperatura · peso · texture.
 */
 @theme {
-  /* Carta — superfici (dalla piu' alta alla piu' in ombra) */
-  --color-carta: #f4efe6;
-  --color-carta-alta: #fbf8f1;
-  --color-carta-bassa: #ece4d6;
-  --color-carta-ombra: #e2d8c6;
+  /* ── Carta (superfici) — dalla piu' alta alla piu' in ombra ── */
+  --color-carta: #f3eee3;
+  --color-carta-alta: #faf6ec;
+  --color-carta-bassa: #ebe2d2;
+  --color-carta-ombra: #ddd2bd;
+  --color-carta-svolto: #efe3cd;      /* tabacco caldo — passato */
+  --color-carta-programmato: #e7eaec; /* grigio-bluastro "copia" — futuro */
+  --color-carta-incasso: #2c3730;     /* pelle verde-ottone del registro — soldi */
 
-  /* Inchiostro — testo */
-  --color-inchiostro: #2b2a26;
-  --color-inchiostro-soft: #5c574e;
-  --color-inchiostro-tenue: #8a8275;
+  /* ── Inchiostro (testo), sepia calda ── */
+  --color-inchiostro: #2a2720;        /* forte: titoli/numeri */
+  --color-inchiostro-medio: #595446;  /* corpo */
+  --color-inchiostro-debole: #8b8474; /* didascalie, "matita" */
+  --color-inchiostro-chiaro: #ece3d0; /* testo su pannelli scuri */
 
-  /* Ottone — accento "timbro/ottone" */
+  /* ── Ottone (azione e soldi), metallo smorzato — uso parco ── */
   --color-ottone: #a87f3c;
-  --color-ottone-chiaro: #c49a4f;
+  --color-ottone-chiaro: #c89f51;
+  --color-ottone-scuro: #7c5d28;
 
-  /* Lichene — verde oliva-grigio, solo accenti naturali */
+  /* ── Lichene (corteccia/muschio) — solo accenti/stati, mai fondo ── */
   --color-lichene: #6f7a52;
 
-  /* Stati semantici */
-  --color-positivo: #74803f;   /* pagato — oliva-ottone */
-  --color-attenzione: #b9892f; /* in attesa — ocra/senape */
+  /* ── Semantica (smorzata, in tono carta, non neon) ── */
+  --color-positivo: #6f7a3f;   /* pagato/chiuso — oliva-ottone */
+  --color-attenzione: #b3852c; /* in attesa — ocra/senape */
   --color-critico: #a8492f;    /* scaduto — terracotta/ruggine */
 
-  /* Tipografia */
+  /* ── Tipografia ── */
   --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
 
-  /* Raggi */
+  /* ── Raggi: come carta tagliata, non capsula di plastica ── */
+  --radius-quietanza: 0.25rem; /* ricevuta: angolo quasi retto */
   --radius-carta: 0.875rem;
+  --radius-targhetta: 0.7rem;
+  --radius-bolla: 1.25rem;
+
+  /* ── Ombre: altezza = tempo (futuro alto, passato posato, soldi inciso) ── */
+  --shadow-svolto: 0 1px 2px rgba(42, 39, 32, 0.07);
+  --shadow-carta: 0 2px 8px -2px rgba(42, 39, 32, 0.12), inset 0 1px 0 rgba(255, 253, 247, 0.6);
+  --shadow-programmato: 0 12px 26px -10px rgba(42, 39, 32, 0.22);
+  --shadow-cassa: inset 0 2px 7px rgba(0, 0, 0, 0.38);
+  --shadow-targhetta: 0 9px 20px -5px rgba(124, 93, 40, 0.5), 0 2px 5px rgba(42, 39, 32, 0.22);
 }
 
 @layer base {
@@ -53,13 +68,35 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* zone sicure per il mobile (notch / barra inferiore) */
+    /* zone sicure mobile (notch / barra) */
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
       env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
 
-  /* Cifre tabellari ovunque sia mono: colonne di soldi allineate */
-  .tabular-nums {
-    font-variant-numeric: tabular-nums;
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
+    font-weight: 600;
+  }
+}
+
+@layer utilities {
+  /* Grana di carta: rumore SVG leggero, offline, niente raster pesanti */
+  .grana {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+
+  /* Vignetta morbida: il foglio ha profondita' ai bordi */
+  .vignetta {
+    box-shadow: inset 0 0 90px rgba(42, 39, 32, 0.05);
+  }
+
+  /* Reticolo "millimetrato" tenue per le superfici Programmato */
+  .reticolo {
+    background-image:
+      linear-gradient(to right, rgba(90, 100, 120, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(90, 100, 120, 0.07) 1px, transparent 1px);
+    background-size: 0.75rem 0.75rem;
   }
 }
