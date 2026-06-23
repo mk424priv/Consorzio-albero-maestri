@@ -25,6 +25,25 @@ const PASSWORD_DEFAULT = "albero";
 const oggiISO = () => new Date().toISOString().slice(0, 10);
 type Parziale<T> = Partial<Omit<T, "id">>;
 
+// Input canonico per salvaLavoro (vedi PRD §8).
+export interface SalvaLavoroInput {
+  id?: string; // se presente → modifica
+  clienteId: string;
+  fase: "fatto" | "da_fare";
+  modo: "preventivo" | "ore";
+  conteggio?: "totale" | "per_giorni";
+  data: string;
+  periodo?: { dal: string; al: string } | null;
+  prezzo?: number | null;
+  partecipanti: { collaboratoreId: string; oreTotale?: number }[];
+  righe?: { data: string; ore: Record<string, number> }[];
+  spese?: { descrizione: string; importo: number }[];
+  contaMieOreComeCosto?: boolean;
+  incassatoIniziale?: number; // se fatto e incassato subito
+  titolo?: string;
+  note?: string;
+}
+
 // helper per le azioni generiche (pannello admin → store app)
 const arrDi = (db: Database, coll: keyof Database) => db[coll] as unknown as { id: string }[];
 const conColl = (db: Database, coll: keyof Database, arr: unknown[]): Database =>
@@ -75,6 +94,13 @@ interface Stato {
   // intervento rapido dal campo: crea lavoro + ore + incasso in un colpo,
   // smistando i dati nelle aree (clienti, squadra, lavori, contabilità).
   registraIntervento: (i: { data: string; clienteId: string; operatoreId?: string | null; prezzo?: number | null; ore?: number | null; arrivo?: string | null; uscita?: string | null; titolo?: string | null }) => void;
+  // CANONE: salva un lavoro completo (crea o modifica) con snapshot tariffe,
+  // rigenerando le ore in db.ore e gestendo l'incasso atteso. Ritorna l'id.
+  salvaLavoro: (i: SalvaLavoroInput) => string;
+  segnaFatto: (id: string, dataEffettiva?: string) => void;
+  segnaDaFare: (id: string) => void;
+  duplicaLavoro: (id: string, nuovaData?: string) => string;
+  aggiornaTariffeLavoro: (id: string) => void;
 
   // preventivi
   creaPreventivo: (i: { clienteId: string; lavoroId?: string | null; tipo: Preventivo["tipo"]; importoTotale: number; importoAcconto?: number | null; dataEmissione?: string; dataScadenza?: string | null; note?: string | null }) => void;
@@ -250,6 +276,111 @@ export const useStore = create<Stato>()(
             : s.db.pagamenti;
           return { db: { ...s.db, lavori: [...s.db.lavori, lavoro], ore: nuoveOre, pagamenti: nuoviPag } };
         }),
+
+      salvaLavoro: (i) => {
+        const db = get().db;
+        const id = i.id ?? nuovoId("lv");
+        const esistente = i.id ? db.lavori.find((l) => l.id === id) : undefined;
+        const cliente = db.clienti.find((c) => c.id === i.clienteId);
+        const conteggio = i.conteggio ?? "totale";
+        // snapshot: preserva se già presenti (storia stabile), altrimenti attuali
+        const tariffaClienteSnapshot = esistente?.tariffaClienteSnapshot ?? cliente?.tariffaOraria ?? 0;
+        const partecipanti = i.partecipanti.map((p) => {
+          const prev = esistente?.partecipanti?.find((x) => x.collaboratoreId === p.collaboratoreId);
+          const tariffaSnapshot = prev?.tariffaSnapshot ?? db.operatori.find((o) => o.id === p.collaboratoreId)?.tariffaOraria ?? 0;
+          return { collaboratoreId: p.collaboratoreId, tariffaSnapshot, oreTotale: p.oreTotale };
+        });
+
+        // rigenera le registrazioni ore in db.ore (fonte di verità delle ore)
+        const ore: RegistrazioneOre[] = [];
+        if (conteggio === "per_giorni" && i.righe) {
+          for (const r of i.righe) for (const [cid, h] of Object.entries(r.ore)) if (h > 0) ore.push({ id: nuovoId("or"), clienteId: i.clienteId, lavoroId: id, operatoreId: cid, data: r.data, ore: h, note: null });
+        } else {
+          for (const p of i.partecipanti) if ((p.oreTotale ?? 0) > 0) ore.push({ id: nuovoId("or"), clienteId: i.clienteId, lavoroId: id, operatoreId: p.collaboratoreId, data: i.data, ore: p.oreTotale!, note: null });
+        }
+        const oreTot = arrotonda(ore.reduce((a, o) => a + o.ore, 0));
+        const lordo = i.modo === "preventivo" ? arrotonda(i.prezzo ?? 0) : arrotonda(oreTot * tariffaClienteSnapshot);
+
+        const lavoro: Lavoro = {
+          id,
+          clienteId: i.clienteId,
+          titolo: i.titolo?.trim() || `Intervento del ${i.data.split("-").reverse().join("/")}`,
+          descrizione: esistente?.descrizione ?? null,
+          luogo: esistente?.luogo ?? null,
+          data: i.data,
+          ordineNelGiorno: esistente?.ordineNelGiorno ?? null,
+          stato: i.fase === "fatto" ? "fatto" : "da_fare",
+          tipoCompenso: i.modo,
+          durataPrevistaOre: esistente?.durataPrevistaOre ?? null,
+          operatoreId: partecipanti[0]?.collaboratoreId ?? null,
+          note: i.note ?? esistente?.note ?? null,
+          creatoIl: esistente?.creatoIl ?? new Date().toISOString(),
+          fase: i.fase,
+          modo: i.modo,
+          conteggio,
+          periodo: i.periodo ?? null,
+          prezzo: i.modo === "preventivo" ? (i.prezzo ?? 0) : null,
+          tariffaClienteSnapshot,
+          partecipanti,
+          contaMieOreComeCosto: i.contaMieOreComeCosto ?? false,
+        };
+
+        // spese inline → db.spese collegate al lavoro
+        const speseNuove: Spesa[] = (i.spese ?? []).filter((s) => s.importo > 0).map((s) => ({ id: nuovoId("sp"), categoria: "altro", importo: arrotonda(s.importo), data: i.data, descrizione: s.descrizione || null, clienteId: i.clienteId, lavoroId: id }));
+
+        set((s) => {
+          const altreOre = s.db.ore.filter((o) => o.lavoroId !== id);
+          const altreSpese = s.db.spese.filter((sp) => sp.lavoroId !== id);
+          const altriLavori = s.db.lavori.filter((l) => l.id !== id);
+          let pagamenti = s.db.pagamenti;
+          const pagEsistente = pagamenti.find((p) => p.lavoroId === id);
+          if (i.fase === "fatto" && lordo > 0) {
+            if (pagEsistente) {
+              pagamenti = pagamenti.map((p) => (p.lavoroId === id ? ricalcolaPagamento({ ...p, importoAtteso: lordo }) : p));
+            } else {
+              const inc = Math.max(0, Math.min(i.incassatoIniziale ?? 0, lordo));
+              pagamenti = [ricalcolaPagamento({ id: nuovoId("pa"), clienteId: i.clienteId, lavoroId: id, preventivoId: null, origine: "manuale", importoAtteso: lordo, importoIncassato: inc, stato: "in_attesa", dataEmissione: i.data, dataScadenza: null, dataIncasso: inc > 0 ? i.data : null }), ...pagamenti];
+            }
+          } else if ((i.fase === "da_fare" || lordo <= 0) && pagEsistente && pagEsistente.importoIncassato <= 0) {
+            // piano o senza importo: rimuovi il pagamento atteso non incassato
+            pagamenti = pagamenti.filter((p) => p.lavoroId !== id);
+          }
+          return { db: { ...s.db, lavori: [...altriLavori, lavoro], ore: [...ore, ...altreOre], spese: [...speseNuove, ...altreSpese], pagamenti } };
+        });
+        return id;
+      },
+
+      segnaFatto: (id, dataEffettiva) =>
+        set((s) => ({ db: { ...s.db, lavori: s.db.lavori.map((l) => (l.id === id ? { ...l, fase: "fatto", stato: "fatto", data: dataEffettiva ?? l.data } : l)) } })),
+      segnaDaFare: (id) =>
+        set((s) => ({
+          db: {
+            ...s.db,
+            lavori: s.db.lavori.map((l) => (l.id === id ? { ...l, fase: "da_fare", stato: "da_fare" } : l)),
+            // un piano non ha incassi: azzera i pagamenti non incassati
+            pagamenti: s.db.pagamenti.filter((p) => p.lavoroId !== id || p.importoIncassato > 0),
+          },
+        })),
+      aggiornaTariffeLavoro: (id) =>
+        set((s) => {
+          const l = s.db.lavori.find((x) => x.id === id);
+          if (!l) return {} as Partial<Stato>;
+          const cliente = s.db.clienti.find((c) => c.id === l.clienteId);
+          const partecipanti = (l.partecipanti ?? []).map((p) => ({ ...p, tariffaSnapshot: s.db.operatori.find((o) => o.id === p.collaboratoreId)?.tariffaOraria ?? p.tariffaSnapshot }));
+          return { db: { ...s.db, lavori: s.db.lavori.map((x) => (x.id === id ? { ...x, tariffaClienteSnapshot: cliente?.tariffaOraria ?? x.tariffaClienteSnapshot, partecipanti } : x)) } };
+        }),
+      duplicaLavoro: (id, nuovaData) => {
+        const db = get().db;
+        const l = db.lavori.find((x) => x.id === id);
+        if (!l) return id;
+        const newId = nuovoId("lv");
+        const data = nuovaData ?? oggiISO();
+        const copia: Lavoro = { ...l, id: newId, data, fase: "da_fare", stato: "da_fare", creatoIl: new Date().toISOString() };
+        // copia anche le ore (per stessa struttura), spostate sulla nuova data se totale
+        const oreCopia: RegistrazioneOre[] = db.ore.filter((o) => o.lavoroId === id).map((o) => ({ ...o, id: nuovoId("or"), lavoroId: newId, data: l.conteggio === "per_giorni" ? o.data : data }));
+        set((s) => ({ db: { ...s.db, lavori: [...s.db.lavori, copia], ore: [...oreCopia, ...s.db.ore] } }));
+        return newId;
+      },
 
       // ---------------- preventivi ----------------
       creaPreventivo: (i) => {

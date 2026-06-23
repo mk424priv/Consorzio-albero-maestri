@@ -43,6 +43,19 @@ export interface Operatore {
   creatoIl: ISODate;
 }
 
+// Partecipante a un lavoro: chi + costo orario "congelato" al momento.
+export interface PartecipanteLavoro {
+  collaboratoreId: string;
+  tariffaSnapshot: number; // €/h costo (mia spesa), fissato alla creazione
+  oreTotale?: number; // per conteggio="totale"
+}
+
+// Riga giornaliera (conteggio="per_giorni"): ore di ogni partecipante in un giorno.
+export interface RigaGiorno {
+  data: ISODate;
+  ore: Record<string, number>; // collaboratoreId -> ore
+}
+
 export interface Lavoro {
   id: string;
   clienteId: string;
@@ -51,12 +64,21 @@ export interface Lavoro {
   luogo?: string | null;
   data: ISODate;
   ordineNelGiorno?: number | null;
-  stato: StatoLavoro;
-  tipoCompenso: TipoCompenso;
+  stato: StatoLavoro; // legacy (da_fare/in_corso/fatto) — sincronizzato da `fase`
+  tipoCompenso: TipoCompenso; // legacy — sincronizzato da `modo`
   durataPrevistaOre?: number | null;
-  operatoreId?: string | null;
+  operatoreId?: string | null; // legacy (primo partecipante)
   note?: string | null;
   creatoIl: ISODate;
+  // --- CANONE (tutti opzionali → retrocompatibile con i lavori legacy) ---
+  fase?: "fatto" | "da_fare"; // asse temporale
+  modo?: "preventivo" | "ore"; // asse di compenso
+  conteggio?: "totale" | "per_giorni"; // come si contano le ore
+  periodo?: { dal: ISODate; al: ISODate } | null; // etichetta per preventivo
+  prezzo?: number | null; // per preventivo
+  tariffaClienteSnapshot?: number | null; // €/h cliente fissato (calcolo ore stabile)
+  partecipanti?: PartecipanteLavoro[]; // min. io
+  contaMieOreComeCosto?: boolean; // default false (le mie ore = profitto)
 }
 
 export interface Preventivo {
