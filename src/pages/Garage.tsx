@@ -1,10 +1,14 @@
 import { Car, Cog, Plus, Trash2, Wrench, Zap } from "lucide-react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { Modello3D } from "@/components/garage/Modello3D";
 import { Oggetto3D } from "@/components/garage/Oggetto3D";
 import { OggettoIso } from "@/components/garage/OggettoIso";
 import { Button, Conferma, Cruscotto, EmptyState, Foglio, NumberHero, SectionHeader, Segmented, StatTile } from "@/components/ui";
+import { haModello } from "@/lib/catalogo-modelli";
 import { arrotonda, formatEuro, oggiISO } from "@/lib/format";
+import { risolviModelKey } from "@/lib/gemini-classifica";
 import { nuovoId } from "@/lib/id";
+import { risolviModelloLocale } from "@/lib/modelli-3d";
 import type { Attrezzo, CategoriaAttrezzo } from "@/lib/types";
 import { notificaUndo } from "@/lib/undo";
 import { eliminaAttrezzo } from "@/store/azioni";
@@ -180,12 +184,22 @@ function AttrezzoSheet({ open, onOpenChange, categoriaDefault, attrezzo }: { ope
     prezzoCarburante: attrezzo?.prezzoCarburante != null ? String(attrezzo.prezzoCarburante) : "",
   }));
   const [elimina, setElimina] = useState(false);
+  const [salvando, setSalvando] = useState(false);
   const set = (p: Partial<typeof form>) => setForm((f) => ({ ...f, ...p }));
   const num = (s: string) => (s ? Number(s.replace(",", ".")) : undefined);
   const valido = form.nome.trim().length > 0;
 
+  // Anteprima 3D dal vivo: solo matcher locale (sincrono, niente rete) mentre si scrive.
+  const anteprimaKey = useMemo(() => {
+    const e = risolviModelloLocale(form.nome, form.caratteristiche, form.categoria);
+    return e.key && haModello(e.key) ? e.key : null;
+  }, [form.nome, form.caratteristiche, form.categoria]);
+
   const salvaAttrezzo = async () => {
-    if (!valido) return;
+    if (!valido || salvando) return;
+    setSalvando(true);
+    // Risolve il modelKey una volta al salvataggio (matcher → Gemini se incerto). Vedi canone/10.
+    const modelKey = (await risolviModelKey(form.nome.trim(), form.caratteristiche.trim() || undefined, form.categoria)) ?? undefined;
     await salva("attrezzi", {
       id: attrezzo?.id ?? nuovoId(),
       nome: form.nome.trim(),
@@ -193,11 +207,14 @@ function AttrezzoSheet({ open, onOpenChange, categoriaDefault, attrezzo }: { ope
       prezzo: num(form.prezzo),
       dataAcquisto: form.dataAcquisto || undefined,
       caratteristiche: form.caratteristiche.trim() || undefined,
+      note: attrezzo?.note,
       consumoMedio: form.categoria === "auto" ? num(form.consumoMedio) : undefined,
       carburante: form.categoria === "auto" ? form.carburante.trim() || undefined : undefined,
       prezzoCarburante: form.categoria === "auto" ? num(form.prezzoCarburante) : undefined,
+      modelKey,
       updatedAt: "",
     });
+    setSalvando(false);
     onOpenChange(false);
   };
 
@@ -205,7 +222,11 @@ function AttrezzoSheet({ open, onOpenChange, categoriaDefault, attrezzo }: { ope
     <Foglio open={open} onOpenChange={onOpenChange} variante="dettaglio" titolo={attrezzo ? "Modifica attrezzo" : "Nuovo attrezzo"}>
       <div className="flex flex-col gap-3">
         <div className="relative h-36 overflow-hidden rounded-vetro bg-superficie-bassa">
-          <Oggetto3D categoria={form.categoria} className="absolute inset-0 h-full w-full" />
+          {anteprimaKey ? (
+            <Modello3D modelKey={anteprimaKey} className="absolute inset-0 h-full w-full" />
+          ) : (
+            <Oggetto3D categoria={form.categoria} className="absolute inset-0 h-full w-full" />
+          )}
         </div>
         <Segmented value={form.categoria} onValueChange={(v) => set({ categoria: v })} options={CATEGORIE} layoutId="attrezzo-cat" className="w-full" />
         <input value={form.nome} onChange={(e) => set({ nome: e.target.value })} placeholder="Nome (es. Decespugliatore Stihl)" className={inputCls} autoFocus />
@@ -226,7 +247,7 @@ function AttrezzoSheet({ open, onOpenChange, categoriaDefault, attrezzo }: { ope
           </div>
         )}
 
-        <Button size="lg" onClick={() => void salvaAttrezzo()} disabled={!valido}>{attrezzo ? "Salva modifiche" : "Aggiungi al garage"}</Button>
+        <Button size="lg" onClick={() => void salvaAttrezzo()} disabled={!valido || salvando}>{salvando ? "Riconosco il modello…" : attrezzo ? "Salva modifiche" : "Aggiungi al garage"}</Button>
         {attrezzo && (
           <Button size="lg" variant="critico" onClick={() => setElimina(true)}><Trash2 size={16} /> Elimina</Button>
         )}

@@ -28,6 +28,19 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,woff,woff2,svg,png}"],
+        // Modelli 3D del Garage (public/modelli/*.glb): cache-first, salvati al primo
+        // utilizzo e poi disponibili offline, senza appesantire l'install del SW.
+        runtimeCaching: [
+          {
+            urlPattern: /\/modelli\/.*\.glb$/,
+            handler: "CacheFirst",
+            options: {
+              cacheName: "modelli-3d",
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+        ],
       },
     }),
   ],

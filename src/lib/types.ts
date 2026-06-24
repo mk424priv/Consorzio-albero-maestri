@@ -172,6 +172,8 @@ export interface Attrezzo {
   consumoMedio?: number; // litri / 100 km
   carburante?: string; // benzina · diesel · GPL · elettrico
   prezzoCarburante?: number; // €/litro
+  /** Chiave del modello 3D risolta dal nome (cache derived-not-stored). Vedi canone/10. */
+  modelKey?: string;
   updatedAt: string;
   rev?: number;
   deleted?: boolean;
