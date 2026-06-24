@@ -94,18 +94,28 @@
 
 /* card per stato — solide + barra-accento (programmato=blu, incassare=rosso, pagato=verde) */
 @layer utilities {
+  /* riempimento "vetro": luce di colore dall'angolo + filo di luce in alto, niente barra */
   .statocard { position: relative; overflow: hidden; border-radius: var(--radius-vetro); }
   .statocard--programmato {
-    background: linear-gradient(118deg, rgba(10,88,255,0.10), rgba(10,88,255,0) 55%), var(--color-superficie);
-    box-shadow: inset 4px 0 0 0 var(--color-blu);
+    background:
+      radial-gradient(140% 120% at 100% -15%, rgba(10, 88, 255, 0.30), rgba(10, 88, 255, 0) 52%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 36%),
+      var(--color-superficie);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(10, 88, 255, 0.12);
   }
   .statocard--incassare {
-    background: linear-gradient(118deg, rgba(255,59,48,0.10), rgba(255,59,48,0) 55%), var(--color-superficie);
-    box-shadow: inset 4px 0 0 0 var(--color-rosso);
+    background:
+      radial-gradient(140% 120% at 100% -15%, rgba(255, 59, 48, 0.30), rgba(255, 59, 48, 0) 52%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 36%),
+      var(--color-superficie);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(255, 59, 48, 0.12);
   }
   .statocard--pagato {
-    background: linear-gradient(118deg, rgba(0,209,94,0.08), rgba(0,209,94,0) 55%), var(--color-superficie);
-    box-shadow: inset 4px 0 0 0 rgba(0,209,94,0.7);
+    background:
+      radial-gradient(140% 120% at 100% -15%, rgba(0, 209, 94, 0.16), rgba(0, 209, 94, 0) 50%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 36%),
+      var(--color-superficie);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
   }
 }
 

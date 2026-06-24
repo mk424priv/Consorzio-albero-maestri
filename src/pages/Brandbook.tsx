@@ -64,6 +64,14 @@ function Sezione({ id, titolo, nota, children }: { id?: string; titolo: string; 
 
 const btn = "inline-flex items-center justify-center gap-2 font-semibold transition-all active:scale-[0.98]";
 
+const MONDI: { n: string; c: [string, string, string, string] }[] = [
+  { n: "Agenda · cielo", c: ["#0a58ff", "#1b9cff", "#0a2a6b", "#00d15e"] },
+  { n: "Soldi · linfa", c: ["#00d15e", "#7bff3a", "#0a5e40", "#0a58ff"] },
+  { n: "Rubrica · terra", c: ["#ff7a1a", "#ff3b30", "#7a3b0e", "#ffb03a"] },
+  { n: "Dati · brand", c: ["#0a58ff", "#00d15e", "#4b0082", "#ff3b30"] },
+  { n: "Crea · notte", c: ["#0a58ff", "#1a1147", "#0a2a6b", "#00d15e"] },
+];
+
 export function Brandbook() {
   const navigate = useNavigate();
   const [sheet, setSheet] = useState<null | "detail" | "action" | "danger">(null);
@@ -154,6 +162,20 @@ export function Brandbook() {
             </div>
             <div className="relative h-32 overflow-hidden rounded-bolla mesh-verde p-5"><span className="absolute bottom-5 left-5 font-semibold text-black">Mesh Verde · incasso</span></div>
             <div className="relative h-32 overflow-hidden rounded-bolla mesh-rosso p-5"><span className="absolute bottom-5 left-5 font-semibold">Mesh Rosso · uscita</span></div>
+          </div>
+        </Sezione>
+
+        {/* MONDI — sfondi WebGL per schermo */}
+        <Sezione titolo="Mondi · sfondi WebGL" nota="palette per schermo">
+          <p className="-mt-2 text-sm text-fumo">Ogni schermo ha la sua fascia mesh in alto, che sfuma nel nero. Cambia palette per sezione e fa morphing.</p>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            {MONDI.map((m) => (
+              <div key={m.n} className="relative h-28 overflow-hidden rounded-vetro">
+                <MeshGradient colors={m.c} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/65 to-transparent" />
+                <span className="absolute bottom-3 left-3 text-sm font-semibold">{m.n}</span>
+              </div>
+            ))}
           </div>
         </Sezione>
 

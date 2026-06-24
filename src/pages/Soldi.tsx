@@ -80,18 +80,18 @@ export function Soldi() {
           ]}
           layoutId="modo-soldi"
         />
-        <div className="mt-5 flex flex-col items-center">
-          <span className="text-sm font-medium text-fumo-2">{modo === "incassare" ? "Totale da incassare" : "Totale da pagare"}</span>
-          <NumberHero value={totale} euro tono={modo === "incassare" ? "verde" : "rosso"} className="text-[44px]" />
+        <div className="mt-6 flex flex-col items-center">
+          <span className="text-sm font-medium text-white/70">{modo === "incassare" ? "Totale da incassare" : "Totale da pagare"}</span>
+          <NumberHero value={totale} euro tono={modo === "incassare" ? "verde" : "rosso"} className="text-[54px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]" />
         </div>
-      </Testata>
-
-      <div className="flex flex-col gap-6 px-5 pt-5">
-        <button type="button" onClick={() => navigate("/dashboard")} className="grid grid-cols-3 gap-2 text-left transition-transform active:scale-[0.99]" aria-label="Apri la Dashboard">
+        <button type="button" onClick={() => navigate("/dashboard")} className="mt-6 grid grid-cols-3 gap-2 text-left transition-transform active:scale-[0.99]" aria-label="Apri la Dashboard">
           <StatTile etichetta="Guadagnato">{formatEuro(r.guadagnatoMese)}</StatTile>
           <StatTile etichetta="Incassato" tono="verde">{formatEuro(r.incassatoMese)}</StatTile>
           <StatTile etichetta="Da incassare" tono={r.daIncassare > 0 ? "rosso" : "neutro"}>{formatEuro(r.daIncassare)}</StatTile>
         </button>
+      </Testata>
+
+      <div className="flex flex-col gap-6 px-5 pt-6">
 
         {modo === "incassare" ? (
           <section className="flex flex-col gap-3">

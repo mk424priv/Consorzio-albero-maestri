@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CalendarClock, Check, Clock, MoreHorizontal } from "lucide-react";
+import { Activity, Check, Clock, type LucideIcon } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { codiceCliente } from "@/lib/codice-parlante";
@@ -13,19 +13,11 @@ import { Button, Codice } from "./ui";
 
 type StatoCard = "programmato" | "incassare" | "pagato";
 
-function StatoTag({ stato }: { stato: StatoCard }) {
-  const map = {
-    programmato: { c: "text-blu bg-blu/15", t: "Programmato", I: CalendarClock },
-    incassare: { c: "text-rosso bg-rosso/15", t: "Da incassare", I: Clock },
-    pagato: { c: "text-verde bg-verde/15", t: "Saldato", I: Check },
-  }[stato];
-  const I = map.I;
-  return (
-    <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-pill px-2.5 py-1 font-mono text-[0.58rem] font-semibold uppercase tracking-wider", map.c)}>
-      <I className="h-3 w-3" /> {map.t}
-    </span>
-  );
-}
+const STATO: Record<StatoCard, { I: LucideIcon; c: string }> = {
+  programmato: { I: Activity, c: "text-blu bg-blu/15" },
+  incassare: { I: Clock, c: "text-rosso bg-rosso/15" },
+  pagato: { I: Check, c: "text-verde bg-verde/15" },
+};
 
 export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const dati = useStore((s) => s.dati);
@@ -40,124 +32,81 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const programmato = lavoro.fase === "da_fare";
   const pagato = !programmato && calc.statoIncasso === "pagato";
   const stato: StatoCard = programmato ? "programmato" : pagato ? "pagato" : "incassare";
+  const SI = STATO[stato].I;
 
   const chips = [...calc.partecipanti].sort((a, b) => (a.collaboratoreId === ioId ? -1 : b.collaboratoreId === ioId ? 1 : 0));
   const chipLabel = (id: string, nome: string) => (id === ioId ? "io" : nome);
   const apri = () => navigate(`/lavoro/${lavoro.id}`);
 
+  const importo = programmato ? (
+    lavoro.modo === "preventivo" && lavoro.prezzo ? <span className="text-blu">{formatEuro(lavoro.prezzo)}</span> : <span className="text-xs font-medium text-fumo-2">da svolgere</span>
+  ) : pagato ? (
+    <span className="text-verde">{formatEuro(calc.incassato)}</span>
+  ) : (
+    <span className="text-rosso">{formatEuro(calc.daIncassare)}</span>
+  );
+
   return (
     <motion.div
-      whileTap={{ scale: 0.985 }}
-      whileHover={{ y: -2 }}
+      whileTap={{ scale: 0.99 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className={cn("statocard px-4 py-3.5 text-bianco", `statocard--${stato}`, pagato && "opacity-90")}
+      className={cn("statocard px-3.5 py-3 text-bianco", `statocard--${stato}`, pagato && "opacity-90")}
     >
-      <button type="button" onClick={apri} className="flex w-full items-start justify-between gap-2 text-left">
-        <div className="flex min-w-0 flex-col gap-1">
-          <div className="flex items-center gap-2">
-            {cliente && <Codice value={codiceCliente(dati, cliente.id)} />}
-            <span className="truncate text-sm font-medium text-fumo">
-              {cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() : "Senza cliente"}
+      <button type="button" onClick={apri} className="flex w-full items-center justify-between gap-3 text-left">
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", STATO[stato].c)}>
+            <SI className="h-4 w-4" />
+          </span>
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate text-[15px] font-semibold leading-tight">{lavoro.titolo}</span>
+            <span className="flex min-w-0 items-center gap-1.5">
+              {cliente && <Codice value={codiceCliente(dati, cliente.id)} />}
+              <span className="truncate text-[11px] text-fumo-2">{cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() : "Senza cliente"}</span>
             </span>
-          </div>
-          <span className="truncate font-display text-[1.05rem] font-semibold leading-tight text-bianco">{lavoro.titolo}</span>
-        </div>
-        <StatoTag stato={stato} />
+          </span>
+        </span>
+        <span className="shrink-0 text-right text-base font-bold tracking-tight tabular-nums">{importo}</span>
       </button>
 
-      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
-        {programmato ? (
-          <span className="font-mono text-sm text-blu">
-            {lavoro.modo === "preventivo" && lavoro.prezzo ? `${formatEuro(lavoro.prezzo)} previsto` : "da svolgere"}
-          </span>
-        ) : (
-          <>
-            <span className="font-mono text-sm tabular-nums text-fumo">{formatOre(calc.oreTotali)}</span>
-            <RigaSoldi calc={calc} />
-          </>
-        )}
-      </div>
-
-      {chips.length > 0 && (
-        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
-          {chips.slice(0, 3).map((p) => (
-            <button
-              key={p.collaboratoreId}
-              type="button"
-              onClick={() => navigate(`/operaio/${p.collaboratoreId}`)}
-              className="rounded-pill bg-white/10 px-2.5 py-0.5 font-mono text-[0.62rem] text-fumo"
-            >
+      <div className="mt-2.5 flex items-center justify-between gap-2">
+        <span className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] text-fumo-2">
+          {!programmato && <span className="shrink-0">{formatOre(calc.oreTotali)}</span>}
+          {calc.statoIncasso === "parziale" && <span className="shrink-0 text-verde">· {formatEuro(calc.incassato)} inc.</span>}
+          {chips.slice(0, 2).map((p) => (
+            <button key={p.collaboratoreId} type="button" onClick={() => navigate(`/operaio/${p.collaboratoreId}`)} className="shrink-0 rounded-pill bg-white/10 px-2 py-0.5 text-fumo">
               {chipLabel(p.collaboratoreId, p.nome)}
             </button>
           ))}
-          {chips.length > 3 && <span className="font-mono text-[0.62rem] text-fumo-2">+{chips.length - 3}</span>}
-        </div>
-      )}
-
-      <div className="mt-3 flex items-center justify-between gap-2">
+          {chips.length > 2 && <span className="shrink-0">+{chips.length - 2}</span>}
+        </span>
         {programmato ? (
-          <Button size="sm" variant="inchiostro" onClick={() => void segnaSvolto(lavoro.id)}>
-            Segna svolto
-          </Button>
+          <Button size="sm" variant="inchiostro" onClick={() => void segnaSvolto(lavoro.id)}>Svolto</Button>
         ) : pagato ? (
-          <span className="inline-flex items-center gap-1.5 font-mono text-xs text-positivo">
-            <Check className="h-3.5 w-3.5" /> Saldato
-          </span>
+          <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-verde"><Check className="h-3 w-3" /> saldato</span>
         ) : (
-          <Button size="sm" variant="ottone" onClick={() => setIncassaOpen((v) => !v)}>
-            Incassa
-          </Button>
+          <Button size="sm" onClick={() => setIncassaOpen((v) => !v)}>Incassa</Button>
         )}
-        <button type="button" onClick={apri} aria-label="Apri lavoro" className="grid h-8 w-8 place-items-center rounded-full text-fumo-2 transition-colors hover:bg-white/10">
-          <MoreHorizontal className="h-4 w-4" />
-        </button>
       </div>
 
       {stato === "incassare" && incassaOpen && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3 overflow-hidden rounded-2xl bg-white/[0.06] p-3">
-          <p className="font-mono text-xs text-fumo-2">
-            Da incassare: <span className="text-rosso">{formatEuro(calc.daIncassare)}</span>
-          </p>
-          <div className="mt-2 flex flex-wrap items-center gap-2">
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-2.5 overflow-hidden rounded-2xl bg-black/20 p-2.5">
+          <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={() => { void incassaLavoro(lavoro.id, calc.daIncassare); setIncassaOpen(false); }}>
               Tutto {formatEuro(calc.daIncassare)}
             </Button>
             <input
-              className="h-9 w-24 rounded-pill bg-white/[0.06] px-3 font-sans text-sm text-bianco placeholder:text-fumo-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/60"
+              className="h-9 w-24 rounded-pill bg-superficie-bassa px-3 font-sans text-sm text-bianco placeholder:text-fumo-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blu/50"
               placeholder="altro…"
               inputMode="decimal"
               value={altro}
               onChange={(e) => setAltro(e.target.value)}
             />
             <Button size="sm" variant="inchiostro" onClick={() => { const v = Number(altro.replace(",", ".")); if (v > 0) void incassaLavoro(lavoro.id, v); setAltro(""); setIncassaOpen(false); }}>
-              Conferma
+              Ok
             </Button>
           </div>
         </motion.div>
       )}
     </motion.div>
-  );
-}
-
-function RigaSoldi({ calc }: { calc: { statoIncasso: string; incassato: number; daIncassare: number } }) {
-  if (calc.statoIncasso === "pagato") {
-    return (
-      <span className="inline-flex items-center gap-1 font-mono text-sm text-positivo">
-        <Check className="h-3.5 w-3.5" /> {formatEuro(calc.incassato)} incassato
-      </span>
-    );
-  }
-  if (calc.statoIncasso === "parziale") {
-    return (
-      <span className="inline-flex flex-wrap items-center gap-x-2 font-mono text-sm">
-        <span className="inline-flex items-center gap-1 text-positivo"><Check className="h-3.5 w-3.5" /> {formatEuro(calc.incassato)}</span>
-        <span className="inline-flex items-center gap-1 text-rosso"><Clock className="h-3.5 w-3.5" /> {formatEuro(calc.daIncassare)} da incassare</span>
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center gap-1 font-mono text-sm text-rosso">
-      <Clock className="h-3.5 w-3.5" /> {formatEuro(calc.daIncassare)} da incassare
-    </span>
   );
 }
