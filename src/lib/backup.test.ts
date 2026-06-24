@@ -1,12 +1,15 @@
 import { describe, expect, it } from "vitest";
 import { fondi } from "./backup";
-import { DATI_VUOTI, type Cliente, type Dati } from "./types";
+import { DATI_VUOTI, type Cliente, type Dati, type Lavoro } from "./types";
 
 function snap(clienti: Cliente[]): Dati {
   return { ...DATI_VUOTI, clienti };
 }
 function cli(id: string, nome: string, rev: number, updatedAt: string, deleted = false): Cliente {
   return { id, nome, inizialiCodice: "XX", modalitaPredefinita: "ore", creatoIl: "2026-01-01", rev, updatedAt, deleted };
+}
+function lav(id: string, rev: number, updatedAt: string, extra: Partial<Lavoro> = {}): Lavoro {
+  return { id, titolo: "t", data: "2026-06-10", fase: "fatto", modo: "preventivo", conteggio: "totale", partecipanti: [], creatoIl: "2026-01-01", rev, updatedAt, ...extra };
 }
 
 describe("fondi (merge LWW)", () => {
@@ -34,6 +37,14 @@ describe("fondi (merge LWW)", () => {
     const a = snap([cli("1", "Vivo", 5, "2026-01-05T00:00:00Z", false)]);
     const b = snap([cli("1", "Vivo", 2, "2026-01-02T00:00:00Z", true)]);
     expect(fondi(a, b).clienti[0].deleted).toBe(false);
+  });
+
+  it("i campi nuovi (fascia, statoPreventivo) sopravvivono al merge", () => {
+    const a: Dati = { ...DATI_VUOTI, lavori: [lav("L", 1, "2026-01-01T00:00:00Z")] };
+    const b: Dati = { ...DATI_VUOTI, lavori: [lav("L", 2, "2026-01-02T00:00:00Z", { fascia: "mattina", statoPreventivo: "inviato" })] };
+    const m = fondi(a, b);
+    expect(m.lavori[0].fascia).toBe("mattina");
+    expect(m.lavori[0].statoPreventivo).toBe("inviato");
   });
 
   it("unione di id disgiunti, commutativa e idempotente", () => {

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import type { CategoriaSpesa, Fase } from "@/lib/dominio";
+import type { CategoriaSpesa, Fase, FasciaGiornata, MetodoPagamento, StatoPreventivo } from "@/lib/dominio";
 import { arrotonda, oggiISO, SOGLIA } from "@/lib/format";
 import { nuovoId } from "@/lib/id";
 import { calcoloLavoro, operatoreIo } from "@/lib/lavoro-calc";
@@ -45,6 +45,11 @@ export interface Bozza {
   contaMieOreComeCosto: boolean;
   giaIncassato: "no" | "tutto" | "parte";
   importoParte: number;
+  luogo: string;
+  fascia: FasciaGiornata | null;
+  statoPreventivo: StatoPreventivo | null;
+  metodoPagamento: MetodoPagamento | null;
+  scadenzaIncasso: string; // ISO yyyy-mm-dd o ""
 }
 
 function bozzaIniziale(): Bozza {
@@ -68,6 +73,11 @@ function bozzaIniziale(): Bozza {
     contaMieOreComeCosto: false,
     giaIncassato: "no",
     importoParte: 0,
+    luogo: "",
+    fascia: null,
+    statoPreventivo: null,
+    metodoPagamento: null,
+    scadenzaIncasso: "",
   };
 }
 
@@ -129,9 +139,12 @@ export const useBozza = create<BozzaStore>((set) => ({
         base.modoCalc = l.modo === "preventivo" ? "preventivo" : l.conteggio === "per_giorni" ? "giornate" : "ore";
         base.clienteId = l.clienteId ?? null;
         base.titolo = l.titolo;
+        base.luogo = l.luogo ?? "";
         base.data = l.data;
         base.oraInizio = l.oraInizio ?? "";
+        base.fascia = l.fascia ?? null;
         base.periodo = l.periodo ?? null;
+        base.statoPreventivo = l.statoPreventivo ?? null;
         base.prezzo = l.prezzo ?? null;
         base.tariffaCliente = l.tariffaClienteSnapshot ?? dati.clienti.find((c) => c.id === l.clienteId)?.tariffaOraria ?? null;
         base.tariffaModificata = l.tariffaClienteSnapshot != null;
@@ -160,6 +173,8 @@ export const useBozza = create<BozzaStore>((set) => ({
         if (inc <= SOGLIA) base.giaIncassato = "no";
         else if (inc >= atteso - SOGLIA) base.giaIncassato = "tutto";
         else { base.giaIncassato = "parte"; base.importoParte = inc; }
+        base.metodoPagamento = pag?.metodo ?? null;
+        base.scadenzaIncasso = pag?.dataScadenza ?? "";
         persisti(base);
         set({ b: base });
         return;
@@ -173,6 +188,7 @@ export const useBozza = create<BozzaStore>((set) => ({
       base.clienteId = ctx.clienteId;
       const c = dati.clienti.find((x) => x.id === ctx.clienteId);
       base.tariffaCliente = c?.tariffaOraria ?? null;
+      base.luogo = c?.luogo ?? "";
     }
     const primi: BozzaPartecipante[] = [];
     if (io) primi.push({ collaboratoreId: io.id, tariffaSnapshot: io.tariffaOraria ?? 0, ore: 0 });
@@ -253,13 +269,16 @@ export async function salvaBozza(): Promise<string> {
     id: lavoroId,
     clienteId: cId,
     titolo,
+    luogo: b.luogo.trim() || undefined,
     data: b.data,
     oraInizio: b.oraInizio || undefined,
     oraFine: oraFineCalc,
     fase: b.fase,
     modo,
     conteggio,
+    fascia: b.fascia ?? undefined,
     periodo: b.periodo,
+    statoPreventivo: modo === "preventivo" ? b.statoPreventivo ?? undefined : undefined,
     prezzo: modo === "preventivo" ? b.prezzo ?? 0 : null,
     tariffaClienteSnapshot: modo === "ore" ? b.tariffaCliente : null,
     partecipanti: b.partecipanti.map((p) => ({
@@ -325,7 +344,9 @@ export async function salvaBozza(): Promise<string> {
         importoAtteso: lordo,
         importoIncassato: arrotonda(incassato),
         dataEmissione: b.data,
+        dataScadenza: b.scadenzaIncasso || undefined,
         dataIncasso: incassato > 0 ? oggiISO() : undefined,
+        metodo: b.metodoPagamento ?? undefined,
         creatoIl: oggiISO(),
         updatedAt: "",
       });
