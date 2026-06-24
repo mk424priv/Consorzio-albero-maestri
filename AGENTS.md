@@ -48,7 +48,9 @@ Nessuna password: l'app è local-first, si apre diretta. Backup: Impostazioni �
 
 ## Flusso di lavoro
 
-- Sviluppa sul branch **`canone/nuovo-prodotto`** (mai su `main`).
+- Sviluppa sul branch **`canone/nuovo-prodotto`**.
 - **Commit a ogni tappa** (Conventional Commits); `npm run build` deve passare prima del commit.
-- **Push solo su richiesta** dell'utente (niente auto-deploy: l'infra Vercel del vecchio
-  prodotto è stata abbandonata; il deploy del nuovo prodotto si concorda a parte).
+- **OBBLIGATORIO — commit + push SEMPRE a fine lavoro.** Dopo **ogni** lavoro completato, fare
+  **sempre** `commit` e `push` su GitHub **senza aspettare la richiesta dell'utente**: push del branch
+  `canone/nuovo-prodotto` **e** fast-forward di `main` + push di `main`. Questo **triggera il redeploy**.
+  Non lasciare mai lavoro completato non pushato. (Questo punto sovrascrive ogni regola di "push opt-in".)
