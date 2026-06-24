@@ -123,6 +123,15 @@ export async function prelievoTitolare(importo: number, data?: string): Promise<
   return async () => { await elimina("compensi", id); };
 }
 
+/** Elimina (soft) un attrezzo/veicolo del Garage. */
+export async function eliminaAttrezzo(id: string): Promise<Annulla> {
+  const { dati, elimina, salva } = useStore.getState();
+  const a = dati.attrezzi.find((x) => x.id === id);
+  await elimina("attrezzi", id);
+  if (!a) return noop;
+  return async () => { await salva("attrezzi", { ...a, deleted: false }); };
+}
+
 /** Elimina (soft) un cliente. I lavori collegati restano nei conti. */
 export async function eliminaCliente(id: string): Promise<Annulla> {
   const { dati, elimina, salva } = useStore.getState();

@@ -2,6 +2,7 @@ import { assegnaIniziali } from "@/lib/codice-parlante";
 import { adessoISO, oggiISO } from "@/lib/format";
 import { nuovoId } from "@/lib/id";
 import type {
+  Attrezzo,
   Cliente,
   CompensoOperatore,
   Dati,
@@ -131,5 +132,12 @@ export function creaSeed(): Dati {
   // compenso parziale a Luca
   compensi.push({ id: nuovoId(), operatoreId: luca.id, importo: 40, data: g(12), metodo: "contanti", periodo: mese, updatedAt: ora });
 
-  return { clienti, operatori, lavori, ore, pagamenti, compensi, spese };
+  const attrezzi: Attrezzo[] = [
+    { id: nuovoId(), nome: "Ape Piaggio", categoria: "auto", prezzo: 4500, dataAcquisto: "2023-04-12", caratteristiche: "Furgone da lavoro", consumoMedio: 5.5, carburante: "benzina", prezzoCarburante: 1.85, updatedAt: ora },
+    { id: nuovoId(), nome: "Decespugliatore Stihl FS 460", categoria: "motore", prezzo: 720, dataAcquisto: "2024-09-03", caratteristiche: "2.2 kW · 9.3 kg", updatedAt: ora },
+    { id: nuovoId(), nome: "Tagliasiepi Bosch", categoria: "elettrico", prezzo: 150, dataAcquisto: "2025-02-18", caratteristiche: "550 W · lama 60 cm", updatedAt: ora },
+    { id: nuovoId(), nome: "Forbici Felco", categoria: "manuale", prezzo: 45, dataAcquisto: "2024-06-01", caratteristiche: "Lama Ø 25 mm", updatedAt: ora },
+  ];
+
+  return { clienti, operatori, lavori, ore, pagamenti, compensi, spese, attrezzi };
 }

@@ -34,6 +34,7 @@ export function importaJSON(testo: string): Dati {
     pagamenti: [],
     compensi: [],
     spese: [],
+    attrezzi: [],
   };
   for (const k of CHIAVI) {
     const arr = src[k];

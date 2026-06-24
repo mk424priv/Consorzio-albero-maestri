@@ -1,5 +1,6 @@
 import Dexie, { type Table } from "dexie";
 import type {
+  Attrezzo,
   Cliente,
   CompensoOperatore,
   Lavoro,
@@ -18,6 +19,7 @@ export class AlberoDB extends Dexie {
   pagamenti!: Table<Pagamento, string>;
   compensi!: Table<CompensoOperatore, string>;
   spese!: Table<Spesa, string>;
+  attrezzi!: Table<Attrezzo, string>;
 
   constructor() {
     super("albero-maestri");
@@ -29,6 +31,9 @@ export class AlberoDB extends Dexie {
       pagamenti: "id, clienteId, lavoroId, dataIncasso, updatedAt",
       compensi: "id, operatoreId, data, updatedAt",
       spese: "id, lavoroId, clienteId, data",
+    });
+    this.version(2).stores({
+      attrezzi: "id, categoria, updatedAt",
     });
   }
 }

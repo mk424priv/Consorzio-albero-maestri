@@ -3,7 +3,7 @@ import { calcoloLavoro } from "./lavoro-calc";
 import type { Dati, Lavoro, Operatore } from "./types";
 
 function dati(p: Partial<Dati> = {}): Dati {
-  return { clienti: [], operatori: [], lavori: [], ore: [], pagamenti: [], compensi: [], spese: [], ...p };
+  return { clienti: [], operatori: [], lavori: [], ore: [], pagamenti: [], compensi: [], spese: [], attrezzi: [], ...p };
 }
 
 const io: Operatore = { id: "io", nome: "Io", ruolo: "titolare", tariffaOraria: null, attivo: true, creatoIl: "x", updatedAt: "x" };

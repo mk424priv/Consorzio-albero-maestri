@@ -9,6 +9,7 @@ import { Cantiere } from "@/pages/Cantiere";
 import { ClienteScheda } from "@/pages/ClienteScheda";
 import { CreaLavoro } from "@/pages/CreaLavoro";
 import { Dashboard } from "@/pages/Dashboard";
+import { Garage } from "@/pages/Garage";
 import { Impostazioni } from "@/pages/Impostazioni";
 import { Kitchen } from "@/pages/Kitchen";
 import { NuovoCliente } from "@/pages/NuovoCliente";
@@ -47,6 +48,7 @@ export function App() {
               <Route path="/soldi" element={<Soldi />} />
               <Route path="/anagrafiche" element={<Anagrafiche />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/garage" element={<Garage />} />
               <Route path="/nuovo" element={<CreaLavoro />} />
               <Route path="/lavoro/:id" element={<Cantiere />} />
               <Route path="/cliente/nuovo" element={<NuovoCliente />} />

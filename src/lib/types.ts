@@ -138,6 +138,25 @@ export interface Spesa {
   deleted?: boolean;
 }
 
+export type CategoriaAttrezzo = "auto" | "motore" | "elettrico" | "manuale";
+
+/** Attrezzo/veicolo del «Garage». */
+export interface Attrezzo {
+  id: string;
+  nome: string;
+  categoria: CategoriaAttrezzo;
+  prezzo?: number;
+  dataAcquisto?: string; // ISO yyyy-mm-dd
+  caratteristiche?: string;
+  note?: string;
+  // solo veicoli (categoria "auto")
+  consumoMedio?: number; // litri / 100 km
+  carburante?: string; // benzina · diesel · GPL · elettrico
+  prezzoCarburante?: number; // €/litro
+  updatedAt: string;
+  deleted?: boolean;
+}
+
 /** Snapshot in memoria (idratato da Dexie) su cui operano i calcoli in src/lib. */
 export interface Dati {
   clienti: Cliente[];
@@ -147,6 +166,7 @@ export interface Dati {
   pagamenti: Pagamento[];
   compensi: CompensoOperatore[];
   spese: Spesa[];
+  attrezzi: Attrezzo[];
 }
 
 export const DATI_VUOTI: Dati = {
@@ -157,6 +177,7 @@ export const DATI_VUOTI: Dati = {
   pagamenti: [],
   compensi: [],
   spese: [],
+  attrezzi: [],
 };
 
 export type CollezioneKey = keyof Dati;
