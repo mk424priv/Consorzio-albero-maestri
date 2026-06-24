@@ -209,3 +209,21 @@ export function squadraDelCliente(dati: Dati, clienteId: string): OperaioCliente
     }))
     .sort((a, b) => b.ore - a.ore);
 }
+
+/** L'entità ha relazioni? Allora si ARCHIVIA (reversibile), non si elimina (08 §2.3). */
+export function haRelazioni(dati: Dati, tipo: "cliente" | "operatore" | "attrezzo", id: string): boolean {
+  if (tipo === "cliente") {
+    return (
+      dati.lavori.some((l) => !l.deleted && l.clienteId === id) ||
+      dati.pagamenti.some((p) => !p.deleted && p.clienteId === id)
+    );
+  }
+  if (tipo === "operatore") {
+    return (
+      dati.lavori.some((l) => !l.deleted && l.partecipanti.some((p) => p.collaboratoreId === id)) ||
+      dati.ore.some((o) => !o.deleted && o.operatoreId === id) ||
+      dati.compensi.some((c) => !c.deleted && c.operatoreId === id)
+    );
+  }
+  return dati.spese.some((s) => !s.deleted && s.attrezzoId === id);
+}

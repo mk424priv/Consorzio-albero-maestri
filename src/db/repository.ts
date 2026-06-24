@@ -10,6 +10,8 @@ export interface Repository {
   upsert<K extends CollezioneKey>(collezione: K, record: Dati[K][number]): Promise<void>;
   /** Soft-delete (tombstone), pronto per il sync. */
   rimuovi(collezione: CollezioneKey, id: string): Promise<void>;
+  /** Hard-delete: rimozione definitiva (solo dal Cestino). */
+  rimuoviDefinitivo(collezione: CollezioneKey, id: string): Promise<void>;
   /** Import: sostituisce tutto. */
   sostituisciTutto(dati: Dati): Promise<void>;
   svuota(): Promise<void>;

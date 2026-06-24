@@ -54,7 +54,7 @@ export function Cantiere() {
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">{lavoro.titolo}</h1>
           {cliente ? (
-            <button type="button" onClick={() => navigate(`/cliente/${cliente.id}`)} className="text-sm text-fumo underline-offset-2 hover:underline">{`${cliente.nome} ${cliente.cognome ?? ""}`.trim()}</button>
+            <button type="button" onClick={() => navigate(`/cliente/${cliente.id}`)} className="text-sm text-fumo underline-offset-2 hover:underline">{`${cliente.nome} ${cliente.cognome ?? ""}`.trim()}{cliente.deleted ? " · archiviato" : ""}</button>
           ) : (
             <p className="text-sm text-fumo">Senza cliente</p>
           )}

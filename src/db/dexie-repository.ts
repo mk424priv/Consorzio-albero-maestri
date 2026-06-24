@@ -28,8 +28,8 @@ export class DexieRepository implements Repository {
     };
     await Promise.all(
       COLLEZIONI.map(async (k) => {
-        const all = (await db.table(k).toArray()) as Array<{ deleted?: boolean }>;
-        (out as Record<CollezioneKey, unknown[]>)[k] = all.filter((r) => !r.deleted);
+        // tombstone inclusi: la UI filtra `deleted` a lettura; servono per cestino/merge/orfani (08 §2.4)
+        (out as Record<CollezioneKey, unknown[]>)[k] = await db.table(k).toArray();
       }),
     );
     return out;
@@ -42,6 +42,10 @@ export class DexieRepository implements Repository {
   async rimuovi(collezione: CollezioneKey, id: string): Promise<void> {
     const rec = await db.table(collezione).get(id);
     if (rec) await db.table(collezione).put({ ...rec, deleted: true, rev: ((rec as { rev?: number }).rev ?? 0) + 1, updatedAt: adessoISO() });
+  }
+
+  async rimuoviDefinitivo(collezione: CollezioneKey, id: string): Promise<void> {
+    await db.table(collezione).delete(id);
   }
 
   async sostituisciTutto(dati: Dati): Promise<void> {

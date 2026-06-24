@@ -32,7 +32,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const chips = [...calc.partecipanti].sort((a, b) => (a.collaboratoreId === ioId ? -1 : b.collaboratoreId === ioId ? 1 : 0));
   const chipLabel = (id: string, nome: string) => (id === ioId ? "io" : nome);
   const apri = () => navigate(`/lavoro/${lavoro.id}`);
-  const nomeCliente = cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() : "Senza cliente";
+  const nomeCliente = cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() + (cliente.deleted ? " · archiviato" : "") : "Senza cliente";
 
   // Cliente = porta verso il dossier (tap dedicato, non apre il lavoro).
   const ClienteTag = () =>

@@ -1,10 +1,10 @@
-import { ArrowLeft, Mail, MapPin, Pencil, Phone, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Pencil, Phone, Plus, Trash2, Undo2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
 import { Avatar, AvatarStorico, Button, Codice, Conferma, Field, Foglio, Segmented, StatePill, StatTile } from "@/components/ui";
 import { codiceCliente, leggiCodice } from "@/lib/codice-parlante";
-import { riepilogoCliente, squadraDelCliente } from "@/lib/conti";
+import { haRelazioni, riepilogoCliente, squadraDelCliente } from "@/lib/conti";
 import { chiaveMese, formatEuro, formatMese, formatOre, oggiISO } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
 import type { Cliente } from "@/lib/types";
@@ -19,6 +19,7 @@ export function ClienteScheda() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const dati = useStore((s) => s.dati);
+  const salva = useStore((s) => s.salva);
   const [filtro, setFiltro] = useState<Filtro>("tutto");
   const [dettagli, setDettagli] = useState(false);
   const [modifica, setModifica] = useState(false);
@@ -60,6 +61,7 @@ export function ClienteScheda() {
   const mesi = [...perMese.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 6);
   const prossimo = daFare.filter((l) => l.data >= oggiISO()).sort((a, b) => a.data.localeCompare(b.data))[0];
   const squadra = squadraDelCliente(dati, cliente.id);
+  const archivia = haRelazioni(dati, "cliente", cliente.id);
 
   return (
     <div className="flex flex-col pb-24">
@@ -69,7 +71,11 @@ export function ClienteScheda() {
           <div className="flex items-center gap-2">
             {storico && <StatePill stato="storico" />}
             <button type="button" onClick={() => setModifica(true)} aria-label="Modifica cliente" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo shadow-card hover:text-bianco"><Pencil size={16} /></button>
-            <button type="button" onClick={() => setElimina(true)} aria-label="Elimina cliente" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-rosso shadow-card"><Trash2 size={16} /></button>
+            {cliente.deleted ? (
+              <button type="button" onClick={() => void salva("clienti", { ...cliente, deleted: false })} aria-label="Ripristina cliente" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-verde shadow-card"><Undo2 size={16} /></button>
+            ) : (
+              <button type="button" onClick={() => setElimina(true)} aria-label={archivia ? "Archivia cliente" : "Elimina cliente"} className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-rosso shadow-card"><Trash2 size={16} /></button>
+            )}
           </div>
         </div>
         {storico ? <AvatarStorico iniziali={iniz} size={72} /> : <Avatar iniziali={iniz} tono={r.saldoDaIncassare > 0 ? "rosso" : "neutro"} size={72} />}
@@ -167,10 +173,10 @@ export function ClienteScheda() {
       <Conferma
         open={elimina}
         onOpenChange={setElimina}
-        titolo="Eliminare il cliente?"
-        testo="I lavori restano nei conti. Si può annullare subito dopo."
-        etichettaConferma="Elimina cliente"
-        onConferma={() => void (async () => { const a = await eliminaCliente(cliente.id); notificaUndo("Cliente eliminato", a); navigate(-1); })()}
+        titolo={archivia ? "Archiviare il cliente?" : "Eliminare il cliente?"}
+        testo={archivia ? "Ha lavori collegati: resta nei conti e si ripristina dal Cestino." : "Si può annullare subito dopo."}
+        etichettaConferma={archivia ? "Archivia" : "Elimina cliente"}
+        onConferma={() => void (async () => { const a = await eliminaCliente(cliente.id); notificaUndo(archivia ? "Cliente archiviato" : "Cliente eliminato", a); navigate(-1); })()}
       />
     </div>
   );

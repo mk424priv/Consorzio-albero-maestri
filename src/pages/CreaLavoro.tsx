@@ -587,7 +587,7 @@ function ScegliCliente({ onIndietro, onScelto }: { onIndietro: () => void; onSce
   const lista = useMemo(() => {
     const t = q.trim().toLowerCase();
     return dati.clienti.filter((c) =>
-      !t || `${c.nome} ${c.cognome ?? ""} ${c.inizialiCodice}`.toLowerCase().includes(t),
+      !c.deleted && (!t || `${c.nome} ${c.cognome ?? ""} ${c.inizialiCodice}`.toLowerCase().includes(t)),
     );
   }, [dati.clienti, q]);
 
@@ -659,7 +659,7 @@ function ScegliOperaio({ esistenti, onIndietro, onScelto }: { esistenti: string[
   const salva = useStore((s) => s.salva);
   const [nuovo, setNuovo] = useState(false);
   const [form, setForm] = useState({ nome: "", tariffa: "" });
-  const disponibili = dati.operatori.filter((o) => o.attivo && !esistenti.includes(o.id));
+  const disponibili = dati.operatori.filter((o) => !o.deleted && o.attivo && !esistenti.includes(o.id));
 
   const crea = async () => {
     if (!form.nome.trim()) return;

@@ -49,7 +49,7 @@ export function Agenda() {
 
   const { giorni, perGiorno, meseLordo, meseConta } = useMemo(() => {
     const lavori = dati.lavori
-      .filter((l) => chiaveMese(l.data) === mese)
+      .filter((l) => !l.deleted && chiaveMese(l.data) === mese)
       .sort(
         (a, b) =>
           a.data.localeCompare(b.data) ||

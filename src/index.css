@@ -13,7 +13,7 @@
   --color-superficie: #ffffff; /* card bianche */
   --color-superficie-alta: #ffffff;
   --color-superficie-bassa: #eceff4; /* input / track */
-  --color-superficie-3: #e1e6ee; /* segmented track / hover */
+  --color-superficie-3: #e3e7ee; /* segmented track / hover */
   --color-bordo: #e6e9f0;
   --color-scuro: #1c1e26; /* ink scuro: bottoni primari, FAB */
 
@@ -24,16 +24,17 @@
 
   /* accenti morbidi */
   --color-blu: #3b6ef5;
-  --color-verde: #1bb574;
+  --color-verde: #15b87a;
   --color-rosso: #ef5b52;
-  --color-arancio: #f5933a;
+  --color-arancio: #f59331;
   --color-viola: #6a5bd8;
+  --color-ciano: #22c3d6;
 
   /* alias di compat */
   --color-lime: #3b6ef5;
   --color-lime-scuro: #2f57cc;
-  --color-positivo: #1bb574;
-  --color-attenzione: #f5933a;
+  --color-positivo: #15b87a;
+  --color-attenzione: #f59331;
   --color-critico: #ef5b52;
 
   --font-display: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
@@ -44,11 +45,13 @@
   --radius-btn: 1rem;
   --radius-vetro: 1.5rem;
   --radius-bolla: 2rem;
+  --radius-cm: 1.75rem; /* hero "carta-banca" */
   --radius-pill: 999px;
 
   /* ombre = elevazione (le card volano sopra la canvas) */
   --shadow-card: 0 1px 2px rgba(20, 28, 46, 0.05), 0 8px 20px -8px rgba(20, 28, 46, 0.14);
-  --shadow-flottante: 0 12px 30px -8px rgba(20, 28, 46, 0.24);
+  --shadow-flottante: 0 14px 40px -12px rgba(20, 28, 46, 0.18);
+  --shadow-sheet: 0 -10px 44px rgba(20, 28, 46, 0.14);
   --shadow-vetro: var(--shadow-card);
 }
 
@@ -89,18 +92,19 @@
 
 /* card per stato: bianca + velatura chiara (acquerello) + ombra. Niente buio. */
 @layer utilities {
+  /* stato = velatura ad acquerello + ombra. NIENTE bordi (canone 08). */
   .statocard { position: relative; overflow: hidden; border-radius: var(--radius-vetro); }
   .statocard--incassare {
-    background: radial-gradient(150% 130% at 100% -25%, rgba(239, 91, 82, 0.09), rgba(239, 91, 82, 0) 52%), var(--color-superficie);
-    box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(239, 91, 82, 0.12);
+    background: radial-gradient(150% 130% at 100% -25%, rgba(239, 91, 82, 0.12), rgba(239, 91, 82, 0) 54%), var(--color-superficie);
+    box-shadow: var(--shadow-card);
   }
   .statocard--parziale {
-    background: radial-gradient(150% 130% at 100% -25%, rgba(245, 147, 58, 0.1), rgba(245, 147, 58, 0) 52%), var(--color-superficie);
-    box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(245, 147, 58, 0.14);
+    background: radial-gradient(150% 130% at 100% -25%, rgba(245, 147, 49, 0.13), rgba(245, 147, 49, 0) 54%), var(--color-superficie);
+    box-shadow: var(--shadow-card);
   }
   .statocard--pagato {
-    background: radial-gradient(150% 130% at 100% -25%, rgba(27, 181, 116, 0.07), rgba(27, 181, 116, 0) 50%), var(--color-superficie);
-    box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(27, 181, 116, 0.1);
+    background: radial-gradient(150% 130% at 100% -25%, rgba(21, 184, 122, 0.10), rgba(21, 184, 122, 0) 52%), var(--color-superficie);
+    box-shadow: var(--shadow-card);
   }
 }
 

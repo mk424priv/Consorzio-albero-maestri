@@ -2,7 +2,7 @@ import { ArrowLeft, Banknote, CalendarClock, Leaf, Pencil, Plus, Trash2 } from "
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Avatar, Button, Conferma, Field, Foglio, Segmented, StatTile } from "@/components/ui";
-import { libroOperatore } from "@/lib/conti";
+import { haRelazioni, libroOperatore } from "@/lib/conti";
 import type { MetodoPagamento } from "@/lib/dominio";
 import { etichetta } from "@/lib/dominio";
 import { chiaveMese, formatData, formatEuro, formatMese, formatOre } from "@/lib/format";
@@ -33,6 +33,7 @@ export function OperaioScheda() {
 
   const io = operatore.ruolo === "titolare";
   const libro = libroOperatore(dati, operatore.id);
+  const archivia = haRelazioni(dati, "operatore", operatore.id);
 
   const perMese = new Map<string, typeof libro.lavori>();
   for (const l of libro.lavori) {
@@ -148,10 +149,10 @@ export function OperaioScheda() {
         <Conferma
           open={eliminaOpen}
           onOpenChange={setEliminaOpen}
-          titolo="Eliminare l'operaio?"
-          testo="I lavori passati restano nei conti. Si può annullare subito dopo."
-          etichettaConferma="Elimina operaio"
-          onConferma={() => void (async () => { const a = await eliminaOperaio(operatore.id); notificaUndo("Operaio eliminato", a); navigate(-1); })()}
+          titolo={archivia ? "Archiviare l'operaio?" : "Eliminare l'operaio?"}
+          testo={archivia ? "Ha lavori collegati: resta nei conti e si ripristina dal Cestino." : "Si può annullare subito dopo."}
+          etichettaConferma={archivia ? "Archivia" : "Elimina operaio"}
+          onConferma={() => void (async () => { const a = await eliminaOperaio(operatore.id); notificaUndo(archivia ? "Operaio archiviato" : "Operaio eliminato", a); navigate(-1); })()}
         />
       )}
     </div>

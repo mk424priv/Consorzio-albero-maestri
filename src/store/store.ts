@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { repository } from "@/db/dexie-repository";
+import { fondi } from "@/lib/backup";
 import { adessoISO } from "@/lib/format";
 import { creaSeed } from "@/data/seed";
 import { DATI_VUOTI, type CollezioneKey, type Dati } from "@/lib/types";
@@ -13,6 +14,10 @@ interface StoreState {
   /** Soft-delete. */
   elimina: (collezione: CollezioneKey, id: string) => Promise<void>;
   importa: (dati: Dati) => Promise<void>;
+  /** Import «Unisci»: merge LWW con i dati locali (multi-dispositivo). */
+  importaUnisci: (dati: Dati) => Promise<void>;
+  /** Hard-delete definitivo (dal Cestino). */
+  rimuoviDefinitivo: (collezione: CollezioneKey, id: string) => Promise<void>;
   reset: () => Promise<void>;
 }
 
@@ -56,6 +61,22 @@ export const useStore = create<StoreState>((set, get) => ({
   async importa(dati) {
     await repository.sostituisciTutto(dati);
     set({ dati });
+  },
+
+  async importaUnisci(dati) {
+    const merged = fondi(get().dati, dati);
+    await repository.sostituisciTutto(merged);
+    set({ dati: merged });
+  },
+
+  async rimuoviDefinitivo(collezione, id) {
+    await repository.rimuoviDefinitivo(collezione, id);
+    set((s) => ({
+      dati: {
+        ...s.dati,
+        [collezione]: (s.dati[collezione] as Array<{ id: string }>).filter((r) => r.id !== id),
+      },
+    }));
   },
 
   async reset() {

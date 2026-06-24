@@ -42,3 +42,36 @@ export function importaJSON(testo: string): Dati {
   }
   return out;
 }
+
+/**
+ * Merge LWW di due snapshot (multi-dispositivo, canone 08 §2.4): per ogni id vince
+ * la versione con (rev desc, updatedAt desc). Tombstone inclusi → un'eliminazione più
+ * recente cancella, un record più recente resuscita. Deterministico e idempotente.
+ */
+export function fondi(locale: Dati, importato: Dati): Dati {
+  const out: Dati = {
+    clienti: [],
+    operatori: [],
+    lavori: [],
+    ore: [],
+    pagamenti: [],
+    compensi: [],
+    spese: [],
+    attrezzi: [],
+  };
+  for (const k of CHIAVI) {
+    const map = new Map<string, { rev: number; ua: string; rec: unknown }>();
+    const consider = (rec: { id: string; rev?: number; updatedAt?: string }) => {
+      const prev = map.get(rec.id);
+      const rev = rec.rev ?? 0;
+      const ua = rec.updatedAt ?? "";
+      if (!prev || rev > prev.rev || (rev === prev.rev && ua > prev.ua)) {
+        map.set(rec.id, { rev, ua, rec });
+      }
+    };
+    for (const r of locale[k] as Array<{ id: string; rev?: number; updatedAt?: string }>) consider(r);
+    for (const r of importato[k] as Array<{ id: string; rev?: number; updatedAt?: string }>) consider(r);
+    (out as Record<CollezioneKey, unknown[]>)[k] = [...map.values()].map((v) => v.rec);
+  }
+  return out;
+}
