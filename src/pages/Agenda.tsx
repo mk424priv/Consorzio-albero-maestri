@@ -1,10 +1,10 @@
-import { AnimatePresence, motion } from "framer-motion";
-import { ChevronLeft, ChevronRight, TreePine } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { motion } from "framer-motion";
+import { Banknote, ChevronLeft, ChevronRight, TreePine } from "lucide-react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { CardLavoro } from "@/components/CardLavoro";
-import { Button, Targhetta } from "@/components/ui";
-import { cn } from "@/lib/cn";
+import { Button, EmptyState, NumberHero, SectionHeader, Swipeable, Testata } from "@/components/ui";
 import {
   chiaveMese,
   formatEuro,
@@ -12,11 +12,11 @@ import {
   formatOre,
   giornoDelMese,
   nomeGiorno,
-  nomeMese,
   oggiISO,
 } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
-import type { Lavoro } from "@/lib/types";
+import type { Dati, Lavoro } from "@/lib/types";
+import { incassaLavoro } from "@/store/azioni";
 import { useStore } from "@/store/store";
 
 function meseAdiacente(chiave: string, delta: number): string {
@@ -31,7 +31,7 @@ export function Agenda() {
   const oggi = oggiISO();
   const [mese, setMese] = useState(() => chiaveMese(oggi));
 
-  const { giorni, perGiorno } = useMemo(() => {
+  const { giorni, perGiorno, meseLordo, meseConta } = useMemo(() => {
     const lavori = dati.lavori
       .filter((l) => chiaveMese(l.data) === mese)
       .sort(
@@ -41,17 +41,17 @@ export function Agenda() {
           (a.oraInizio ?? "").localeCompare(b.oraInizio ?? ""),
       );
     const map = new Map<string, Lavoro[]>();
+    let lordo = 0;
     for (const l of lavori) {
       const arr = map.get(l.data) ?? [];
       arr.push(l);
       map.set(l.data, arr);
+      if (l.fase === "fatto") lordo += calcoloLavoro(dati, l).lordo;
     }
     const set = new Set(map.keys());
-    if (chiaveMese(oggi) === mese) set.add(oggi); // ancora "oggi"
-    return { giorni: [...set].sort(), perGiorno: map };
-  }, [dati.lavori, mese, oggi]);
-
-  const { attivo, setRef } = useGiornoAttivo(giorni);
+    if (chiaveMese(oggi) === mese) set.add(oggi);
+    return { giorni: [...set].sort(), perGiorno: map, meseLordo: lordo, meseConta: lavori.length };
+  }, [dati, mese, oggi]);
 
   const sommaGiorno = (iso: string) => {
     const ls = perGiorno.get(iso) ?? [];
@@ -66,79 +66,70 @@ export function Agenda() {
   };
 
   const vuoto = giorni.length === 0 || (giorni.length === 1 && (perGiorno.get(giorni[0])?.length ?? 0) === 0);
+  const cambioMese = chiaveMese(oggi) !== mese;
 
   return (
     <div className="flex flex-col">
-      <header className="flex items-center justify-between pb-1">
-        <h1 className="font-display text-3xl font-semibold text-bianco">Agenda</h1>
-        <div className="flex items-center gap-1">
-          <Button size="icona" variant="tenue" className="h-9 w-9" onClick={() => setMese((m) => meseAdiacente(m, -1))} aria-label="Mese precedente">
-            <ChevronLeft className="h-5 w-5" />
-          </Button>
-          <span className="w-24 text-center font-mono text-xs text-fumo">{formatMese(mese)}</span>
-          <Button size="icona" variant="tenue" className="h-9 w-9" onClick={() => setMese((m) => meseAdiacente(m, 1))} aria-label="Mese successivo">
-            <ChevronRight className="h-5 w-5" />
-          </Button>
+      <Testata
+        titolo="Agenda"
+        controllo={
+          <div className="flex items-center gap-1">
+            <button type="button" onClick={() => setMese((m) => meseAdiacente(m, -1))} aria-label="Mese precedente" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo hover:text-bianco">
+              <ChevronLeft size={18} />
+            </button>
+            <span className="w-[84px] text-center font-mono text-xs text-fumo">{formatMese(mese)}</span>
+            <button type="button" onClick={() => setMese((m) => meseAdiacente(m, 1))} aria-label="Mese successivo" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo hover:text-bianco">
+              <ChevronRight size={18} />
+            </button>
+          </div>
+        }
+      >
+        <p className="text-sm text-fumo">Fatturato del mese</p>
+        <div className="mt-0.5 flex items-end gap-3">
+          <NumberHero value={meseLordo} euro className="text-[40px]" />
+          <span className="pb-1.5 font-mono text-sm text-fumo-2">{meseConta} lavori</span>
+          {cambioMese && (
+            <Button size="sm" variant="inchiostro" className="ml-auto" onClick={() => setMese(chiaveMese(oggi))}>
+              oggi
+            </Button>
+          )}
         </div>
-      </header>
-
-      {/* targhetta sticky, cambia con il giorno che si avvicina */}
-      <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-2 glass-bassa px-4 py-2 backdrop-blur">
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.div
-            key={attivo || "vuoto"}
-            initial={{ opacity: 0, y: -3 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 3 }}
-            transition={{ duration: 0.22 }}
-          >
-            {attivo && (
-              <Targhetta giorno={giornoDelMese(attivo)} giornoSettimana={nomeGiorno(attivo, true)} mese={nomeMese(attivo, true)} />
-            )}
-          </motion.div>
-        </AnimatePresence>
-        {chiaveMese(oggi) !== mese && (
-          <Button size="sm" variant="ottone" onClick={() => setMese(chiaveMese(oggi))}>
-            oggi
-          </Button>
-        )}
-      </div>
+      </Testata>
 
       {vuoto ? (
-        <MeseVuoto mese={mese} onCrea={() => navigate("/nuovo")} />
+        <div className="px-5 pt-6">
+          <EmptyState
+            icon={TreePine}
+            titolo={`Nessun lavoro in ${formatMese(mese)}`}
+            testo="Tocca ＋ per la prima registrazione."
+            azione={<Button onClick={() => navigate("/nuovo")}>＋ Crea registrazione</Button>}
+          />
+        </div>
       ) : (
-        <div className="flex flex-col gap-4 pt-3">
+        <div className="flex flex-col gap-5 px-5 pt-4">
           {giorni.map((iso) => {
             const ls = perGiorno.get(iso) ?? [];
             const s = sommaGiorno(iso);
             const isOggi = iso === oggi;
             return (
-              <section key={iso} ref={(el) => setRef(iso, el)}>
-                <div className="sticky top-[4.25rem] z-10 -mx-4 flex items-baseline justify-between glass-bassa px-4 py-1 backdrop-blur">
-                  <h2 className={cn("font-display text-sm", isOggi ? "text-lime" : "text-fumo")}>
-                    {nomeGiorno(iso)} {giornoDelMese(iso)}{" "}
-                    {isOggi && <span className="font-mono text-[0.6rem] uppercase tracking-wider text-lime">oggi</span>}
-                  </h2>
-                  {s.lordo > 0 && (
-                    <span className="font-mono text-xs text-fumo-2">
-                      {formatEuro(s.lordo)} · {formatOre(s.ore)}
-                    </span>
-                  )}
+              <motion.section key={iso} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-8% 0px" }} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
+                <div className="sticky top-0 z-10 -mx-5 bg-fondo/85 px-5 py-2 backdrop-blur-md">
+                  <SectionHeader
+                    titolo={`${nomeGiorno(iso)} ${giornoDelMese(iso)}${isOggi ? " · oggi" : ""}`}
+                    tono={isOggi ? "blu" : "neutro"}
+                    azione={s.lordo > 0 ? <span className="font-mono text-xs text-fumo-2">{formatEuro(s.lordo)} · {formatOre(s.ore)}</span> : undefined}
+                  />
                 </div>
-                <div className="mt-2 flex flex-col gap-2">
+                <div className="mt-2.5 flex flex-col gap-2.5">
                   {ls.length === 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => navigate("/nuovo")}
-                      className="rounded-2xl border border-dashed border-white/10 py-3 text-center font-mono text-xs text-fumo-2"
-                    >
-                      ···· nessun lavoro · + crea ····
+                    <button type="button" onClick={() => navigate("/nuovo")} className="rounded-vetro border border-dashed border-white/10 py-3 text-center font-mono text-xs text-fumo-2 hover:border-white/20">
+                      ＋ crea lavoro
                     </button>
                   ) : (
-                    ls.map((l) => <CardLavoro key={l.id} lavoro={l} />)
+                    ls.map((l) => <Riga key={l.id} lavoro={l} dati={dati} />)
                   )}
                 </div>
-              </section>
+              </motion.section>
             );
           })}
         </div>
@@ -147,38 +138,24 @@ export function Agenda() {
   );
 }
 
-function useGiornoAttivo(giorni: string[]) {
-  const [attivo, setAttivo] = useState(giorni[0] ?? "");
-  const refs = useRef(new Map<string, HTMLElement | null>());
-  const setRef = (iso: string, el: HTMLElement | null) => {
-    refs.current.set(iso, el);
-  };
-  const chiave = giorni.join(",");
-  useEffect(() => {
-    const onScroll = () => {
-      const soglia = 100;
-      let corrente = giorni[0] ?? "";
-      for (const g of giorni) {
-        const el = refs.current.get(g);
-        if (el && el.getBoundingClientRect().top <= soglia) corrente = g;
-      }
-      setAttivo(corrente);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chiave]);
-  return { attivo, setRef };
-}
-
-function MeseVuoto({ mese, onCrea }: { mese: string; onCrea: () => void }) {
+function Riga({ lavoro, dati }: { lavoro: Lavoro; dati: Dati }) {
+  const c = calcoloLavoro(dati, lavoro);
+  const daIncassare = lavoro.fase === "fatto" && c.statoIncasso !== "pagato";
+  const card = <CardLavoro lavoro={lavoro} />;
+  if (!daIncassare) return card;
   return (
-    <div className="flex flex-col items-center gap-3 py-16 text-center">
-      <TreePine className="h-10 w-10 text-lime" />
-      <p className="font-display text-lg text-fumo">Nessun lavoro in {formatMese(mese)}</p>
-      <p className="text-sm text-fumo-2">Tocca ＋ per creare la prima registrazione.</p>
-      <Button onClick={onCrea}>＋ Crea registrazione</Button>
-    </div>
+    <Swipeable
+      azione={
+        <span className="flex items-center gap-1.5 font-semibold text-rosso">
+          <Banknote size={16} /> Riscuoti
+        </span>
+      }
+      onAzione={() => {
+        void incassaLavoro(lavoro.id, c.daIncassare);
+        toast.success(`Incassato ${formatEuro(c.daIncassare)}`);
+      }}
+    >
+      {card}
+    </Swipeable>
   );
 }
