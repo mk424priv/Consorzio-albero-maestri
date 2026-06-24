@@ -3,7 +3,7 @@ import { ArrowLeft, ChevronRight, Plus, Search, Trash2, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { Intestazione } from "@/components/Intestazione";
-import { Badge, Button, Card, Codice, Field, Modal, Segmented } from "@/components/ui";
+import { Badge, Button, CampoFacolt, Card, Codice, Field, Modal, Segmented } from "@/components/ui";
 import { assegnaIniziali, codiceCliente } from "@/lib/codice-parlante";
 import { cn } from "@/lib/cn";
 import type { CategoriaSpesa } from "@/lib/dominio";
@@ -212,12 +212,7 @@ export function CreaLavoro() {
           onClick={() => setVista("cliente")}
         />
 
-        <Field
-          label="Titolo"
-          placeholder={b.modoCalc === "preventivo" ? "Lavoro a preventivo" : "Es. Potatura ulivi"}
-          value={b.titolo}
-          onChange={(e) => set({ titolo: e.target.value })}
-        />
+        <CampoFacolt label="Titolo (facoltativo)" value={b.titolo} onValue={(v) => set({ titolo: v })} />
       </div>
 
       {/* modalità — unica biforcazione */}
@@ -448,32 +443,31 @@ function SezioneOperai({
   onAdd: () => void;
 }) {
   const altri = b.partecipanti.filter((p) => p.collaboratoreId !== io);
-  if (!b.mostraOperai && altri.length === 0) {
-    return (
-      <button type="button" onClick={() => set({ mostraOperai: true })} className="flex items-center gap-2 px-1 text-sm text-fumo">
-        <Plus className="h-4 w-4" /> Ho lavorato con qualcuno
-      </button>
-    );
-  }
   return (
-    <Card tono="piana" className="flex flex-col gap-2 p-3">
-      <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">Chi ha lavorato</span>
-      {altri.map((p) => (
-        <div key={p.collaboratoreId} className="flex items-center justify-between text-sm">
-          <span>{dati.operatori.find((o) => o.id === p.collaboratoreId)?.nome ?? "—"} · {p.tariffaSnapshot} €/h</span>
-          <button type="button" onClick={() => set({ partecipanti: b.partecipanti.filter((x) => x.collaboratoreId !== p.collaboratoreId) })} aria-label="Rimuovi operaio">
-            <X className="h-4 w-4 text-fumo-2" />
-          </button>
-        </div>
-      ))}
-      <button type="button" onClick={onAdd} className="flex items-center gap-2 px-1 text-sm text-lime">
+    <div className="flex flex-col gap-2 rounded-vetro bg-superficie p-3">
+      <span className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Operai</span>
+      {altri.length === 0 ? (
+        <span className="text-xs text-fumo-2">Solo io. Aggiungi chi ha lavorato con te.</span>
+      ) : (
+        altri.map((p) => (
+          <div key={p.collaboratoreId} className="flex items-center justify-between rounded-pill bg-superficie-bassa px-3 py-1.5 text-sm">
+            <span>{dati.operatori.find((o) => o.id === p.collaboratoreId)?.nome ?? "—"} · {p.tariffaSnapshot} €/h</span>
+            <button type="button" onClick={() => set({ partecipanti: b.partecipanti.filter((x) => x.collaboratoreId !== p.collaboratoreId) })} aria-label="Rimuovi operaio">
+              <X className="h-4 w-4 text-fumo-2" />
+            </button>
+          </div>
+        ))
+      )}
+      <button type="button" onClick={onAdd} className="flex items-center gap-2 self-start rounded-pill bg-superficie-bassa px-3 py-1.5 text-sm font-medium text-blu">
         <Plus className="h-4 w-4" /> Aggiungi operaio
       </button>
-      <label className="mt-1 flex items-center gap-2 text-sm text-fumo">
-        <input type="checkbox" checked={b.contaMieOreComeCosto} onChange={(e) => set({ contaMieOreComeCosto: e.target.checked })} />
-        Conta le mie ore come costo
-      </label>
-    </Card>
+      {altri.length > 0 && (
+        <label className="mt-1 flex items-center gap-2 text-sm text-fumo">
+          <input type="checkbox" checked={b.contaMieOreComeCosto} onChange={(e) => set({ contaMieOreComeCosto: e.target.checked })} />
+          Conta le mie ore come costo
+        </label>
+      )}
+    </div>
   );
 }
 
@@ -532,22 +526,35 @@ function SezioneSpese({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"]
 }
 
 function SezioneIncasso({ b, set, lordo }: { b: ReturnType<typeof useBozza.getState>["b"]; set: (p: Partial<ReturnType<typeof useBozza.getState>["b"]>) => void; lordo: number }) {
-  const opt = (val: "no" | "tutto" | "parte", label: string) => (
-    <label className="flex items-center gap-2 text-sm">
-      <input type="radio" name="incasso" checked={b.giaIncassato === val} onChange={() => set({ giaIncassato: val })} />
-      {label}
-    </label>
-  );
+  const Toggle = ({ val, label, color }: { val: "no" | "parte" | "tutto"; label: string; color: "rosso" | "arancio" | "verde" }) => {
+    const active = b.giaIncassato === val;
+    const attivo = {
+      rosso: "bg-rosso/15 text-rosso shadow-[inset_0_0_0_1.5px_rgba(255,59,48,0.5)]",
+      arancio: "bg-arancio/15 text-arancio shadow-[inset_0_0_0_1.5px_rgba(255,140,26,0.5)]",
+      verde: "bg-verde/15 text-verde shadow-[inset_0_0_0_1.5px_rgba(0,209,94,0.5)]",
+    }[color];
+    return (
+      <button type="button" onClick={() => set({ giaIncassato: val })} className={cn("rounded-btn py-2.5 text-sm font-medium transition-colors", active ? attivo : "bg-superficie-bassa text-fumo-2")}>
+        {label}
+      </button>
+    );
+  };
   return (
-    <Card tono="piana" className="flex flex-col gap-2 p-3">
-      <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">Già incassato?</span>
-      {opt("no", "No, da incassare")}
-      {opt("tutto", `Sì, tutto incassato oggi (${formatEuro(lordo)})`)}
-      {opt("parte", "In parte:")}
+    <div className="flex flex-col gap-2 rounded-vetro bg-superficie p-3">
+      <span className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Stato incasso</span>
+      <div className="grid grid-cols-3 gap-2">
+        <Toggle val="no" label="Da incassare" color="rosso" />
+        <Toggle val="parte" label="Parziale" color="arancio" />
+        <Toggle val="tutto" label="Pagato" color="verde" />
+      </div>
       {b.giaIncassato === "parte" && (
-        <NumberField iniziale={b.importoParte} placeholder="0,00" onChange={(n) => set({ importoParte: Math.min(n, lordo) })} className="h-9 w-28" />
+        <div className="mt-1 flex items-center gap-2">
+          <span className="text-sm text-fumo-2">Incassato</span>
+          <NumberField iniziale={b.importoParte} placeholder="0,00" onChange={(n) => set({ importoParte: Math.min(n, lordo) })} className="h-10 w-28" />
+          <span className="font-mono text-xs text-fumo-2">di {formatEuro(lordo)}</span>
+        </div>
       )}
-    </Card>
+    </div>
   );
 }
 
