@@ -1,13 +1,13 @@
 import { ArrowLeft, Banknote, CalendarClock, Leaf, Plus } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
 import { Avatar, Button, Field, Foglio, Segmented, StatTile } from "@/components/ui";
 import { libroOperatore } from "@/lib/conti";
 import type { MetodoPagamento } from "@/lib/dominio";
 import { etichetta } from "@/lib/dominio";
 import { chiaveMese, formatData, formatEuro, formatMese, formatOre } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
+import { notificaUndo } from "@/lib/undo";
 import { pagaOperaio } from "@/store/azioni";
 import { useStore } from "@/store/store";
 
@@ -126,10 +126,10 @@ function PagaSheet({ open, onOpenChange, operatoreId, nome, saldo }: { open: boo
   const [metodo, setMetodo] = useState<MetodoPagamento>("contanti");
   const v = importo ? Number(importo.replace(",", ".")) : saldo;
   const paga = async () => {
-    await pagaOperaio(operatoreId, v, metodo);
+    const a = await pagaOperaio(operatoreId, v, metodo);
     setImporto("");
     onOpenChange(false);
-    toast.success(`Pagato ${formatEuro(v)} a ${nome}`);
+    notificaUndo(`Pagato ${formatEuro(v)} a ${nome}`, a);
   };
   return (
     <Foglio open={open} onOpenChange={onOpenChange} variante="azione-pagamento" titolo={`Paga ${nome}`}>

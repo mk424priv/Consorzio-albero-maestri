@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { cn } from "@/lib/cn";
+import { notificaUndo } from "@/lib/undo";
 import { formatData, formatEuro, formatOre } from "@/lib/format";
 import { calcoloLavoro, operatoreIo } from "@/lib/lavoro-calc";
 import type { Lavoro } from "@/lib/types";
@@ -66,7 +67,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
         </button>
         <div className="mt-2.5 flex items-center justify-between gap-2">
           <Chips />
-          <Button size="sm" variant="inchiostro" onClick={() => void segnaSvolto(lavoro.id)}>Svolto</Button>
+          <Button size="sm" variant="inchiostro" onClick={async () => notificaUndo("Segnato come svolto", await segnaSvolto(lavoro.id))}>Svolto</Button>
         </div>
       </motion.div>
     );
@@ -114,7 +115,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
       {stato !== "pagato" && incassaOpen && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-2.5 overflow-hidden rounded-2xl bg-black/20 p-2.5">
           <div className="flex flex-wrap items-center gap-2">
-            <Button size="sm" onClick={() => { void incassaLavoro(lavoro.id, calc.daIncassare); setIncassaOpen(false); }}>
+            <Button size="sm" onClick={async () => { const a = await incassaLavoro(lavoro.id, calc.daIncassare); setIncassaOpen(false); notificaUndo(`Incassato ${formatEuro(calc.daIncassare)}`, a); }}>
               Tutto {formatEuro(calc.daIncassare)}
             </Button>
             <input
@@ -124,7 +125,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
               value={altro}
               onChange={(e) => setAltro(e.target.value)}
             />
-            <Button size="sm" variant="inchiostro" onClick={() => { const v = Number(altro.replace(",", ".")); if (v > 0) void incassaLavoro(lavoro.id, v); setAltro(""); setIncassaOpen(false); }}>
+            <Button size="sm" variant="inchiostro" onClick={async () => { const v = Number(altro.replace(",", ".")); setAltro(""); setIncassaOpen(false); if (v > 0) notificaUndo(`Incassato ${formatEuro(v)}`, await incassaLavoro(lavoro.id, v)); }}>
               Ok
             </Button>
           </div>

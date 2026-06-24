@@ -2,7 +2,6 @@ import { motion } from "framer-motion";
 import { Banknote, ChevronLeft, ChevronRight, TreePine } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { CardLavoro } from "@/components/CardLavoro";
 import { Button, Cruscotto, EmptyState, NumberHero, SectionHeader, Swipeable } from "@/components/ui";
 import {
@@ -15,6 +14,7 @@ import {
   oggiISO,
 } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
+import { notificaUndo } from "@/lib/undo";
 import type { Dati, Lavoro } from "@/lib/types";
 import { incassaLavoro } from "@/store/azioni";
 import { useStore } from "@/store/store";
@@ -149,9 +149,9 @@ function Riga({ lavoro, dati }: { lavoro: Lavoro; dati: Dati }) {
           <Banknote size={16} /> Riscuoti
         </span>
       }
-      onAzione={() => {
-        void incassaLavoro(lavoro.id, c.daIncassare);
-        toast.success(`Incassato ${formatEuro(c.daIncassare)}`);
+      onAzione={async () => {
+        const a = await incassaLavoro(lavoro.id, c.daIncassare);
+        notificaUndo(`Incassato ${formatEuro(c.daIncassare)}`, a);
       }}
     >
       {card}

@@ -1,13 +1,13 @@
 import { Banknote, ChevronLeft, ChevronRight, Plus, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { CardLavoro } from "@/components/CardLavoro";
 import { Avatar, Button, Codice, Cruscotto, Field, Foglio, NumberHero, SectionHeader, Segmented, StatTile, Swipeable } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { libroOperatore, riepilogoCliente, riepilogoSoldi } from "@/lib/conti";
 import { chiaveMese, formatEuro, formatMese, oggiISO } from "@/lib/format";
 import { calcoloLavoro, operatoreIo } from "@/lib/lavoro-calc";
+import { notificaUndo } from "@/lib/undo";
 import type { Cliente, Lavoro } from "@/lib/types";
 import { incassaLavoro, incassaSubito, prelievoTitolare } from "@/store/azioni";
 import { useStore } from "@/store/store";
@@ -169,9 +169,9 @@ function LavoroIncasso({ lavoro, daIncassare }: { lavoro: Lavoro; daIncassare: n
   return (
     <Swipeable
       azione={<span className="flex items-center gap-1.5 font-semibold text-rosso"><Banknote size={16} /> Riscuoti</span>}
-      onAzione={() => {
-        void incassaLavoro(lavoro.id, daIncassare);
-        toast.success(`Incassato ${formatEuro(daIncassare)}`);
+      onAzione={async () => {
+        const a = await incassaLavoro(lavoro.id, daIncassare);
+        notificaUndo(`Incassato ${formatEuro(daIncassare)}`, a);
       }}
     >
       <CardLavoro lavoro={lavoro} />
@@ -188,12 +188,12 @@ function IncassoSubitoSheet({ open, onOpenChange, onFatto }: { open: boolean; on
 
   const conferma = async () => {
     if (!(v > 0)) return;
-    const id = await incassaSubito({ clienteId: clienteId || undefined, titolo, importo: v });
+    const { id, annulla } = await incassaSubito({ clienteId: clienteId || undefined, titolo, importo: v });
     setClienteId("");
     setTitolo("");
     setImporto("");
     onOpenChange(false);
-    toast.success(`Incassato ${formatEuro(v)}`);
+    notificaUndo(`Incassato ${formatEuro(v)}`, annulla);
     onFatto(id);
   };
 
@@ -224,10 +224,10 @@ function PrelievoSheet({ open, onOpenChange, cassa }: { open: boolean; onOpenCha
   const [importo, setImporto] = useState("");
   const conferma = async () => {
     const v = importo ? Number(importo.replace(",", ".")) : cassa;
-    await prelievoTitolare(v);
+    const a = await prelievoTitolare(v);
     setImporto("");
     onOpenChange(false);
-    toast.success(`Prelevato ${formatEuro(v)}`);
+    notificaUndo(`Prelevato ${formatEuro(v)}`, a);
   };
   return (
     <Foglio open={open} onOpenChange={onOpenChange} variante="azione-pagamento" titolo="Preleva">

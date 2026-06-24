@@ -1,10 +1,10 @@
-import { ArrowLeft, ShieldAlert, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { toast } from "sonner";
-import { Badge, Button, Codice, Foglio, Stamp } from "@/components/ui";
+import { Badge, Button, Codice, Conferma, Stamp } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { cn } from "@/lib/cn";
+import { notificaUndo } from "@/lib/undo";
 import { etichetta } from "@/lib/dominio";
 import { formatData, formatEuro, formatOre } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
@@ -41,8 +41,8 @@ export function Cantiere() {
   const svolto = lavoro.fase === "fatto";
 
   const elimina = async () => {
-    await eliminaLavoro(lavoro.id);
-    toast.success("Lavoro eliminato");
+    const a = await eliminaLavoro(lavoro.id);
+    notificaUndo("Lavoro eliminato", a);
     navigate(-1);
   };
 
@@ -99,16 +99,14 @@ export function Cantiere() {
         </Button>
       </div>
 
-      <Foglio open={pericolo} onOpenChange={setPericolo} variante="pericolo" titolo="Eliminare il lavoro?">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rosso/10 text-rosso"><ShieldAlert size={30} /></div>
-          <p className="leading-relaxed text-fumo">Azione irreversibile. Lo storico collegato resta nei conti.</p>
-          <div className="flex w-full flex-col gap-2">
-            <Button size="lg" variant="critico" className="bg-rosso text-white hover:bg-rosso/90" onClick={() => void elimina()}>Elimina lavoro</Button>
-            <Button size="lg" variant="fantasma" onClick={() => setPericolo(false)}>Annulla</Button>
-          </div>
-        </div>
-      </Foglio>
+      <Conferma
+        open={pericolo}
+        onOpenChange={setPericolo}
+        titolo="Eliminare il lavoro?"
+        testo="Si può annullare subito dopo, dal messaggio."
+        etichettaConferma="Elimina lavoro"
+        onConferma={() => void elimina()}
+      />
     </div>
   );
 }

@@ -2,8 +2,9 @@ import { ArrowLeft, Download, RotateCcw, Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Intestazione } from "@/components/Intestazione";
-import { Button, Card } from "@/components/ui";
+import { Button, Card, Conferma } from "@/components/ui";
 import { esportaJSON, importaJSON } from "@/lib/backup";
+import { notificaUndo } from "@/lib/undo";
 import { adessoISO, oggiISO } from "@/lib/format";
 import { useStore } from "@/store/store";
 
@@ -40,6 +41,13 @@ export function Impostazioni() {
     e.target.value = "";
   };
 
+  const ricarica = async () => {
+    const prima = dati; // snapshot per annullare
+    await reset();
+    notificaUndo("Dati d'esempio ricaricati", async () => { await importa(prima); });
+    setMsg("Dati d'esempio ricaricati.");
+  };
+
   return (
     <div className="flex flex-col gap-4 px-5 pt-5 pb-10">
       <Intestazione
@@ -71,19 +79,19 @@ export function Impostazioni() {
       <Card tono="alta" className="flex flex-col gap-3 p-4">
         <h2 className="font-display text-lg text-bianco">Dati d'esempio</h2>
         <p className="text-sm text-fumo-2">Ricarica i dati d'esempio. Sostituisce tutto quello che c'è ora.</p>
-        {confermaReset ? (
-          <div className="flex gap-2">
-            <Button variant="critico" onClick={() => { void reset(); setConfermaReset(false); setMsg("Dati d'esempio ricaricati."); }}>
-              <RotateCcw className="h-4 w-4" /> Sì, ricarica
-            </Button>
-            <Button variant="fantasma" onClick={() => setConfermaReset(false)}>Annulla</Button>
-          </div>
-        ) : (
-          <Button variant="fantasma" className="self-start" onClick={() => setConfermaReset(true)}>
-            <RotateCcw className="h-4 w-4" /> Ricarica esempio
-          </Button>
-        )}
+        <Button variant="fantasma" className="self-start" onClick={() => setConfermaReset(true)}>
+          <RotateCcw className="h-4 w-4" /> Ricarica esempio
+        </Button>
       </Card>
+
+      <Conferma
+        open={confermaReset}
+        onOpenChange={setConfermaReset}
+        titolo="Ricaricare i dati d'esempio?"
+        testo="Sostituisce tutto quello che c'è ora. Si può annullare subito dopo."
+        etichettaConferma="Sì, ricarica"
+        onConferma={() => void ricarica()}
+      />
 
       {msg && <p className="text-center text-sm text-verde">{msg}</p>}
 
