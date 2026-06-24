@@ -123,6 +123,24 @@ export async function prelievoTitolare(importo: number, data?: string): Promise<
   return async () => { await elimina("compensi", id); };
 }
 
+/** Elimina (soft) un cliente. I lavori collegati restano nei conti. */
+export async function eliminaCliente(id: string): Promise<Annulla> {
+  const { dati, elimina, salva } = useStore.getState();
+  const c = dati.clienti.find((x) => x.id === id);
+  await elimina("clienti", id);
+  if (!c) return noop;
+  return async () => { await salva("clienti", { ...c, deleted: false }); };
+}
+
+/** Elimina (soft) un operaio collaboratore (mai il titolare). */
+export async function eliminaOperaio(id: string): Promise<Annulla> {
+  const { dati, elimina, salva } = useStore.getState();
+  const o = dati.operatori.find((x) => x.id === id);
+  if (!o || o.ruolo === "titolare") return noop;
+  await elimina("operatori", id);
+  return async () => { await salva("operatori", { ...o, deleted: false }); };
+}
+
 /** Paga un operaio: crea un CompensoOperatore (denaro in uscita). */
 export async function pagaOperaio(operatoreId: string, importo: number, metodo?: MetodoPagamento, periodo?: string): Promise<Annulla> {
   const { salva, elimina } = useStore.getState();

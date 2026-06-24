@@ -1,12 +1,15 @@
-import { ArrowLeft, Mail, MapPin, Phone, Plus } from "lucide-react";
+import { ArrowLeft, Mail, MapPin, Pencil, Phone, Plus, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
-import { Avatar, AvatarStorico, Button, Codice, Segmented, StatePill, StatTile } from "@/components/ui";
+import { Avatar, AvatarStorico, Button, Codice, Conferma, Field, Foglio, Segmented, StatePill, StatTile } from "@/components/ui";
 import { codiceCliente, leggiCodice } from "@/lib/codice-parlante";
 import { riepilogoCliente } from "@/lib/conti";
 import { chiaveMese, formatEuro, formatMese, formatOre, oggiISO } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
+import type { Cliente } from "@/lib/types";
+import { notificaUndo } from "@/lib/undo";
+import { eliminaCliente } from "@/store/azioni";
 import { useStore } from "@/store/store";
 
 type Filtro = "tutto" | "incassare" | "fare";
@@ -18,6 +21,8 @@ export function ClienteScheda() {
   const dati = useStore((s) => s.dati);
   const [filtro, setFiltro] = useState<Filtro>("tutto");
   const [dettagli, setDettagli] = useState(false);
+  const [modifica, setModifica] = useState(false);
+  const [elimina, setElimina] = useState(false);
 
   const cliente = dati.clienti.find((c) => c.id === id);
   const lavori = useMemo(
@@ -59,8 +64,12 @@ export function ClienteScheda() {
     <div className="flex flex-col pb-24">
       <header className="flex flex-col items-center gap-3 px-5 pt-5 text-center">
         <div className="flex w-full items-center justify-between">
-          <button type="button" onClick={() => navigate(-1)} aria-label="Indietro" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo hover:text-bianco"><ArrowLeft size={18} /></button>
-          {storico && <StatePill stato="storico" />}
+          <button type="button" onClick={() => navigate(-1)} aria-label="Indietro" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo shadow-card hover:text-bianco"><ArrowLeft size={18} /></button>
+          <div className="flex items-center gap-2">
+            {storico && <StatePill stato="storico" />}
+            <button type="button" onClick={() => setModifica(true)} aria-label="Modifica cliente" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo shadow-card hover:text-bianco"><Pencil size={16} /></button>
+            <button type="button" onClick={() => setElimina(true)} aria-label="Elimina cliente" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-rosso shadow-card"><Trash2 size={16} /></button>
+          </div>
         </div>
         {storico ? <AvatarStorico iniziali={iniz} size={72} /> : <Avatar iniziali={iniz} tono={r.saldoDaIncassare > 0 ? "rosso" : "neutro"} size={72} />}
         <div>
@@ -140,6 +149,53 @@ export function ClienteScheda() {
           </Button>
         </div>
       </div>
+
+      <ModificaClienteSheet key={cliente.id} open={modifica} onOpenChange={setModifica} cliente={cliente} />
+      <Conferma
+        open={elimina}
+        onOpenChange={setElimina}
+        titolo="Eliminare il cliente?"
+        testo="I lavori restano nei conti. Si può annullare subito dopo."
+        etichettaConferma="Elimina cliente"
+        onConferma={() => void (async () => { const a = await eliminaCliente(cliente.id); notificaUndo("Cliente eliminato", a); navigate(-1); })()}
+      />
     </div>
+  );
+}
+
+function ModificaClienteSheet({ open, onOpenChange, cliente }: { open: boolean; onOpenChange: (o: boolean) => void; cliente: Cliente }) {
+  const salva = useStore((s) => s.salva);
+  const [form, setForm] = useState(() => ({
+    nome: `${cliente.nome}${cliente.cognome ? " " + cliente.cognome : ""}`.trim(),
+    tariffa: cliente.tariffaOraria != null ? String(cliente.tariffaOraria) : "",
+    luogo: cliente.luogo ?? "",
+    telefono: cliente.telefono ?? "",
+    email: cliente.email ?? "",
+  }));
+  const set = (p: Partial<typeof form>) => setForm((f) => ({ ...f, ...p }));
+  const salvaMod = async () => {
+    await salva("clienti", {
+      ...cliente,
+      nome: form.nome.trim() || cliente.nome,
+      cognome: undefined,
+      tariffaOraria: form.tariffa ? Number(form.tariffa.replace(",", ".")) : null,
+      luogo: form.luogo.trim() || undefined,
+      telefono: form.telefono.trim() || undefined,
+      email: form.email.trim() || undefined,
+      updatedAt: "",
+    });
+    onOpenChange(false);
+  };
+  return (
+    <Foglio open={open} onOpenChange={onOpenChange} variante="dettaglio" titolo="Modifica cliente">
+      <div className="flex flex-col gap-3">
+        <Field label="Nome" value={form.nome} onChange={(e) => set({ nome: e.target.value })} />
+        <Field label="Tariffa oraria" value={form.tariffa} onChange={(e) => set({ tariffa: e.target.value })} suffix="€/h" inputMode="decimal" />
+        <Field label="Luogo" value={form.luogo} onChange={(e) => set({ luogo: e.target.value })} />
+        <Field label="Telefono" value={form.telefono} onChange={(e) => set({ telefono: e.target.value })} inputMode="tel" />
+        <Field label="Email" value={form.email} onChange={(e) => set({ email: e.target.value })} inputMode="email" />
+        <Button size="lg" onClick={() => void salvaMod()}>Salva modifiche</Button>
+      </div>
+    </Foglio>
   );
 }

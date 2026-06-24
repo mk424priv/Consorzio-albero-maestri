@@ -10,7 +10,7 @@ import { calcoloLavoro, operatoreIo } from "@/lib/lavoro-calc";
 import type { Lavoro } from "@/lib/types";
 import { incassaLavoro, segnaSvolto } from "@/store/azioni";
 import { useStore } from "@/store/store";
-import { Button, Codice } from "./ui";
+import { Button, Codice, StatePill } from "./ui";
 
 type StatoSvolto = "incassare" | "parziale" | "pagato";
 
@@ -60,9 +60,9 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
               </span>
             </span>
           </span>
-          <span className="shrink-0 text-right">
-            <span className="block font-mono text-[10px] uppercase tracking-label text-blu">programmato</span>
-            <span className="block text-sm font-medium text-fumo">{lavoro.modo === "preventivo" && lavoro.prezzo ? formatEuro(lavoro.prezzo) : formatData(lavoro.data)}</span>
+          <span className="flex shrink-0 flex-col items-end gap-1">
+            <StatePill stato="programmato" />
+            <span className="text-sm font-medium text-fumo">{lavoro.modo === "preventivo" && lavoro.prezzo ? formatEuro(lavoro.prezzo) : formatData(lavoro.data)}</span>
           </span>
         </button>
         <div className="mt-2.5 flex items-center justify-between gap-2">
@@ -96,7 +96,10 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
             </span>
           </span>
         </span>
-        <span className={cn("shrink-0 text-right text-base font-bold tracking-tight tabular-nums", s.amount)}>{formatEuro(amount)}</span>
+        <span className="flex shrink-0 flex-col items-end gap-1">
+          <StatePill stato={stato} />
+          <span className={cn("text-base font-bold tracking-tight tabular-nums", s.amount)}>{formatEuro(amount)}</span>
+        </span>
       </button>
 
       <div className="mt-2.5 flex items-center justify-between gap-2">

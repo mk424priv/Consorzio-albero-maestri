@@ -1,14 +1,15 @@
-import { ArrowLeft, Banknote, CalendarClock, Leaf, Plus } from "lucide-react";
+import { ArrowLeft, Banknote, CalendarClock, Leaf, Pencil, Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Avatar, Button, Field, Foglio, Segmented, StatTile } from "@/components/ui";
+import { Avatar, Button, Conferma, Field, Foglio, Segmented, StatTile } from "@/components/ui";
 import { libroOperatore } from "@/lib/conti";
 import type { MetodoPagamento } from "@/lib/dominio";
 import { etichetta } from "@/lib/dominio";
 import { chiaveMese, formatData, formatEuro, formatMese, formatOre } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
+import type { Operatore } from "@/lib/types";
 import { notificaUndo } from "@/lib/undo";
-import { pagaOperaio } from "@/store/azioni";
+import { eliminaOperaio, pagaOperaio } from "@/store/azioni";
 import { useStore } from "@/store/store";
 
 export function OperaioScheda() {
@@ -16,6 +17,8 @@ export function OperaioScheda() {
   const navigate = useNavigate();
   const dati = useStore((s) => s.dati);
   const [pagaOpen, setPagaOpen] = useState(false);
+  const [modifica, setModifica] = useState(false);
+  const [eliminaOpen, setEliminaOpen] = useState(false);
 
   const operatore = dati.operatori.find((o) => o.id === id);
   if (!operatore) {
@@ -45,8 +48,12 @@ export function OperaioScheda() {
   return (
     <div className="flex flex-col pb-10">
       <header className="flex flex-col items-center gap-3 px-5 pt-5 text-center">
-        <div className="flex w-full items-center">
-          <button type="button" onClick={() => navigate(-1)} aria-label="Indietro" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo hover:text-bianco"><ArrowLeft size={18} /></button>
+        <div className="flex w-full items-center justify-between">
+          <button type="button" onClick={() => navigate(-1)} aria-label="Indietro" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo shadow-card hover:text-bianco"><ArrowLeft size={18} /></button>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setModifica(true)} aria-label="Modifica operaio" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo shadow-card hover:text-bianco"><Pencil size={16} /></button>
+            {!io && <button type="button" onClick={() => setEliminaOpen(true)} aria-label="Elimina operaio" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-rosso shadow-card"><Trash2 size={16} /></button>}
+          </div>
         </div>
         <Avatar iniziali={operatore.nome.slice(0, 2).toUpperCase()} tono={io ? "verde" : "blu"} size={72} />
         <div>
@@ -117,7 +124,48 @@ export function OperaioScheda() {
       </div>
 
       {!io && <PagaSheet open={pagaOpen} onOpenChange={setPagaOpen} operatoreId={operatore.id} nome={operatore.nome} saldo={libro.saldo} />}
+      <ModificaOperaioSheet key={operatore.id} open={modifica} onOpenChange={setModifica} operatore={operatore} />
+      {!io && (
+        <Conferma
+          open={eliminaOpen}
+          onOpenChange={setEliminaOpen}
+          titolo="Eliminare l'operaio?"
+          testo="I lavori passati restano nei conti. Si può annullare subito dopo."
+          etichettaConferma="Elimina operaio"
+          onConferma={() => void (async () => { const a = await eliminaOperaio(operatore.id); notificaUndo("Operaio eliminato", a); navigate(-1); })()}
+        />
+      )}
     </div>
+  );
+}
+
+function ModificaOperaioSheet({ open, onOpenChange, operatore }: { open: boolean; onOpenChange: (o: boolean) => void; operatore: Operatore }) {
+  const salva = useStore((s) => s.salva);
+  const [form, setForm] = useState(() => ({
+    nome: operatore.nome,
+    tariffa: operatore.tariffaOraria != null ? String(operatore.tariffaOraria) : "",
+    telefono: operatore.telefono ?? "",
+  }));
+  const set = (p: Partial<typeof form>) => setForm((f) => ({ ...f, ...p }));
+  const salvaMod = async () => {
+    await salva("operatori", {
+      ...operatore,
+      nome: form.nome.trim() || operatore.nome,
+      tariffaOraria: form.tariffa ? Number(form.tariffa.replace(",", ".")) : 0,
+      telefono: form.telefono.trim() || undefined,
+      updatedAt: "",
+    });
+    onOpenChange(false);
+  };
+  return (
+    <Foglio open={open} onOpenChange={onOpenChange} variante="dettaglio" titolo="Modifica operaio">
+      <div className="flex flex-col gap-3">
+        <Field label="Nome" value={form.nome} onChange={(e) => set({ nome: e.target.value })} />
+        <Field label="Tariffa oraria (costo)" value={form.tariffa} onChange={(e) => set({ tariffa: e.target.value })} suffix="€/h" inputMode="decimal" />
+        <Field label="Telefono" value={form.telefono} onChange={(e) => set({ telefono: e.target.value })} inputMode="tel" />
+        <Button size="lg" onClick={() => void salvaMod()}>Salva modifiche</Button>
+      </div>
+    </Foglio>
   );
 }
 
