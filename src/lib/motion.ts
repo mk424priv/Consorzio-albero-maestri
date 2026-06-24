@@ -1,60 +1,34 @@
 import type { Transition, Variants } from "framer-motion";
 
-/*
-  Movimento = "voltare pagina", non "transizione web" (canone 01/02 §1.1, §3.6).
-  Durate calme, curve naturali, NIENTE rimbalzo elastico — tranne il leggero
-  galleggiamento delle card `programmato`. Il movimento significa il TEMPO:
-  il passato si posa, il futuro galleggia. Tutto rispetta reduced-motion.
-*/
+/* Movimento "Vetro Vivo": molle, reveal con blur, niente lineare. (canone 04 §5) */
 
-export const voltaPagina: Transition = {
-  type: "tween",
-  ease: [0.22, 0.61, 0.36, 1],
-  duration: 0.42,
+export const molla: Transition = { type: "spring", stiffness: 300, damping: 30, mass: 0.8 };
+export const mollaMorbida: Transition = { type: "spring", stiffness: 200, damping: 26 };
+
+/** Il vetro "si condensa": blur-in + scale. */
+export const reveal: Variants = {
+  hidden: { opacity: 0, scale: 0.96, filter: "blur(10px)" },
+  show: { opacity: 1, scale: 1, filter: "blur(0px)", transition: { type: "spring", stiffness: 240, damping: 26 } },
 };
 
-/** Il passato "si posa" e non trema piu'. */
-export const posa: Transition = {
-  type: "tween",
-  ease: [0.2, 0.8, 0.2, 1],
-  duration: 0.5,
+export const rivelaSu: Variants = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0, transition: molla },
 };
 
-/** Il futuro "galleggia" — unico punto con un filo di molla. */
-export const galleggia: Transition = {
-  type: "spring",
-  stiffness: 210,
-  damping: 24,
-  mass: 0.9,
-};
-
-/** Card `svolto`: scende e si posa. */
-export const cardPosa: Variants = {
-  hidden: { opacity: 0, y: 8 },
-  show: { opacity: 1, y: 0, transition: posa },
-};
-
-/** Card `programmato`: arriva dall'alto e galleggia. */
-export const cardGalleggia: Variants = {
-  hidden: { opacity: 0, y: -6 },
-  show: { opacity: 1, y: 0, transition: galleggia },
-};
-
-/** Foglio inferiore (sheet): sale dal basso come una pagina. */
+/** Foglio che sale dal basso (sheet). */
 export const foglioSu: Variants = {
   hidden: { y: "100%" },
-  show: { y: 0, transition: voltaPagina },
-  exit: { y: "100%", transition: { ...voltaPagina, duration: 0.3 } },
+  show: { y: 0, transition: { type: "spring", stiffness: 320, damping: 34 } },
+  exit: { y: "100%", transition: { duration: 0.25 } },
 };
 
-/** Velo del modale. */
 export const velo: Variants = {
   hidden: { opacity: 0 },
   show: { opacity: 1, transition: { duration: 0.25 } },
   exit: { opacity: 0, transition: { duration: 0.2 } },
 };
 
-/** Lista a comparsa scaglionata (per i giorni dell'Agenda). */
 export const listaScaglionata: Variants = {
-  show: { transition: { staggerChildren: 0.035 } },
+  show: { transition: { staggerChildren: 0.045 } },
 };

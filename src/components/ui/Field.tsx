@@ -14,10 +14,7 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(
     return (
       <div className="flex flex-col gap-1.5">
         {label && (
-          <label
-            htmlFor={fieldId}
-            className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole"
-          >
+          <label htmlFor={fieldId} className="font-mono text-xs uppercase tracking-wider text-fumo-2">
             {label}
           </label>
         )}
@@ -26,21 +23,16 @@ export const Field = forwardRef<HTMLInputElement, FieldProps>(
             ref={ref}
             id={fieldId}
             className={cn(
-              "h-11 w-full rounded-targhetta border border-carta-ombra bg-carta-alta px-3 font-sans text-inchiostro",
-              "placeholder:text-inchiostro-debole/70",
-              "focus-visible:border-ottone focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ottone/30",
-              suffix ? "pr-10" : "",
+              "glass-bassa h-12 w-full rounded-pill px-4 font-sans text-bianco",
+              "placeholder:text-fumo-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/60",
+              suffix ? "pr-12" : "",
               className,
             )}
             {...props}
           />
-          {suffix && (
-            <span className="absolute right-3 font-mono text-sm text-inchiostro-debole">
-              {suffix}
-            </span>
-          )}
+          {suffix && <span className="absolute right-4 font-mono text-sm text-fumo">{suffix}</span>}
         </div>
-        {hint && <span className="text-xs text-inchiostro-debole">{hint}</span>}
+        {hint && <span className="text-xs text-fumo-2">{hint}</span>}
       </div>
     );
   },

@@ -13,7 +13,7 @@ export interface SheetProps {
   className?: string;
 }
 
-/** Foglio inferiore (bottom sheet) su Radix Dialog: accessibile, sale dal basso. */
+/** Foglio di vetro che sale dal basso. */
 export function Sheet({ open, onOpenChange, title, description, children, className }: SheetProps) {
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
@@ -21,13 +21,7 @@ export function Sheet({ open, onOpenChange, title, description, children, classN
         {open && (
           <DialogPrimitive.Portal forceMount>
             <DialogPrimitive.Overlay asChild forceMount>
-              <motion.div
-                variants={velo}
-                initial="hidden"
-                animate="show"
-                exit="exit"
-                className="fixed inset-0 z-40 bg-inchiostro/40"
-              />
+              <motion.div variants={velo} initial="hidden" animate="show" exit="exit" className="fixed inset-0 z-40 bg-fondo/60" />
             </DialogPrimitive.Overlay>
             <DialogPrimitive.Content asChild forceMount>
               <motion.div
@@ -36,16 +30,16 @@ export function Sheet({ open, onOpenChange, title, description, children, classN
                 animate="show"
                 exit="exit"
                 className={cn(
-                  "fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-bolla bg-carta-alta shadow-targhetta",
+                  "glass-scura fixed inset-x-0 bottom-0 z-50 mx-auto flex max-h-[92dvh] w-full max-w-md flex-col overflow-hidden rounded-t-bolla text-bianco",
                   className,
                 )}
               >
-                <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-full bg-carta-ombra" />
-                <div className="overflow-y-auto px-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] pt-3">
-                  <DialogPrimitive.Title className={cn("font-display text-xl text-inchiostro", !title && "sr-only")}>
+                <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-pill bg-white/20" />
+                <div className="overflow-y-auto px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3">
+                  <DialogPrimitive.Title className={cn("font-display text-xl text-bianco", !title && "sr-only")}>
                     {title ?? "Foglio"}
                   </DialogPrimitive.Title>
-                  <DialogPrimitive.Description className={cn("mt-1 text-sm text-inchiostro-debole", !description && "sr-only")}>
+                  <DialogPrimitive.Description className={cn("mt-1 text-sm text-fumo", !description && "sr-only")}>
                     {description ?? "Foglio"}
                   </DialogPrimitive.Description>
                   <div className="mt-4">{children}</div>

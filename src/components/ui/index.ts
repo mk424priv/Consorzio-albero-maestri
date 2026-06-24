@@ -8,3 +8,6 @@ export { Field, type FieldProps } from "./Field";
 export { Segmented, type SegmentedProps, type SegmentedOption } from "./Segmented";
 export { Sheet, type SheetProps } from "./Sheet";
 export { Modal, type ModalProps } from "./Dialog";
+export { NumberHero } from "./NumberHero";
+export { Progress } from "./Progress";
+export { StampVivo } from "./StampVivo";

@@ -1,7 +1,7 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
-/** Codice parlante del cliente: timbro di ottone, mono, "numero d'inventario". */
+/** Codice parlante: gettone di vetro con accento lime, mono. */
 export interface CodiceProps extends HTMLAttributes<HTMLSpanElement> {
   value: string;
   grande?: boolean;
@@ -11,8 +11,8 @@ export function Codice({ value, grande = false, className, ...props }: CodicePro
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-targhetta border border-ottone/40 bg-ottone/10 font-mono font-medium tracking-wider text-ottone-scuro",
-        grande ? "px-3 py-1 text-lg" : "px-2 py-0.5 text-sm",
+        "inline-flex items-center rounded-pill bg-lime/12 font-mono font-medium tracking-wider text-lime",
+        grande ? "px-4 py-1.5 text-xl" : "px-2.5 py-0.5 text-sm",
         className,
       )}
       {...props}

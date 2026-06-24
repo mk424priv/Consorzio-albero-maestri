@@ -1,46 +1,27 @@
 import type { HTMLAttributes } from "react";
 import { cn } from "@/lib/cn";
 
-/** L'oggetto-eroe: targhetta di ottone con il giorno (canone 01 §1, 02 §5.5).
- *  Accompagna l'Agenda e si appiccica in alto allo scroll. */
+/** Pillola di vetro con la data (oggetto-segnaposto dell'Agenda). */
 export interface TarghettaProps extends HTMLAttributes<HTMLDivElement> {
   giorno: number | string;
   mese?: string;
   giornoSettimana?: string;
 }
 
-export function Targhetta({
-  giorno,
-  mese,
-  giornoSettimana,
-  className,
-  ...props
-}: TarghettaProps) {
+export function Targhetta({ giorno, mese, giornoSettimana, className, ...props }: TarghettaProps) {
   return (
     <div
       className={cn(
-        "inline-flex select-none flex-col items-center rounded-targhetta px-3 py-1.5 text-carta-alta shadow-targhetta",
+        "glass-alta inline-flex select-none items-baseline gap-1.5 rounded-bolla px-4 py-2 text-bianco",
         className,
       )}
-      style={{
-        backgroundImage:
-          "linear-gradient(to bottom, var(--color-ottone-chiaro), var(--color-ottone))",
-      }}
       {...props}
     >
       {giornoSettimana && (
-        <span className="font-mono text-[0.6rem] uppercase tracking-widest opacity-90">
-          {giornoSettimana}
-        </span>
+        <span className="font-mono text-[0.6rem] uppercase tracking-widest text-fumo">{giornoSettimana}</span>
       )}
-      <span className="font-display text-xl font-semibold leading-none tabular-nums">
-        {giorno}
-      </span>
-      {mese && (
-        <span className="font-mono text-[0.6rem] uppercase tracking-widest opacity-90">
-          {mese}
-        </span>
-      )}
+      <span className="font-display text-2xl font-semibold leading-none tabular-nums">{giorno}</span>
+      {mese && <span className="font-mono text-[0.6rem] uppercase tracking-widest text-fumo">{mese}</span>}
     </div>
   );
 }
