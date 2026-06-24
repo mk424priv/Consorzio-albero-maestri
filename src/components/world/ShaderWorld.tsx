@@ -89,11 +89,16 @@ export function ShaderWorld({ colorA, colorB }: { colorA: string; colorB: string
     const mesh = new Mesh(gl, { geometry: new Triangle(gl), program });
 
     const resize = () => {
-      renderer.setSize(canvas.clientWidth, canvas.clientHeight);
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      renderer.setSize(w, h); // OGL imposta sia il buffer sia lo stile px del canvas
       program.uniforms.uRes.value = [gl.canvas.width, gl.canvas.height];
     };
     window.addEventListener("resize", resize);
+    window.addEventListener("orientationchange", resize);
     resize();
+    // un secondo resize dopo il layout, per sicurezza (canvas appena montato)
+    requestAnimationFrame(resize);
 
     let raf = 0;
     let disposed = false;
@@ -125,6 +130,7 @@ export function ShaderWorld({ colorA, colorB }: { colorA: string; colorB: string
       disposed = true;
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
+      window.removeEventListener("orientationchange", resize);
       document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
