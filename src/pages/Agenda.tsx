@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Banknote, ChevronLeft, ChevronRight, PencilLine, TreePine } from "lucide-react";
+import { Banknote, CalendarClock, Check, ChevronLeft, ChevronRight, PencilLine, TreePine } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
@@ -17,7 +17,7 @@ import { cn } from "@/lib/cn";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
 import { notificaUndo } from "@/lib/undo";
 import type { Dati, Lavoro } from "@/lib/types";
-import { incassaLavoro } from "@/store/azioni";
+import { incassaLavoro, riprogramma, segnaSvolto } from "@/store/azioni";
 import { bozzaNonVuota, useBozza } from "@/store/bozza";
 import { useStore } from "@/store/store";
 
@@ -189,20 +189,26 @@ export function Agenda() {
 
 function Riga({ lavoro, dati }: { lavoro: Lavoro; dati: Dati }) {
   const c = calcoloLavoro(dati, lavoro);
-  const daIncassare = lavoro.fase === "fatto" && c.statoIncasso !== "pagato";
   const card = <CardLavoro lavoro={lavoro} />;
-  if (!daIncassare) return card;
+  // programmato → swipe-destra «Svolto»
+  if (lavoro.fase === "da_fare") {
+    return (
+      <Swipeable
+        azioneDx={<span className="flex items-center gap-1.5 font-semibold text-verde"><Check size={16} /> Svolto</span>}
+        onAzioneDx={async () => notificaUndo("Segnato svolto", await segnaSvolto(lavoro.id))}
+      >
+        {card}
+      </Swipeable>
+    );
+  }
+  if (c.statoIncasso === "pagato") return card;
+  // svolto da incassare → sinistra «Riscuoti», destra «Riprogramma»
   return (
     <Swipeable
-      azione={
-        <span className="flex items-center gap-1.5 font-semibold text-rosso">
-          <Banknote size={16} /> Riscuoti
-        </span>
-      }
-      onAzione={async () => {
-        const a = await incassaLavoro(lavoro.id, c.daIncassare);
-        notificaUndo(`Incassato ${formatEuro(c.daIncassare)}`, a);
-      }}
+      azione={<span className="flex items-center gap-1.5 font-semibold text-rosso"><Banknote size={16} /> Riscuoti</span>}
+      onAzione={async () => { const a = await incassaLavoro(lavoro.id, c.daIncassare); notificaUndo(`Incassato ${formatEuro(c.daIncassare)}`, a); }}
+      azioneDx={<span className="flex items-center gap-1.5 font-semibold text-blu"><CalendarClock size={16} /> Riprogramma</span>}
+      onAzioneDx={async () => notificaUndo("Riprogrammato", await riprogramma(lavoro.id))}
     >
       {card}
     </Swipeable>

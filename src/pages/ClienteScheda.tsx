@@ -83,7 +83,7 @@ export function ClienteScheda() {
           <h1 className="text-2xl font-bold tracking-tight">{cliente.nome} {cliente.cognome ?? ""}</h1>
           {cliente.luogo && <p className="text-sm text-fumo">{cliente.luogo}</p>}
         </div>
-        <Codice value={codice} grande />
+        <Codice value={codice} grande copiabile />
         {decode && r.numeroLavori > 0 && (
           <p className="font-mono text-[11px] text-fumo-2">paga in ~{decode.giorniMedi} gg · ~{formatEuro(decode.spesaMedia)}/lavoro · {decode.anni} anni</p>
         )}
@@ -98,9 +98,9 @@ export function ClienteScheda() {
 
       <div className="flex flex-col gap-5 px-5 pt-6">
         <div className="grid grid-cols-2 gap-2">
-          <StatTile etichetta="Da incassare" tono={r.saldoDaIncassare > 0 ? "rosso" : "neutro"}>{formatEuro(r.saldoDaIncassare)}</StatTile>
+          <StatTile etichetta="Da incassare" tono={r.saldoDaIncassare > 0 ? "rosso" : "neutro"} onClick={() => setFiltro("incassare")}>{formatEuro(r.saldoDaIncassare)}</StatTile>
           <StatTile etichetta="Incassato" tono="verde">{formatEuro(r.totaleIncassato)}</StatTile>
-          <StatTile etichetta="Lavori">{String(r.numeroLavori)}</StatTile>
+          <StatTile etichetta="Lavori" onClick={() => setFiltro("tutto")}>{String(r.numeroLavori)}</StatTile>
           <StatTile etichetta="Ore">{formatOre(r.oreTotali)}</StatTile>
         </div>
 

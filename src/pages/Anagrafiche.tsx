@@ -2,10 +2,24 @@ import { Plus, Search, Settings } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, AvatarStorico, Codice, SectionHeader, Segmented, StatePill, Testata } from "@/components/ui";
+import { cn } from "@/lib/cn";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { dovutoOperatore, riepilogoCliente } from "@/lib/conti";
 import { formatEuro } from "@/lib/format";
 import { useStore } from "@/store/store";
+
+function SommarioRubrica({ figure }: { figure: { label: string; val: string; rosso?: boolean }[] }) {
+  return (
+    <div className="flex items-stretch justify-between gap-1 rounded-vetro bg-superficie px-2 py-3 shadow-card">
+      {figure.map((f) => (
+        <div key={f.label} className="flex flex-1 flex-col items-center gap-0.5 px-2">
+          <span className="font-mono text-[10px] uppercase tracking-label text-fumo-2">{f.label}</span>
+          <span className={cn("text-lg font-bold tracking-tight tabular-nums", f.rosso ? "text-rosso" : "text-bianco")}>{f.val}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
 
 const STORICO_SOGLIA = 2; // cliente "storico" = relazione consolidata (≥2 lavori)
 
@@ -30,6 +44,10 @@ export function Anagrafiche() {
     const t = q.trim().toLowerCase();
     return operatori.filter((o) => !t || o.nome.toLowerCase().includes(t));
   }, [operatori, q]);
+
+  const nDebitori = clienti.filter((x) => x.r.saldoDaIncassare > 0).length;
+  const totIncassare = clienti.reduce((s, x) => s + x.r.saldoDaIncassare, 0);
+  const totPagare = operaiFiltrati.reduce((s, o) => s + (o.ruolo === "titolare" ? 0 : dovutoOperatore(dati, o.id).daPagare), 0);
 
   return (
     <div className="flex flex-col">
@@ -62,6 +80,22 @@ export function Anagrafiche() {
       </Testata>
 
       <div className="flex flex-col gap-2.5 px-4 pt-5">
+        {modo === "clienti" ? (
+          <SommarioRubrica
+            figure={[
+              { label: "Clienti", val: String(clienti.length) },
+              { label: "Debitori", val: String(nDebitori), rosso: nDebitori > 0 },
+              { label: "Da incassare", val: formatEuro(totIncassare), rosso: totIncassare > 0 },
+            ]}
+          />
+        ) : (
+          <SommarioRubrica
+            figure={[
+              { label: "Squadra", val: String(operaiFiltrati.length) },
+              { label: "Da pagare", val: formatEuro(totPagare), rosso: totPagare > 0 },
+            ]}
+          />
+        )}
         {modo === "clienti" ? (
           <>
             <SectionHeader

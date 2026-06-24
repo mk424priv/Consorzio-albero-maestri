@@ -6,14 +6,33 @@ import type { ReactNode } from "react";
   Card con azione su swipe-sinistra. L'azione (es. «Riscuoti») sta sotto, a destra;
   scorrendo a sinistra oltre soglia → onAzione. Rispetta il tap (filterTaps).
 */
-export function Swipeable({ azione, onAzione, children, soglia = 72 }: { azione: ReactNode; onAzione: () => void; children: ReactNode; soglia?: number }) {
+export function Swipeable({
+  azione,
+  onAzione,
+  azioneDx,
+  onAzioneDx,
+  children,
+  soglia = 72,
+}: {
+  azione?: ReactNode;
+  onAzione?: () => void;
+  azioneDx?: ReactNode;
+  onAzioneDx?: () => void;
+  children: ReactNode;
+  soglia?: number;
+}) {
   const x = useMotionValue(0);
   const bind = useDrag(
     ({ last, movement: [mx], cancel }) => {
-      const clamped = Math.max(-104, Math.min(0, mx));
+      const min = onAzione ? -104 : 0;
+      const max = onAzioneDx ? 104 : 0;
+      const clamped = Math.max(min, Math.min(max, mx));
       if (last) {
-        if (mx < -soglia) {
+        if (onAzione && mx < -soglia) {
           onAzione();
+          cancel?.();
+        } else if (onAzioneDx && mx > soglia) {
+          onAzioneDx();
           cancel?.();
         }
         animate(x, 0, { type: "spring", stiffness: 420, damping: 36 });
@@ -25,7 +44,8 @@ export function Swipeable({ azione, onAzione, children, soglia = 72 }: { azione:
   );
   return (
     <div className="relative overflow-hidden rounded-vetro">
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-5">{azione}</div>
+      {azione && <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-5">{azione}</div>}
+      {azioneDx && <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-5">{azioneDx}</div>}
       <div {...bind()} style={{ touchAction: "pan-y" }}>
         <motion.div style={{ x }}>{children}</motion.div>
       </div>
