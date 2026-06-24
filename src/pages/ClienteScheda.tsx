@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
 import { Avatar, AvatarStorico, Button, Codice, Conferma, Field, Foglio, Segmented, StatePill, StatTile } from "@/components/ui";
 import { codiceCliente, leggiCodice } from "@/lib/codice-parlante";
-import { haRelazioni, riepilogoCliente, squadraDelCliente } from "@/lib/conti";
+import { creditoCliente, haRelazioni, riepilogoCliente, squadraDelCliente } from "@/lib/conti";
 import { chiaveMese, formatEuro, formatMese, formatOre, oggiISO } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
 import type { Cliente } from "@/lib/types";
@@ -62,6 +62,7 @@ export function ClienteScheda() {
   const prossimo = daFare.filter((l) => l.data >= oggiISO()).sort((a, b) => a.data.localeCompare(b.data))[0];
   const squadra = squadraDelCliente(dati, cliente.id);
   const archivia = haRelazioni(dati, "cliente", cliente.id);
+  const credito = creditoCliente(dati, cliente.id);
 
   return (
     <div className="flex flex-col pb-24">
@@ -86,6 +87,9 @@ export function ClienteScheda() {
         <Codice value={codice} grande copiabile />
         {decode && r.numeroLavori > 0 && (
           <p className="font-mono text-[11px] text-fumo-2">paga in ~{decode.giorniMedi} gg · ~{formatEuro(decode.spesaMedia)}/lavoro · {decode.anni} anni</p>
+        )}
+        {credito > 0 && (
+          <span className="rounded-pill bg-verde/12 px-3 py-1 font-mono text-[11px] font-medium text-verde">a credito {formatEuro(credito)}</span>
         )}
         {(cliente.telefono || cliente.email) && (
           <div className="flex flex-wrap items-center justify-center gap-2">

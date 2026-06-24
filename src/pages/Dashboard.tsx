@@ -4,8 +4,10 @@ import { Avatar, Codice, Cruscotto, NumberHero, SectionHeader, Segmented, StatTi
 import { codiceCliente } from "@/lib/codice-parlante";
 import { cn } from "@/lib/cn";
 import { libroOperatore, riepilogoCliente } from "@/lib/conti";
-import { arrotonda, formatEuro, formatOre } from "@/lib/format";
+import { arrotonda, chiaveMese, formatData, formatEuro, formatOre, oggiISO } from "@/lib/format";
 import { operatoreIo } from "@/lib/lavoro-calc";
+import { movimenti } from "@/lib/movimenti";
+import type { Dati } from "@/lib/types";
 import { useStore } from "@/store/store";
 
 function Barra({ pct, tono = "verde" }: { pct: number; tono?: "verde" | "blu" }) {
@@ -147,8 +149,51 @@ export function Dashboard() {
             </section>
           </>
         )}
+        <MovimentiSezione dati={dati} />
+
         <p className="pb-2 pt-1 text-center font-mono text-[11px] text-fumo-2">clienti = entrate · squadra = uscite</p>
       </div>
     </div>
+  );
+}
+
+function MovimentiSezione({ dati }: { dati: Dati }) {
+  const navigate = useNavigate();
+  const [soloMese, setSoloMese] = useState(true);
+  const mese = chiaveMese(oggiISO());
+  const lista = useMemo(() => {
+    const all = movimenti(dati);
+    return (soloMese ? all.filter((m) => chiaveMese(m.data) === mese) : all).slice(0, 30);
+  }, [dati, soloMese, mese]);
+  const vai = (m: (typeof lista)[number]) => {
+    if (m.lavoroId) navigate(`/lavoro/${m.lavoroId}`);
+    else if (m.clienteId) navigate(`/cliente/${m.clienteId}`);
+    else if (m.operatoreId) navigate(`/operaio/${m.operatoreId}`);
+  };
+  return (
+    <section className="flex flex-col gap-2.5">
+      <SectionHeader
+        titolo="Movimenti"
+        conteggio={lista.length}
+        azione={
+          <button type="button" onClick={() => setSoloMese((v) => !v)} className="font-mono text-[11px] uppercase tracking-label text-fumo-2 hover:text-bianco">
+            {soloMese ? "Questo mese" : "Tutto"}
+          </button>
+        }
+      />
+      {lista.length === 0 ? (
+        <p className="py-4 text-center text-sm text-fumo-2">Nessun movimento.</p>
+      ) : (
+        lista.map((m) => (
+          <button key={m.id} type="button" onClick={() => vai(m)} className="flex items-center justify-between gap-2 rounded-vetro bg-superficie px-3.5 py-2.5 text-left transition-transform active:scale-[0.99]">
+            <span className="flex min-w-0 flex-col items-start">
+              <span className="truncate text-sm">{m.descrizione}</span>
+              <span className="font-mono text-[11px] text-fumo-2">{formatData(m.data)}</span>
+            </span>
+            <span className={`shrink-0 font-mono text-sm font-bold tabular-nums ${m.importo >= 0 ? "text-verde" : "text-rosso"}`}>{m.importo >= 0 ? "+" : "−"}{formatEuro(Math.abs(m.importo))}</span>
+          </button>
+        ))
+      )}
+    </section>
   );
 }

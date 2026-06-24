@@ -261,7 +261,7 @@ export async function salvaBozza(): Promise<string> {
     conteggio,
     periodo: b.periodo,
     prezzo: modo === "preventivo" ? b.prezzo ?? 0 : null,
-    tariffaClienteSnapshot: modo === "ore" ? b.tariffaCliente ?? 0 : null,
+    tariffaClienteSnapshot: modo === "ore" ? b.tariffaCliente : null,
     partecipanti: b.partecipanti.map((p) => ({
       collaboratoreId: p.collaboratoreId,
       tariffaSnapshot: p.tariffaSnapshot,

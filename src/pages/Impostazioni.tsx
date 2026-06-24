@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, RotateCcw, Trash2, Undo2, Upload } from "lucide-react";
+import { ArrowLeft, Download, RotateCcw, Trash2, Undo2, Upload, UserRound } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Intestazione } from "@/components/Intestazione";
@@ -6,6 +6,7 @@ import { Button, Card, Conferma } from "@/components/ui";
 import { esportaJSON, importaJSON } from "@/lib/backup";
 import { notificaUndo } from "@/lib/undo";
 import { adessoISO, oggiISO } from "@/lib/format";
+import { operatoreIo } from "@/lib/lavoro-calc";
 import type { CollezioneKey } from "@/lib/types";
 import { useStore } from "@/store/store";
 
@@ -25,6 +26,7 @@ function nomeRecord(key: CestinoKey, r: { nome?: string; cognome?: string; titol
 export function Impostazioni() {
   const navigate = useNavigate();
   const dati = useStore((s) => s.dati);
+  const io = operatoreIo(dati);
   const salva = useStore((s) => s.salva);
   const importa = useStore((s) => s.importa);
   const importaUnisci = useStore((s) => s.importaUnisci);
@@ -100,6 +102,16 @@ export function Impostazioni() {
           </Button>
         }
       />
+
+      <Card tono="alta" className="flex flex-col gap-3 p-4">
+        <h2 className="font-display text-lg text-bianco">Io · titolare</h2>
+        <p className="text-sm text-fumo-2">Il tuo profilo: le tue ore sono profitto, non un costo. Da qui prelievi e storico.</p>
+        {io && (
+          <Button variant="tenue" className="self-start" onClick={() => navigate(`/operaio/${io.id}`)}>
+            <UserRound className="h-4 w-4" /> Apri il mio profilo ({io.nome})
+          </Button>
+        )}
+      </Card>
 
       <Card tono="alta" className="flex flex-col gap-3 p-4">
         <h2 className="font-display text-lg text-bianco">Backup e dispositivi</h2>

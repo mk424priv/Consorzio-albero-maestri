@@ -19,6 +19,7 @@ import {
   useBozza,
   type ModoCalc,
 } from "@/store/bozza";
+import { creaRicorrenze } from "@/store/azioni";
 import { useStore } from "@/store/store";
 
 const MODI: { value: ModoCalc; label: string }[] = [
@@ -89,6 +90,7 @@ export function CreaLavoro() {
   const [tariffaOpen, setTariffaOpen] = useState(false);
   const [tariffaTmp, setTariffaTmp] = useState("");
   const [errore, setErrore] = useState<string | null>(null);
+  const [ripeti, setRipeti] = useState<{ periodicita: "settimana" | "mese"; volte: number } | null>(null);
 
   // init bozza all'apertura di /nuovo (sopravvive ai sotto-pannelli interni)
   useEffect(() => {
@@ -125,22 +127,27 @@ export function CreaLavoro() {
     return null;
   };
 
+  const finalizza = async () => {
+    const eraModifica = b.id != null;
+    const id = await salvaBozza();
+    if (ripeti && !eraModifica && b.fase === "da_fare") await creaRicorrenze(id, ripeti.periodicita, ripeti.volte);
+    // ritorno coerente: in modifica torno da dove venivo (Cantiere); in creazione apro il lavoro creato.
+    if (eraModifica) navigate(-1);
+    else navigate(`/lavoro/${id}`);
+  };
+
   const salva = async () => {
     const err = valida();
     if (err) {
       setErrore(err);
       return;
     }
-    // modale tariffa: svolto, modo ore, senza cliente e senza tariffa
-    if (svolto && b.modoCalc !== "preventivo" && !b.clienteId && b.tariffaCliente == null) {
+    // modale tariffa: svolto, modo ore, senza cliente e senza tariffa (e non ancora deciso)
+    if (svolto && b.modoCalc !== "preventivo" && !b.clienteId && b.tariffaCliente == null && !b.tariffaModificata) {
       setTariffaOpen(true);
       return;
     }
-    const eraModifica = b.id != null;
-    const id = await salvaBozza();
-    // ritorno coerente: in modifica torno da dove venivo (Cantiere); in creazione apro il lavoro creato.
-    if (eraModifica) navigate(-1);
-    else navigate(`/lavoro/${id}`);
+    await finalizza();
   };
 
   // ── sotto-viste ──
@@ -273,6 +280,22 @@ export function CreaLavoro() {
       {/* già incassato (solo CREAZIONE svolto, lordo>0). In modifica gli incassi vivono nelle azioni dedicate (Incassa/Storna). */}
       {!b.id && svolto && b.modoCalc && lordo > 0 && <SezioneIncasso b={b} set={set} lordo={lordo} />}
 
+      {!b.id && !svolto && (
+        <div className="flex flex-col gap-2">
+          <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Ripeti</label>
+          <Segmented
+            value={ripeti ? ripeti.periodicita : "no"}
+            onValueChange={(v) => setRipeti(v === "no" ? null : v === "settimana" ? { periodicita: "settimana", volte: 4 } : { periodicita: "mese", volte: 3 })}
+            options={[
+              { value: "no", label: "Una volta" },
+              { value: "settimana", label: "×4 sett." },
+              { value: "mese", label: "×3 mesi" },
+            ]}
+            layoutId="ripeti"
+          />
+        </div>
+      )}
+
       {errore && <p className="text-sm text-critico">{errore}</p>}
 
       {/* CTA */}
@@ -293,18 +316,18 @@ export function CreaLavoro() {
             <Button
               variant="fantasma"
               onClick={() => {
-                set({ tariffaCliente: 0, tariffaModificata: true });
+                set({ tariffaCliente: null, tariffaModificata: true });
                 setTariffaOpen(false);
-                void salva();
+                void finalizza();
               }}
             >
-              Senza tariffa
+              Decido dopo
             </Button>
             <Button
               onClick={() => {
                 set({ tariffaCliente: Number(tariffaTmp) || 0, tariffaModificata: true });
                 setTariffaOpen(false);
-                void salva();
+                void finalizza();
               }}
             >
               Conferma

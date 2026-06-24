@@ -1,4 +1,4 @@
-import { Banknote, ChevronLeft, ChevronRight, Plus, Wallet } from "lucide-react";
+import { Banknote, CalendarClock, ChevronLeft, ChevronRight, Plus, Wallet } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
@@ -58,6 +58,16 @@ export function Soldi() {
     () => dati.compensi.filter((c) => !c.deleted && c.operatoreId === io?.id && c.note === "prelievo" && chiaveMese(c.data) === mese).sort((a, b) => b.data.localeCompare(a.data)),
     [dati.compensi, io?.id, mese],
   );
+  const oggi = oggiISO();
+  const programmatiScaduti = useMemo(
+    () => dati.lavori.filter((l) => !l.deleted && l.fase === "da_fare" && l.data < oggi).sort((a, b) => a.data.localeCompare(b.data)),
+    [dati.lavori, oggi],
+  );
+  const incassiScaduti = useMemo(
+    () => dati.pagamenti.filter((p) => !p.deleted && p.importoAtteso - p.importoIncassato > 0.005 && p.dataScadenza && p.dataScadenza < oggi),
+    [dati.pagamenti, oggi],
+  );
+  const nRitardo = programmatiScaduti.length + incassiScaduti.length;
 
   return (
     <div className="flex flex-col">
@@ -98,6 +108,34 @@ export function Soldi() {
           <StatTile etichetta="Incassato" tono="verde">{formatEuro(r.incassatoMese)}</StatTile>
           <StatTile etichetta="Da incassare" tono={r.daIncassare > 0 ? "rosso" : "neutro"}>{formatEuro(r.daIncassare)}</StatTile>
         </button>
+
+        {nRitardo > 0 && (
+          <section className="flex flex-col gap-2">
+            <SectionHeader titolo="In ritardo" conteggio={nRitardo} tono="rosso" />
+            {incassiScaduti.map((p) => {
+              const l = dati.lavori.find((x) => x.id === p.lavoroId);
+              const cli = dati.clienti.find((c) => c.id === p.clienteId);
+              return (
+                <button key={p.id} type="button" onClick={() => p.lavoroId && navigate(`/lavoro/${p.lavoroId}`)} className="flex items-center justify-between gap-2 rounded-vetro bg-rosso/[0.06] px-3.5 py-2.5 text-left">
+                  <span className="flex min-w-0 flex-col items-start">
+                    <span className="truncate text-sm font-medium">{l?.titolo ?? "Incasso"} · {cli?.nome ?? "—"}</span>
+                    <span className="font-mono text-[11px] text-rosso">scaduto {formatData(p.dataScadenza!)}</span>
+                  </span>
+                  <span className="shrink-0 font-mono text-sm font-bold text-rosso">{formatEuro(p.importoAtteso - p.importoIncassato)}</span>
+                </button>
+              );
+            })}
+            {programmatiScaduti.map((l) => (
+              <button key={l.id} type="button" onClick={() => navigate(`/lavoro/${l.id}`)} className="flex items-center justify-between gap-2 rounded-vetro bg-blu/[0.06] px-3.5 py-2.5 text-left">
+                <span className="flex min-w-0 flex-col items-start">
+                  <span className="truncate text-sm font-medium">{l.titolo}</span>
+                  <span className="font-mono text-[11px] text-blu">da fare · scaduto {formatData(l.data)}</span>
+                </span>
+                <CalendarClock size={16} className="shrink-0 text-blu" />
+              </button>
+            ))}
+          </section>
+        )}
 
         {modo === "incassare" ? (
           <section className="flex flex-col gap-3">

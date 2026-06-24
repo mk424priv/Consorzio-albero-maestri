@@ -6,7 +6,7 @@ import { codiceCliente } from "@/lib/codice-parlante";
 import { cn } from "@/lib/cn";
 import { notificaUndo } from "@/lib/undo";
 import { formatData, formatEuro, formatOre } from "@/lib/format";
-import { calcoloLavoro, operatoreIo } from "@/lib/lavoro-calc";
+import { calcoloLavoro, operatoreIo, statoQuotazione } from "@/lib/lavoro-calc";
 import type { Lavoro } from "@/lib/types";
 import { useLongPress } from "@/lib/useLongPress";
 import { incassaLavoro, segnaSvolto } from "@/store/azioni";
@@ -31,6 +31,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const lp = useLongPress(() => setMenuOpen(true));
 
   const calc = calcoloLavoro(dati, lavoro);
+  const daQuotare = statoQuotazione(dati, lavoro);
   const cliente = lavoro.clienteId ? dati.clienti.find((c) => c.id === lavoro.clienteId) : undefined;
   const ioId = operatoreIo(dati)?.id;
   const chips = [...calc.partecipanti].sort((a, b) => (a.collaboratoreId === ioId ? -1 : b.collaboratoreId === ioId ? 1 : 0));
@@ -115,7 +116,11 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
           <StatePill stato={stato} />
-          <span className={cn("font-bold tracking-tight tabular-nums", stato === "incassare" ? "text-lg" : stato === "pagato" ? "text-sm" : "text-base", s.amount)}>{formatEuro(amount)}</span>
+          {daQuotare ? (
+            <span className="text-sm font-bold tracking-tight text-arancio">da quotare</span>
+          ) : (
+            <span className={cn("font-bold tracking-tight tabular-nums", stato === "incassare" ? "text-lg" : stato === "pagato" ? "text-sm" : "text-base", s.amount)}>{formatEuro(amount)}</span>
+          )}
         </span>
       </div>
 

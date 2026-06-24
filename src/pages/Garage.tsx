@@ -86,13 +86,29 @@ export function Garage() {
 }
 
 function CalcolatorePercorso({ veicoli }: { veicoli: Attrezzo[] }) {
+  const dati = useStore((s) => s.dati);
+  const salva = useStore((s) => s.salva);
+  const elimina = useStore((s) => s.elimina);
   const [selId, setSelId] = useState(veicoli[0]?.id ?? "");
   const [km, setKm] = useState("");
+  const [lavoroId, setLavoroId] = useState("");
   const v = veicoli.find((x) => x.id === selId) ?? veicoli[0];
   const distanza = Number(km.replace(",", ".")) || 0;
   const consumo = v?.consumoMedio ?? 0;
   const litri = arrotonda((distanza * consumo) / 100);
   const costo = arrotonda(litri * (v?.prezzoCarburante ?? 0));
+  const euroKm = arrotonda((consumo / 100) * (v?.prezzoCarburante ?? 0));
+  const spesoTot = arrotonda(dati.spese.filter((s) => !s.deleted && s.attrezzoId === v?.id).reduce((a, s) => a + s.importo, 0));
+  const lavoriRecenti = dati.lavori.filter((l) => !l.deleted).sort((a, b) => b.data.localeCompare(a.data)).slice(0, 20);
+
+  const salvaSpesa = async () => {
+    if (!(costo > 0) || !lavoroId || !v) return;
+    const l = dati.lavori.find((x) => x.id === lavoroId);
+    const id = nuovoId();
+    await salva("spese", { id, categoria: "benzina", importo: costo, data: oggiISO(), descrizione: `${v.nome} · ${distanza} km`, attrezzoId: v.id, lavoroId, clienteId: l?.clienteId, creatoIl: oggiISO(), updatedAt: "" });
+    notificaUndo(`Spesa benzina ${formatEuro(costo)} aggiunta`, async () => { await elimina("spese", id); });
+    setKm("");
+  };
 
   return (
     <div className="flex flex-col gap-3 rounded-bolla bg-superficie p-4 shadow-card">
@@ -111,7 +127,21 @@ function CalcolatorePercorso({ veicoli }: { veicoli: Attrezzo[] }) {
         <StatTile etichetta="Carburante">{litri.toFixed(1)} L</StatTile>
         <StatTile etichetta="Costo stimato" tono={costo > 0 ? "rosso" : "neutro"}>{formatEuro(costo)}</StatTile>
       </div>
-      {consumo <= 0 && <p className="text-xs text-fumo-2">Imposta il consumo medio del veicolo per stimare il percorso.</p>}
+      {consumo > 0 ? (
+        <p className="font-mono text-[11px] text-fumo-2">≈ {formatEuro(euroKm)}/km · speso finora con «{v?.nome}»: <span className="text-bianco">{formatEuro(spesoTot)}</span></p>
+      ) : (
+        <p className="text-xs text-fumo-2">Imposta il consumo medio del veicolo per stimare il percorso.</p>
+      )}
+      {costo > 0 && (
+        <div className="flex flex-col gap-2 border-t border-black/[0.06] pt-3">
+          <span className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Registra come spesa</span>
+          <select value={lavoroId} onChange={(e) => setLavoroId(e.target.value)} className={inputCls}>
+            <option value="">Scegli il lavoro…</option>
+            {lavoriRecenti.map((l) => <option key={l.id} value={l.id}>{l.titolo} · {l.data}</option>)}
+          </select>
+          <Button onClick={() => void salvaSpesa()} disabled={!lavoroId}>Salva spesa di {formatEuro(costo)}</Button>
+        </div>
+      )}
     </div>
   );
 }

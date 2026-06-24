@@ -1,13 +1,14 @@
 import { Banknote, CalendarClock, Check, Copy, Pencil, Scissors, Trash2, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { StornaFoglio } from "@/components/AzioniLavoro";
 import { IncassaFoglio } from "@/components/IncassaFoglio";
-import { ActionRow, type Azione, Button, Conferma, Field, Foglio } from "@/components/ui";
+import { ActionRow, type Azione, Button, Conferma, Foglio } from "@/components/ui";
 import { formatEuro } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
 import type { Lavoro } from "@/lib/types";
 import { notificaUndo } from "@/lib/undo";
-import { duplicaLavoro, eliminaLavoro, riprogramma, segnaSvolto, spezzaLavoro, stornaIncasso } from "@/store/azioni";
+import { duplicaLavoro, eliminaLavoro, riprogramma, segnaSvolto, spezzaLavoro } from "@/store/azioni";
 import { useStore } from "@/store/store";
 
 function Riga({ label, valore, forte }: { label: string; valore: string; forte?: boolean }) {
@@ -81,26 +82,5 @@ export function MenuLavoro({ lavoro, open, onOpenChange }: { lavoro: Lavoro; ope
         onConferma={() => void (async () => { setElimina(false); chiudi(); notificaUndo("Lavoro archiviato", await eliminaLavoro(lavoro.id)); })()}
       />
     </>
-  );
-}
-
-function StornaFoglio({ open, onOpenChange, lavoroId, incassato }: { open: boolean; onOpenChange: (o: boolean) => void; lavoroId: string; incassato: number }) {
-  const [importo, setImporto] = useState("");
-  const v = importo ? Number(importo.replace(",", ".")) : incassato;
-  const conferma = async () => {
-    if (!(v > 0)) return;
-    const a = await stornaIncasso(lavoroId, v);
-    setImporto("");
-    onOpenChange(false);
-    notificaUndo(`Stornato ${formatEuro(v)}`, a);
-  };
-  return (
-    <Foglio open={open} onOpenChange={onOpenChange} variante="pericolo" titolo="Storna incasso">
-      <p className="mb-4 text-sm text-fumo">Riduci l'incassato (es. reso o errore). Incassato attuale: <span className="text-bianco">{formatEuro(incassato)}</span>.</p>
-      <div className="flex flex-col gap-3">
-        <Field label="Importo da stornare" value={importo} onChange={(e) => setImporto(e.target.value.replace(/[^0-9.,]/g, ""))} suffix="€" inputMode="decimal" placeholder={String(incassato)} />
-        <Button size="lg" variant="critico" onClick={() => void conferma()} disabled={!(v > 0)}>Storna {formatEuro(v)}</Button>
-      </div>
-    </Foglio>
   );
 }

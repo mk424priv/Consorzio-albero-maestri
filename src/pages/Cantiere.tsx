@@ -1,6 +1,7 @@
-import { ArrowLeft, Banknote, Clock, Copy, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Banknote, Clock, Copy, Pencil, Scissors, Trash2, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { ConvertiFoglio, StornaFoglio } from "@/components/AzioniLavoro";
 import { IncassaFoglio } from "@/components/IncassaFoglio";
 import { Badge, Button, Codice, Conferma, Stamp } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
@@ -9,7 +10,7 @@ import { notificaUndo } from "@/lib/undo";
 import { etichetta } from "@/lib/dominio";
 import { formatData, formatEuro, formatOre } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
-import { duplicaLavoro, eliminaLavoro, riprogramma, segnaSvolto } from "@/store/azioni";
+import { duplicaLavoro, eliminaLavoro, riprogramma, spezzaLavoro } from "@/store/azioni";
 import { useStore } from "@/store/store";
 
 function Riga({ label, valore, forte }: { label: string; valore: string; forte?: boolean }) {
@@ -27,6 +28,8 @@ export function Cantiere() {
   const dati = useStore((s) => s.dati);
   const [pericolo, setPericolo] = useState(false);
   const [incassaOpen, setIncassaOpen] = useState(false);
+  const [convertiOpen, setConvertiOpen] = useState(false);
+  const [stornaOpen, setStornaOpen] = useState(false);
   const lavoro = dati.lavori.find((l) => l.id === id);
 
   if (!lavoro) {
@@ -41,6 +44,7 @@ export function Cantiere() {
   const calc = calcoloLavoro(dati, lavoro);
   const cliente = lavoro.clienteId ? dati.clienti.find((c) => c.id === lavoro.clienteId) : undefined;
   const svolto = lavoro.fase === "fatto";
+  const pagamenti = dati.pagamenti.filter((p) => !p.deleted && p.lavoroId === lavoro.id);
 
   const elimina = async () => {
     const a = await eliminaLavoro(lavoro.id);
@@ -97,6 +101,24 @@ export function Cantiere() {
         </section>
       )}
 
+      {pagamenti.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Pagamenti</h2>
+          {pagamenti.map((p) => (
+            <div key={p.id} className="flex items-center justify-between rounded-vetro bg-superficie px-3.5 py-2.5 text-sm">
+              <span className="flex flex-col">
+                <span className="font-medium">{etichetta(p.origine)}{p.metodo ? ` · ${etichetta(p.metodo)}` : ""}</span>
+                <span className="font-mono text-[11px] text-fumo-2">{p.dataIncasso ? `incassato ${formatData(p.dataIncasso)}` : "in attesa"}</span>
+              </span>
+              <span className="font-mono text-xs tabular-nums">
+                <span className="text-verde">{formatEuro(p.importoIncassato)}</span>
+                <span className="text-fumo-2"> / {formatEuro(p.importoAtteso)}</span>
+              </span>
+            </div>
+          ))}
+        </section>
+      )}
+
       <div className="flex flex-wrap gap-2 pt-1">
         {svolto && calc.daIncassare > 0 && (
           <Button onClick={() => setIncassaOpen(true)}>
@@ -109,7 +131,17 @@ export function Cantiere() {
         {svolto ? (
           <Button variant="inchiostro" onClick={async () => notificaUndo("Riprogrammato", await riprogramma(lavoro.id))}>Riprogramma</Button>
         ) : (
-          <Button variant="inchiostro" onClick={async () => notificaUndo("Segnato svolto", await segnaSvolto(lavoro.id))}>Segna svolto</Button>
+          <Button variant="inchiostro" onClick={() => setConvertiOpen(true)}>Segna svolto</Button>
+        )}
+        {!svolto && (
+          <Button variant="tenue" onClick={async () => { const r = await spezzaLavoro(lavoro.id); if (r) { notificaUndo("Lavoro spezzato", r.annulla); navigate(`/lavoro/${r.id}`); } }}>
+            <Scissors size={16} /> Spezza
+          </Button>
+        )}
+        {svolto && calc.incassato > 0 && (
+          <Button variant="tenue" onClick={() => setStornaOpen(true)}>
+            <Undo2 size={16} /> Storna
+          </Button>
         )}
         <Button variant="tenue" onClick={async () => { const r = await duplicaLavoro(lavoro.id); if (r) { notificaUndo("Lavoro duplicato", r.annulla); navigate(`/lavoro/${r.id}`); } }}>
           <Copy size={16} /> Duplica
@@ -120,6 +152,8 @@ export function Cantiere() {
       </div>
 
       {svolto && <IncassaFoglio open={incassaOpen} onOpenChange={setIncassaOpen} lavoroId={lavoro.id} daIncassare={calc.daIncassare} />}
+      {!svolto && <ConvertiFoglio open={convertiOpen} onOpenChange={setConvertiOpen} lavoro={lavoro} />}
+      {svolto && <StornaFoglio open={stornaOpen} onOpenChange={setStornaOpen} lavoroId={lavoro.id} incassato={calc.incassato} />}
 
       <Conferma
         open={pericolo}
