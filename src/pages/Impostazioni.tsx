@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, RotateCcw, Trash2, Undo2, Upload, UserRound, Warehouse } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Calculator, Download, RotateCcw, Trash2, Undo2, Upload, UserRound, Warehouse } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Intestazione } from "@/components/Intestazione";
@@ -8,6 +8,11 @@ import { esportaJSON, importaJSON } from "@/lib/backup";
 import { notificaUndo } from "@/lib/undo";
 import { adessoISO, oggiISO } from "@/lib/format";
 import { operatoreIo } from "@/lib/lavoro-calc";
+import {
+  notificheAbilitate,
+  richiediPermessoNotifiche,
+  setNotificheAbilitate,
+} from "@/lib/notifiche";
 import type { CollezioneKey } from "@/lib/types";
 import { useStore } from "@/store/store";
 
@@ -37,6 +42,7 @@ export function Impostazioni() {
   const modoRef = useRef<"sostituisci" | "unisci">("sostituisci");
   const [msg, setMsg] = useState<string | null>(null);
   const [confermaReset, setConfermaReset] = useState(false);
+  const [notificheOn, setNotificheOn] = useState(() => notificheAbilitate());
   const [daEliminare, setDaEliminare] = useState<{ key: CestinoKey; id: string; nome: string } | null>(null);
   const [linkCode, setLinkCode] = useState("");
   const syncOn = isSyncConfigured();
@@ -113,6 +119,50 @@ export function Impostazioni() {
         {io && (
           <Button variant="tenue" className="self-start" onClick={() => navigate(`/operaio/${io.id}`)}>
             <UserRound className="h-4 w-4" /> Apri il mio profilo ({io.nome})
+          </Button>
+        )}
+      </Card>
+
+      <Card tono="alta" className="flex flex-col gap-3 p-4">
+        <h2 className="font-display text-lg text-bianco">Calcolatore fiscale</h2>
+        <p className="text-sm text-fumo-2">Calcola automaticamente imposta e contributi su ogni incasso, in base al tuo regime fiscale.</p>
+        <Button variant="tenue" className="self-start" onClick={() => navigate("/fiscale")}>
+          <Calculator className="h-4 w-4" /> Apri il calcolatore
+        </Button>
+      </Card>
+
+      <Card tono="alta" className="flex flex-col gap-3 p-4">
+        <h2 className="font-display text-lg text-bianco">Notifiche</h2>
+        <p className="text-sm text-fumo-2">
+          {!("Notification" in window)
+            ? "Il tuo browser non supporta le notifiche."
+            : notificheOn
+              ? "Le notifiche sono attive. Riceverai promemoria per lavori programmati, appuntamenti e pagamenti in scadenza."
+              : "Attiva le notifiche per ricevere promemoria per lavori, appuntamenti e scadenze."}
+        </p>
+        {"Notification" in window && (
+          <Button
+            variant={notificheOn ? "fantasma" : "tenue"}
+            className="self-start"
+            onClick={async () => {
+              if (notificheOn) {
+                setNotificheAbilitate(false);
+                setNotificheOn(false);
+                setMsg("Notifiche disattivate.");
+              } else {
+                const ok = await richiediPermessoNotifiche();
+                if (ok) {
+                  setNotificheAbilitate(true);
+                  setNotificheOn(true);
+                  setMsg("Notifiche attivate.");
+                } else {
+                  setMsg("Permesso negato. Abilitale dalle impostazioni del browser.");
+                }
+              }
+            }}
+          >
+            {notificheOn ? <BellOff className="h-4 w-4" /> : <Bell className="h-4 w-4" />}
+            {notificheOn ? "Disattiva notifiche" : "Attiva notifiche"}
           </Button>
         )}
       </Card>

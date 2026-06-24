@@ -149,5 +149,5 @@ export function creaSeed(): Dati {
     { id: nuovoId(), nome: "Forbici Felco", categoria: "manuale", prezzo: 45, dataAcquisto: "2024-06-01", caratteristiche: "Lama Ø 25 mm", updatedAt: ora },
   ];
 
-  return { clienti, operatori, lavori, ore, pagamenti, compensi, spese, attrezzi };
+  return { clienti, operatori, lavori, ore, pagamenti, compensi, spese, attrezzi, appuntamenti: [] };
 }

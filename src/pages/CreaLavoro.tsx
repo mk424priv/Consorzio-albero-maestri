@@ -392,15 +392,80 @@ function CampiPreventivo({ b, set }: { b: ReturnType<typeof useBozza.getState>["
         <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Stato preventivo</label>
         <Segmented value={b.statoPreventivo ?? "da_fare"} onValueChange={(v) => set({ statoPreventivo: v })} options={STATI_PREV} layoutId="statoprev" />
       </div>
-      <div className="flex flex-col gap-1.5">
-        <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Importo concordato</label>
-        <div className="flex items-center gap-2">
-          <NumberField key="prezzo" iniziale={b.prezzo} placeholder="0,00" onChange={(n) => set({ prezzo: n })} className="h-11 flex-1" />
-          <span className="font-mono text-sm text-fumo-2">€</span>
-        </div>
-      </div>
+
+      {b.mostraInterventi ? (
+        <SezioneInterventi b={b} set={set} />
+      ) : (
+        <>
+          <div className="flex flex-col gap-1.5">
+            <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Importo concordato</label>
+            <div className="flex items-center gap-2">
+              <NumberField key="prezzo" iniziale={b.prezzo} placeholder="0,00" onChange={(n) => set({ prezzo: n })} className="h-11 flex-1" />
+              <span className="font-mono text-sm text-fumo-2">€</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => set({ mostraInterventi: true, interventi: [{ id: nuovoId(), descrizione: "", prezzo: 0 }] })}
+            className="flex items-center gap-2 px-1 text-sm text-fumo"
+          >
+            <Plus className="h-4 w-4" /> Dividi in interventi (più voci)
+          </button>
+        </>
+      )}
+
       <PeriodoFacolt b={b} set={set} />
     </>
+  );
+}
+
+// ── Sezione interventi ──
+function SezioneInterventi({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"]; set: (p: Partial<ReturnType<typeof useBozza.getState>["b"]>) => void }) {
+  const totale = b.interventi.reduce((a, i) => a + i.prezzo, 0);
+  return (
+    <Card tono="piana" className="flex flex-col gap-2 p-3">
+      <div className="flex items-center justify-between">
+        <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">Interventi</span>
+        <button type="button" onClick={() => set({ mostraInterventi: false, interventi: [] })} aria-label="Rimuovi interventi" className="text-fumo-2">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      {b.interventi.map((interv, idx) => (
+        <div key={interv.id} className="flex items-center gap-2">
+          <input
+            value={interv.descrizione}
+            placeholder={`Intervento ${idx + 1}`}
+            onChange={(e) => set({ interventi: b.interventi.map((x) => x.id === interv.id ? { ...x, descrizione: e.target.value } : x) })}
+            className="h-9 min-w-0 flex-1 rounded-2xl bg-superficie-bassa px-2 text-sm focus-visible:outline-none"
+          />
+          <NumberField
+            iniziale={interv.prezzo || null}
+            placeholder="0"
+            onChange={(n) => set({ interventi: b.interventi.map((x) => x.id === interv.id ? { ...x, prezzo: n } : x) })}
+            className="h-9 w-20"
+          />
+          <span className="font-mono text-xs text-fumo-2">€</span>
+          {b.interventi.length > 1 && (
+            <button type="button" onClick={() => set({ interventi: b.interventi.filter((x) => x.id !== interv.id) })} aria-label="Rimuovi">
+              <Trash2 className="h-4 w-4 text-fumo-2" />
+            </button>
+          )}
+        </div>
+      ))}
+      <button
+        type="button"
+        onClick={() => set({ interventi: [...b.interventi, { id: nuovoId(), descrizione: "", prezzo: 0 }] })}
+        className="flex items-center gap-2 px-1 text-sm text-fumo"
+      >
+        <Plus className="h-4 w-4" /> Aggiungi intervento
+      </button>
+      {totale > 0 && (
+        <div className="mt-1 flex items-center justify-between border-t border-black/5 pt-2">
+          <span className="font-mono text-xs text-fumo-2">Totale</span>
+          <span className="font-mono text-sm font-semibold text-lime">{formatEuro(totale)}</span>
+        </div>
+      )}
+    </Card>
   );
 }
 

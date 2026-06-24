@@ -12,6 +12,7 @@ const COLLEZIONI: CollezioneKey[] = [
   "compensi",
   "spese",
   "attrezzi",
+  "appuntamenti",
 ];
 
 export class DexieRepository implements Repository {
@@ -25,6 +26,7 @@ export class DexieRepository implements Repository {
       compensi: [],
       spese: [],
       attrezzi: [],
+      appuntamenti: [],
     };
     await Promise.all(
       COLLEZIONI.map(async (k) => {
