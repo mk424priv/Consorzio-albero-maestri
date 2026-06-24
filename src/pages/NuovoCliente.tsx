@@ -40,7 +40,7 @@ export function NuovoCliente() {
   };
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
+    <div className="flex flex-col gap-4 px-5 pt-5 pb-10">
       <Intestazione
         titolo="Nuovo cliente"
         azione={
