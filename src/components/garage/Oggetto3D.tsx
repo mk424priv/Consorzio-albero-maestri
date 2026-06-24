@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { Box, Camera, Cylinder, Mesh, Program, Renderer, Transform } from "ogl";
+import { Box, Camera, Cylinder, type Geometry, Mesh, Program, Renderer, Transform } from "ogl";
 import type { CategoriaAttrezzo } from "@/lib/types";
 
 // Forma 3D stilizzata per categoria (estetica, non un modello reale). WebGL via OGL.
@@ -37,6 +37,8 @@ const fragment = /* glsl */ `
 
 export function Oggetto3D({ categoria, className, speed = 1 }: { categoria: CategoriaAttrezzo; className?: string; speed?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const catRef = useRef<CategoriaAttrezzo>(categoria);
+  catRef.current = categoria; // sempre aggiornata: il loop reagisce senza ricreare il context
 
   useEffect(() => {
     const canvas = ref.current;
@@ -53,17 +55,22 @@ export function Oggetto3D({ categoria, className, speed = 1 }: { categoria: Cate
     camera.position.set(2.6, 2.1, 3.6);
     camera.lookAt([0, -0.1, 0]);
 
-    const program = new Program(gl, { vertex, fragment, uniforms: { uColor: { value: COLORE[categoria] ?? COLORE.manuale } } });
-    const geometry =
-      categoria === "motore"
-        ? new Cylinder(gl, { radiusTop: 0.72, radiusBottom: 0.72, height: 1.35, radialSegments: 32 })
-        : categoria === "auto"
-          ? new Box(gl, { width: 1.9, height: 0.72, depth: 0.95 })
-          : new Box(gl, { width: 1.15, height: 1.15, depth: 1.15 });
+    const program = new Program(gl, { vertex, fragment, uniforms: { uColor: { value: [...COLORE[categoria]] } } });
+
+    // geometrie distinte create UNA volta (niente ricreazioni → niente leak/crash)
+    const cubo = new Box(gl, { width: 1.1, height: 1.1, depth: 1.1 });
+    const geos: Record<CategoriaAttrezzo, Geometry> = {
+      auto: new Box(gl, { width: 1.95, height: 0.7, depth: 0.95 }), // veicolo: largo e basso
+      motore: new Cylinder(gl, { radiusTop: 0.72, radiusBottom: 0.72, height: 1.35, radialSegments: 36 }), // motore
+      elettrico: cubo, // utensile compatto
+      manuale: new Box(gl, { width: 0.5, height: 1.55, depth: 0.5 }), // utensile a mano, slanciato
+    };
+
     const scene = new Transform();
-    const mesh = new Mesh(gl, { geometry, program });
-    mesh.setParent(scene);
+    const mesh = new Mesh(gl, { geometry: geos[categoria], program });
     mesh.rotation.x = 0.32;
+    mesh.setParent(scene);
+    let mostrata: CategoriaAttrezzo = categoria;
 
     const host = canvas.parentElement ?? canvas;
     const resize = () => {
@@ -79,21 +86,26 @@ export function Oggetto3D({ categoria, className, speed = 1 }: { categoria: Cate
     let disposed = false;
     const loop = (t: number) => {
       if (disposed) return;
-      mesh.rotation.y = reduce ? 0.7 : t * 0.0004 * speed;
+      if (catRef.current !== mostrata) {
+        mostrata = catRef.current;
+        mesh.geometry = geos[mostrata]; // swap forma, stesso context
+        program.uniforms.uColor.value = [...COLORE[mostrata]];
+      }
+      if (!reduce) mesh.rotation.y = t * 0.0004 * speed;
       renderer.render({ scene, camera });
-      if (!reduce) raf = requestAnimationFrame(loop);
+      raf = requestAnimationFrame(loop);
     };
-    if (reduce) loop(0);
-    else raf = requestAnimationFrame(loop);
+    raf = requestAnimationFrame(loop);
 
     return () => {
+      // gira solo allo smontaggio reale (l'effetto non si ri-esegue al cambio categoria)
       disposed = true;
       cancelAnimationFrame(raf);
       ro.disconnect();
       if (!import.meta.env.DEV) gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoria]);
+  }, []);
 
   return <canvas ref={ref} aria-hidden className={className ?? "absolute inset-0 h-full w-full"} />;
 }
