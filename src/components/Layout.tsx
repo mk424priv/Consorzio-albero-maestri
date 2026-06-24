@@ -1,6 +1,7 @@
 import { Plus } from "lucide-react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { BottomNav } from "./BottomNav";
+import { World } from "./world/World";
 
 const TAB_PRINCIPALI = ["/", "/soldi", "/anagrafiche", "/dashboard"];
 
@@ -11,8 +12,9 @@ export function Layout() {
   const mostraFab = TAB_PRINCIPALI.includes(pathname);
 
   return (
-    <div className="grana min-h-dvh">
-      <main className="mx-auto min-h-dvh max-w-md px-4 pb-28 pt-5">
+    <div className="min-h-dvh">
+      <World />
+      <main className="relative mx-auto min-h-dvh max-w-md px-4 pb-28 pt-5">
         <Outlet />
       </main>
 
