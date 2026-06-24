@@ -13,11 +13,12 @@ export function Layout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const mostraFab = TAB_PRINCIPALI.includes(pathname);
+  const creazione = pathname === "/nuovo";
 
   return (
     <div className="min-h-dvh">
       <World />
-      <main className="relative mx-auto min-h-dvh max-w-md pb-28">
+      <main className={`relative mx-auto min-h-dvh max-w-md ${creazione ? "pb-0" : "pb-28"}`}>
         <Outlet />
       </main>
 
@@ -37,7 +38,7 @@ export function Layout() {
         </div>
       )}
 
-      <BottomNav />
+      {!creazione && <BottomNav />}
       <Toaster
         position="top-center"
         theme="dark"

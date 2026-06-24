@@ -6,7 +6,8 @@ import { Intestazione } from "@/components/Intestazione";
 import { Badge, Button, CampoFacolt, Card, Codice, Field, Modal, Segmented } from "@/components/ui";
 import { assegnaIniziali, codiceCliente } from "@/lib/codice-parlante";
 import { cn } from "@/lib/cn";
-import type { CategoriaSpesa } from "@/lib/dominio";
+import { etichetta } from "@/lib/dominio";
+import type { CategoriaSpesa, FasciaGiornata, MetodoPagamento, StatoPreventivo } from "@/lib/dominio";
 import { formatEuro, oggiISO } from "@/lib/format";
 import { nuovoId } from "@/lib/id";
 import { operatoreIo } from "@/lib/lavoro-calc";
@@ -30,6 +31,19 @@ const MODI: { value: ModoCalc; label: string }[] = [
 ];
 
 const CATEGORIE: CategoriaSpesa[] = ["benzina", "materiali", "attrezzi", "altro"];
+
+const FASCE: { value: FasciaGiornata; label: string }[] = [
+  { value: "giornata", label: "Giornata" },
+  { value: "mattina", label: "Mattina" },
+  { value: "pomeriggio", label: "Pomeriggio" },
+  { value: "orario", label: "Orario" },
+];
+const STATI_PREV: { value: StatoPreventivo; label: string }[] = [
+  { value: "da_fare", label: "Da fare" },
+  { value: "inviato", label: "Inviato" },
+  { value: "accettato", label: "Accettato" },
+];
+const METODI: MetodoPagamento[] = ["contanti", "bonifico", "carta", "assegno", "altro"];
 
 function NumberField({
   iniziale,
@@ -109,6 +123,9 @@ export function CreaLavoro() {
     if (m !== "preventivo" && !b.tariffaModificata) {
       patch.tariffaCliente = cliente?.tariffaOraria ?? b.tariffaCliente ?? null;
     }
+    if (m === "preventivo" && b.statoPreventivo == null) {
+      patch.statoPreventivo = "da_fare";
+    }
     if (m === "giornate" && b.giornate.length === 0) {
       patch.giornate = [{ id: nuovoId(), data: b.data, ore: {} }];
     }
@@ -156,7 +173,8 @@ export function CreaLavoro() {
       <ScegliCliente
         onIndietro={() => setVista("form")}
         onScelto={(id, tariffa) => {
-          set({ clienteId: id, tariffaCliente: b.tariffaModificata ? b.tariffaCliente : tariffa });
+          const c = dati.clienti.find((x) => x.id === id);
+          set({ clienteId: id, tariffaCliente: b.tariffaModificata ? b.tariffaCliente : tariffa, luogo: b.luogo.trim() || c?.luogo || "" });
           setVista("form");
         }}
       />
@@ -176,7 +194,7 @@ export function CreaLavoro() {
   }
 
   return (
-    <div className="flex flex-col gap-4 px-5 pt-5 pb-10">
+    <div className="flex flex-col gap-3 px-5 pt-4 pb-3">
       <Intestazione
         titolo={b.id ? "Modifica record" : "Nuovo record"}
         azione={
@@ -205,7 +223,7 @@ export function CreaLavoro() {
             type="date"
             value={b.data}
             onChange={(e) => set({ data: e.target.value || oggiISO() })}
-            className="h-11 rounded-2xl bg-superficie-bassa px-3 font-sans text-bianco focus-visible:outline-none"
+            className="h-10 rounded-2xl bg-superficie-bassa px-3 font-sans text-bianco focus-visible:outline-none"
           />
         </div>
 
@@ -224,7 +242,29 @@ export function CreaLavoro() {
           onClick={() => setVista("cliente")}
         />
 
+        <div className="flex flex-col gap-1.5">
+          <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Fascia</label>
+          <Segmented value={b.fascia ?? "orario"} onValueChange={(v) => set({ fascia: v })} options={FASCE} layoutId="fascia" />
+        </div>
+
+        {(b.fascia ?? "orario") === "orario" && (
+          <div className="flex items-center gap-2">
+            <input
+              type="time"
+              value={b.oraInizio}
+              onChange={(e) => set({ oraInizio: e.target.value })}
+              className="h-10 flex-1 rounded-btn bg-superficie-bassa px-3 font-sans text-sm text-bianco focus:bg-superficie focus:outline-none"
+              aria-label="Ora d'arrivo"
+            />
+            <span className="text-fumo-2">→</span>
+            <span className="flex h-10 flex-1 items-center justify-center rounded-btn bg-superficie-bassa px-3 font-mono text-sm text-blu">
+              {oraUscita(b.oraInizio, io ? orePartecipante(b, io.id) : 0) || "uscita"}
+            </span>
+          </div>
+        )}
+
         <CampoFacolt label="Titolo (facoltativo)" value={b.titolo} onValue={(v) => set({ titolo: v })} />
+        <CampoFacolt label="Luogo (facoltativo)" value={b.luogo} onValue={(v) => set({ luogo: v })} />
       </div>
 
       {/* modalità — unica biforcazione */}
@@ -298,10 +338,15 @@ export function CreaLavoro() {
 
       {errore && <p className="text-sm text-critico">{errore}</p>}
 
-      {/* CTA */}
-      <Button size="lg" variant={svolto ? "ottone" : "inchiostro"} onClick={() => void salva()} className="mt-1">
-        {svolto ? "Salva registrazione" : "Pianifica"}
-      </Button>
+      {/* CTA — barra ancorata in basso */}
+      <div className="sticky bottom-0 z-10 -mx-5 mt-1 flex gap-2 px-5 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 glass-alta">
+        <Button size="lg" variant="fantasma" onClick={() => navigate(-1)} className="flex-1">
+          Annulla
+        </Button>
+        <Button size="lg" variant={svolto ? "ottone" : "inchiostro"} onClick={() => void salva()} className="flex-[2]">
+          {svolto ? "Salva registrazione" : "Pianifica"}
+        </Button>
+      </div>
 
       {/* modale tariffa */}
       <Modal
@@ -343,6 +388,10 @@ export function CreaLavoro() {
 function CampiPreventivo({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"]; set: (p: Partial<ReturnType<typeof useBozza.getState>["b"]>) => void }) {
   return (
     <>
+      <div className="flex flex-col gap-1.5">
+        <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Stato preventivo</label>
+        <Segmented value={b.statoPreventivo ?? "da_fare"} onValueChange={(v) => set({ statoPreventivo: v })} options={STATI_PREV} layoutId="statoprev" />
+      </div>
       <div className="flex flex-col gap-1.5">
         <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Importo concordato</label>
         <div className="flex items-center gap-2">
@@ -439,19 +488,6 @@ function CampiOre({
           ))}
         </div>
       )}
-
-      {/* orario cantiere — arrivo + ore => uscita automatica */}
-      <div className="flex flex-col gap-1.5">
-        <label className="font-mono text-xs uppercase tracking-label text-fumo-2">Orario cantiere</label>
-        <div className="flex items-center gap-2">
-          <input type="time" value={b.oraInizio} onChange={(e) => set({ oraInizio: e.target.value })} className="h-11 rounded-btn bg-superficie-bassa px-3 font-sans text-sm text-bianco focus:bg-superficie focus:outline-none" aria-label="Ora d'arrivo" />
-          <span className="text-fumo-2">→</span>
-          <span className="flex h-11 min-w-[5rem] items-center justify-center rounded-btn bg-superficie-bassa px-3 font-mono text-sm text-blu">
-            {oraUscita(b.oraInizio, io ? orePartecipante(b, io) : 0) || "uscita"}
-          </span>
-        </div>
-        <span className="text-[11px] text-fumo-2">arrivo + ore = uscita (automatico)</span>
-      </div>
 
       {/* collaborazione */}
       <SezioneOperai b={b} set={set} io={io} dati={dati} onAdd={onAddOperaio} />
@@ -593,6 +629,37 @@ function SezioneIncasso({ b, set, lordo }: { b: ReturnType<typeof useBozza.getSt
           <span className="text-sm text-fumo-2">Incassato</span>
           <NumberField iniziale={b.importoParte} placeholder="0,00" onChange={(n) => set({ importoParte: Math.min(n, lordo) })} className="h-10 w-28" />
           <span className="font-mono text-xs text-fumo-2">di {formatEuro(lordo)}</span>
+        </div>
+      )}
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {METODI.map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => set({ metodoPagamento: b.metodoPagamento === m ? null : m })}
+            className={cn(
+              "rounded-pill px-3 py-1.5 text-xs font-medium transition-colors",
+              b.metodoPagamento === m ? "bg-blu/15 text-blu shadow-[inset_0_0_0_1.5px_rgba(59,110,245,0.5)]" : "bg-superficie-bassa text-fumo-2",
+            )}
+          >
+            {etichetta(m)}
+          </button>
+        ))}
+      </div>
+      {b.giaIncassato !== "tutto" && (
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-fumo-2">Scadenza</span>
+          <input
+            type="date"
+            value={b.scadenzaIncasso}
+            onChange={(e) => set({ scadenzaIncasso: e.target.value })}
+            className="h-9 flex-1 rounded-2xl bg-superficie-bassa px-2 font-mono text-xs"
+          />
+          {b.scadenzaIncasso && (
+            <button type="button" onClick={() => set({ scadenzaIncasso: "" })} aria-label="Rimuovi scadenza">
+              <X className="h-4 w-4 text-fumo-2" />
+            </button>
+          )}
         </div>
       )}
     </div>
