@@ -36,13 +36,13 @@ export function Segmented<T extends string>({
             onClick={() => onValueChange(o.value)}
             className={cn(
               "relative z-0 flex-1 rounded-pill px-3 py-2 text-center text-sm font-medium transition-colors",
-              active ? "text-fondo" : "text-fumo hover:text-bianco",
+              active ? "text-bianco" : "text-fumo-2 hover:text-fumo",
             )}
           >
             {active && (
               <motion.span
                 layoutId={layoutId}
-                className="absolute inset-0 -z-10 rounded-pill bg-lime"
+                className="absolute inset-0 -z-10 rounded-pill bg-white/15 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.22)]"
                 transition={{ type: "spring", stiffness: 340, damping: 32 }}
               />
             )}

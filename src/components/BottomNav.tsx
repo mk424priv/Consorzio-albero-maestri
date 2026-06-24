@@ -20,17 +20,17 @@ export function BottomNav() {
               <span
                 className={cn(
                   "relative z-0 flex items-center gap-1.5 rounded-pill px-4 py-2.5 text-sm font-medium transition-colors",
-                  isActive ? "text-fondo" : "text-fumo",
+                  isActive ? "text-bianco" : "text-fumo-2",
                 )}
               >
                 {isActive && (
                   <motion.span
                     layoutId="navpill"
-                    className="absolute inset-0 -z-10 rounded-pill bg-lime"
+                    className="absolute inset-0 -z-10 rounded-pill bg-white/12 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]"
                     transition={{ type: "spring", stiffness: 340, damping: 32 }}
                   />
                 )}
-                <Icon className="h-5 w-5" strokeWidth={isActive ? 2.4 : 2} />
+                <Icon className={cn("h-5 w-5", isActive && "text-lime")} strokeWidth={isActive ? 2.4 : 2} />
                 {isActive && <span>{label}</span>}
               </span>
             )}

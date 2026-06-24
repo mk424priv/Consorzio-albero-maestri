@@ -1,14 +1,31 @@
 import { motion } from "framer-motion";
-import { Check, Clock, MoreHorizontal } from "lucide-react";
+import { CalendarClock, Check, Clock, MoreHorizontal } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { codiceCliente } from "@/lib/codice-parlante";
+import { cn } from "@/lib/cn";
 import { formatEuro, formatOre } from "@/lib/format";
 import { calcoloLavoro, operatoreIo } from "@/lib/lavoro-calc";
 import type { Lavoro } from "@/lib/types";
 import { incassaLavoro, segnaSvolto } from "@/store/azioni";
 import { useStore } from "@/store/store";
-import { Badge, Button, Card, Codice, Stamp } from "./ui";
+import { Button, Codice } from "./ui";
+
+type StatoCard = "programmato" | "incassare" | "pagato";
+
+function StatoTag({ stato }: { stato: StatoCard }) {
+  const map = {
+    programmato: { c: "text-attenzione bg-attenzione/15", t: "Programmato", I: CalendarClock },
+    incassare: { c: "text-lime bg-lime/15", t: "Da incassare", I: Clock },
+    pagato: { c: "text-positivo bg-positivo/15", t: "Saldato", I: Check },
+  }[stato];
+  const I = map.I;
+  return (
+    <span className={cn("inline-flex shrink-0 items-center gap-1 rounded-pill px-2.5 py-1 font-mono text-[0.58rem] font-semibold uppercase tracking-wider", map.c)}>
+      <I className="h-3 w-3" /> {map.t}
+    </span>
+  );
+}
 
 export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const dati = useStore((s) => s.dati);
@@ -19,144 +36,106 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const calc = calcoloLavoro(dati, lavoro);
   const cliente = lavoro.clienteId ? dati.clienti.find((c) => c.id === lavoro.clienteId) : undefined;
   const ioId = operatoreIo(dati)?.id;
-  const svolto = lavoro.fase === "fatto";
 
-  // operai: "io" sempre primo
-  const chips = [...calc.partecipanti].sort((a, b) =>
-    a.collaboratoreId === ioId ? -1 : b.collaboratoreId === ioId ? 1 : 0,
-  );
+  const programmato = lavoro.fase === "da_fare";
+  const pagato = !programmato && calc.statoIncasso === "pagato";
+  const stato: StatoCard = programmato ? "programmato" : pagato ? "pagato" : "incassare";
+
+  const chips = [...calc.partecipanti].sort((a, b) => (a.collaboratoreId === ioId ? -1 : b.collaboratoreId === ioId ? 1 : 0));
   const chipLabel = (id: string, nome: string) => (id === ioId ? "io" : nome);
-
   const apri = () => navigate(`/lavoro/${lavoro.id}`);
 
   return (
-    <Card tono={svolto ? "svolto" : "programmato"} className="flex flex-col gap-0 px-3.5 py-3">
-      {/* riga 1: codice + cliente + stato fase */}
-      <button type="button" onClick={apri} className="flex items-start justify-between gap-2 text-left">
-        <div className="flex min-w-0 flex-col gap-0.5">
+    <motion.div
+      whileTap={{ scale: 0.985 }}
+      whileHover={{ y: -2 }}
+      transition={{ type: "spring", stiffness: 400, damping: 30 }}
+      className={cn("statocard px-4 py-3.5 text-bianco", `statocard--${stato}`, pagato && "opacity-90")}
+    >
+      <button type="button" onClick={apri} className="flex w-full items-start justify-between gap-2 text-left">
+        <div className="flex min-w-0 flex-col gap-1">
           <div className="flex items-center gap-2">
             {cliente && <Codice value={codiceCliente(dati, cliente.id)} />}
-            <span className="truncate text-sm font-medium text-bianco">
+            <span className="truncate text-sm font-medium text-fumo">
               {cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() : "Senza cliente"}
             </span>
           </div>
-          <span className="truncate font-display text-base text-bianco">{lavoro.titolo}</span>
+          <span className="truncate font-display text-[1.05rem] font-semibold leading-tight text-bianco">{lavoro.titolo}</span>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-1">
-          {svolto ? (
-            <Stamp color="ottone">svolto</Stamp>
-          ) : (
-            <Stamp color="lichene">programmato</Stamp>
-          )}
-          {(lavoro.oraInizio || lavoro.oraFine) && (
-            <span className="font-mono text-[0.65rem] text-fumo-2">
-              {lavoro.oraInizio}{lavoro.oraFine ? `–${lavoro.oraFine}` : ""}
-            </span>
-          )}
-        </div>
+        <StatoTag stato={stato} />
       </button>
 
-      {/* perforazione */}
-      <div className="my-2.5 border-t border-dashed border-white/10" />
-
-      {/* riga 2: tre ancore — ore, incassato, da incassare */}
-      <button type="button" onClick={apri} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-left">
-        <span className="font-mono text-sm tabular-nums text-fumo">{formatOre(calc.oreTotali)}</span>
-        {svolto ? (
-          <RigaSoldi calc={calc} />
-        ) : (
-          <span className="font-mono text-sm text-fumo-2">
-            {lavoro.modo === "preventivo" && lavoro.prezzo
-              ? `${formatEuro(lavoro.prezzo)} previsto`
-              : "da svolgere"}
+      <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
+        {programmato ? (
+          <span className="font-mono text-sm text-attenzione">
+            {lavoro.modo === "preventivo" && lavoro.prezzo ? `${formatEuro(lavoro.prezzo)} previsto` : "da svolgere"}
           </span>
+        ) : (
+          <>
+            <span className="font-mono text-sm tabular-nums text-fumo">{formatOre(calc.oreTotali)}</span>
+            <RigaSoldi calc={calc} />
+          </>
         )}
-      </button>
+      </div>
 
-      {/* chip operai */}
       {chips.length > 0 && (
-        <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <div className="mt-2.5 flex flex-wrap items-center gap-1.5">
           {chips.slice(0, 3).map((p) => (
             <button
               key={p.collaboratoreId}
               type="button"
               onClick={() => navigate(`/operaio/${p.collaboratoreId}`)}
-              className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[0.65rem] text-fumo"
+              className="rounded-pill bg-white/10 px-2.5 py-0.5 font-mono text-[0.62rem] text-fumo"
             >
-              ⬡ {chipLabel(p.collaboratoreId, p.nome)}
+              {chipLabel(p.collaboratoreId, p.nome)}
             </button>
           ))}
-          {chips.length > 3 && (
-            <span className="font-mono text-[0.65rem] text-fumo-2">+{chips.length - 3}</span>
-          )}
+          {chips.length > 3 && <span className="font-mono text-[0.62rem] text-fumo-2">+{chips.length - 3}</span>}
         </div>
       )}
 
-      {/* azione principale */}
       <div className="mt-3 flex items-center justify-between gap-2">
-        {svolto ? (
-          calc.statoIncasso === "pagato" ? (
-            <Badge stato="positivo">
-              <Check className="h-3 w-3" /> saldato
-            </Badge>
-          ) : (
-            <Button size="sm" variant="ottone" onClick={() => setIncassaOpen((v) => !v)}>
-              Incassa
-            </Button>
-          )
-        ) : (
+        {programmato ? (
           <Button size="sm" variant="inchiostro" onClick={() => void segnaSvolto(lavoro.id)}>
             Segna svolto
           </Button>
+        ) : pagato ? (
+          <span className="inline-flex items-center gap-1.5 font-mono text-xs text-positivo">
+            <Check className="h-3.5 w-3.5" /> Saldato
+          </span>
+        ) : (
+          <Button size="sm" variant="ottone" onClick={() => setIncassaOpen((v) => !v)}>
+            Incassa
+          </Button>
         )}
-        <Button size="icona" variant="fantasma" onClick={apri} aria-label="Apri lavoro" className="h-8 w-8">
+        <button type="button" onClick={apri} aria-label="Apri lavoro" className="grid h-8 w-8 place-items-center rounded-full text-fumo-2 transition-colors hover:bg-white/10">
           <MoreHorizontal className="h-4 w-4" />
-        </Button>
+        </button>
       </div>
 
-      {/* pannello incasso inline */}
-      {svolto && incassaOpen && calc.statoIncasso !== "pagato" && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          className="mt-3 overflow-hidden rounded-2xl bg-white/[0.08] p-3"
-        >
+      {stato === "incassare" && incassaOpen && (
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3 overflow-hidden rounded-2xl bg-white/[0.06] p-3">
           <p className="font-mono text-xs text-fumo-2">
             Da incassare: <span className="text-attenzione">{formatEuro(calc.daIncassare)}</span>
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
-            <Button
-              size="sm"
-              onClick={() => {
-                void incassaLavoro(lavoro.id, calc.daIncassare);
-                setIncassaOpen(false);
-              }}
-            >
+            <Button size="sm" onClick={() => { void incassaLavoro(lavoro.id, calc.daIncassare); setIncassaOpen(false); }}>
               Tutto {formatEuro(calc.daIncassare)}
             </Button>
             <input
-              className="h-9 w-24 rounded-2xl border border-white/15 bg-white/[0.08] px-2 font-sans text-sm text-bianco placeholder:text-fumo-2 focus-visible:border-lime focus-visible:outline-none"
+              className="h-9 w-24 rounded-pill bg-white/[0.06] px-3 font-sans text-sm text-bianco placeholder:text-fumo-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/60"
               placeholder="altro…"
               inputMode="decimal"
               value={altro}
               onChange={(e) => setAltro(e.target.value)}
             />
-            <Button
-              size="sm"
-              variant="tenue"
-              onClick={() => {
-                const v = Number(altro.replace(",", "."));
-                if (v > 0) void incassaLavoro(lavoro.id, v);
-                setAltro("");
-                setIncassaOpen(false);
-              }}
-            >
+            <Button size="sm" variant="inchiostro" onClick={() => { const v = Number(altro.replace(",", ".")); if (v > 0) void incassaLavoro(lavoro.id, v); setAltro(""); setIncassaOpen(false); }}>
               Conferma
             </Button>
           </div>
         </motion.div>
       )}
-    </Card>
+    </motion.div>
   );
 }
 
@@ -171,12 +150,8 @@ function RigaSoldi({ calc }: { calc: { statoIncasso: string; incassato: number; 
   if (calc.statoIncasso === "parziale") {
     return (
       <span className="inline-flex flex-wrap items-center gap-x-2 font-mono text-sm">
-        <span className="inline-flex items-center gap-1 text-positivo">
-          <Check className="h-3.5 w-3.5" /> {formatEuro(calc.incassato)}
-        </span>
-        <span className="inline-flex items-center gap-1 text-attenzione">
-          <Clock className="h-3.5 w-3.5" /> {formatEuro(calc.daIncassare)} da incassare
-        </span>
+        <span className="inline-flex items-center gap-1 text-positivo"><Check className="h-3.5 w-3.5" /> {formatEuro(calc.incassato)}</span>
+        <span className="inline-flex items-center gap-1 text-attenzione"><Clock className="h-3.5 w-3.5" /> {formatEuro(calc.daIncassare)} da incassare</span>
       </span>
     );
   }

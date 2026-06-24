@@ -152,3 +152,50 @@
     animation: none;
   }
 }
+
+/* ── Card per stato: barra-accento a sinistra + gradiente interno + anello ── */
+@layer utilities {
+  .statocard {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--radius-vetro);
+  }
+  .statocard--programmato {
+    background:
+      linear-gradient(135deg, rgba(255, 194, 61, 0.20), rgba(255, 194, 61, 0.02) 56%),
+      rgba(255, 255, 255, 0.05);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 194, 61, 0.24),
+      inset 4px 0 0 0 rgba(255, 194, 61, 0.95),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+      var(--shadow-vetro);
+  }
+  .statocard--incassare {
+    background:
+      linear-gradient(135deg, rgba(200, 255, 50, 0.16), rgba(200, 255, 50, 0.02) 56%),
+      rgba(255, 255, 255, 0.06);
+    box-shadow:
+      inset 0 0 0 1px rgba(200, 255, 50, 0.22),
+      inset 4px 0 0 0 rgba(200, 255, 50, 0.95),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
+      var(--shadow-vetro);
+  }
+  .statocard--pagato {
+    background:
+      linear-gradient(135deg, rgba(43, 240, 168, 0.13), rgba(43, 240, 168, 0.015) 56%),
+      rgba(255, 255, 255, 0.035);
+    box-shadow:
+      inset 0 0 0 1px rgba(43, 240, 168, 0.18),
+      inset 4px 0 0 0 rgba(43, 240, 168, 0.7),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+      var(--shadow-vetro);
+  }
+  @supports ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+    .statocard--programmato,
+    .statocard--incassare,
+    .statocard--pagato {
+      -webkit-backdrop-filter: blur(20px) saturate(165%);
+      backdrop-filter: blur(20px) saturate(165%);
+    }
+  }
+}

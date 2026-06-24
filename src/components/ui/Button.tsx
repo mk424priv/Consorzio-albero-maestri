@@ -11,12 +11,13 @@ const base =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/60";
 
 // I nomi delle variant restano stabili (compat con le pagine); cambia solo lo stile.
+// Ruoli chiari: lime PIENO = azione primaria · outline = secondaria · vetro = utility · ghost
 const variants: Record<Variant, string> = {
-  ottone: "bg-lime text-fondo shadow-flottante hover:bg-lime-scuro", // primary = lime
-  inchiostro: "glass-alta text-bianco",
-  fantasma: "text-bianco hover:bg-white/10",
-  tenue: "glass-bassa text-bianco",
-  critico: "bg-critico/15 text-critico hover:bg-critico/25",
+  ottone: "bg-lime text-fondo shadow-flottante hover:bg-lime-scuro", // primaria
+  inchiostro: "bg-transparent text-bianco shadow-[inset_0_0_0_1.5px_rgba(255,255,255,0.30)] hover:bg-white/10", // secondaria (outline)
+  fantasma: "text-fumo hover:bg-white/10 hover:text-bianco", // terziaria
+  tenue: "glass-bassa text-bianco", // utility (es. icona)
+  critico: "bg-transparent text-critico shadow-[inset_0_0_0_1.5px_rgba(255,99,99,0.42)] hover:bg-critico/10",
 };
 
 const sizes: Record<Size, string> = {
