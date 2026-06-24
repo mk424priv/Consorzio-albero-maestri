@@ -1,57 +1,53 @@
 @import "tailwindcss";
 
 /*
-  Albero Maestri — "Quaderno di bottega" (canone 01 §2.x, 02 §1.1).
-  Materiale, non colore: carta calda, inchiostro sepia, ottone, lichene.
-  Niente "verde prato", niente #000/#fff puri — tutto tonato sul caldo.
-  Personalita' degli schermi su 3 assi: temperatura · peso · texture.
+  Albero Maestri — "Vetro Vivo" (canone 04).
+  Vetro smerigliato su mondi di colore profondi. Zero bordi: gerarchia per
+  profondità, blur e contrasto. Accento lime. Dark-first.
 */
 @theme {
-  /* ── Carta (superfici) — dalla piu' alta alla piu' in ombra ── */
-  --color-carta: #f3eee3;
-  --color-carta-alta: #faf6ec;
-  --color-carta-bassa: #ebe2d2;
-  --color-carta-ombra: #ddd2bd;
-  --color-carta-svolto: #efe3cd;      /* tabacco caldo — passato */
-  --color-carta-programmato: #e7eaec; /* grigio-bluastro "copia" — futuro */
-  --color-carta-incasso: #2c3730;     /* pelle verde-ottone del registro — soldi */
+  /* ── Fondo base ── */
+  --color-fondo: #0b0c10;
 
-  /* ── Inchiostro (testo), sepia calda ── */
-  --color-inchiostro: #2a2720;        /* forte: titoli/numeri */
-  --color-inchiostro-medio: #595446;  /* corpo */
-  --color-inchiostro-debole: #8b8474; /* didascalie, "matita" */
-  --color-inchiostro-chiaro: #ece3d0; /* testo su pannelli scuri */
+  /* ── Mondi (tinte dei gradienti/shader per sezione) ── */
+  --color-notte-1: #0e1430;
+  --color-notte-2: #2a44a8;
+  --color-linfa-1: #06231a;
+  --color-linfa-2: #0d6044;
+  --color-ambra-1: #2a1606;
+  --color-ambra-2: #9c440d;
+  --color-grafite-1: #0b0b0e;
+  --color-grafite-2: #1c1c24;
+  --color-ossidiana-1: #0a0b0f;
+  --color-ossidiana-2: #15161d;
 
-  /* ── Ottone (azione e soldi), metallo smorzato — uso parco ── */
-  --color-ottone: #a87f3c;
-  --color-ottone-chiaro: #c89f51;
-  --color-ottone-scuro: #7c5d28;
+  /* ── Inchiostro su scuro ── */
+  --color-bianco: #ffffff;
+  --color-fumo: #ffffffb3; /* 70% */
+  --color-fumo-2: #ffffff73; /* 45% */
 
-  /* ── Lichene (corteccia/muschio) — solo accenti/stati, mai fondo ── */
-  --color-lichene: #6f7a52;
+  /* ── Accento brand (lime) ── */
+  --color-lime: #cff54a;
+  --color-lime-scuro: #b6e421;
 
-  /* ── Semantica (smorzata, in tono carta, non neon) ── */
-  --color-positivo: #6f7a3f;   /* pagato/chiuso — oliva-ottone */
-  --color-attenzione: #b3852c; /* in attesa — ocra/senape */
-  --color-critico: #a8492f;    /* scaduto — terracotta/ruggine */
+  /* ── Status (saturi, non neon) ── */
+  --color-positivo: #2fe6a8;
+  --color-attenzione: #ffb020;
+  --color-critico: #ff5d5d;
 
-  /* ── Tipografia ── */
-  --font-display: "Fraunces Variable", ui-serif, Georgia, serif;
+  /* ── Font ── */
+  --font-display: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
 
-  /* ── Raggi: come carta tagliata, non capsula di plastica ── */
-  --radius-quietanza: 0.25rem; /* ricevuta: angolo quasi retto */
-  --radius-carta: 0.875rem;
-  --radius-targhetta: 0.7rem;
-  --radius-bolla: 1.25rem;
+  /* ── Raggi (morbidi, dischiusi) ── */
+  --radius-vetro: 1.5rem;
+  --radius-bolla: 1.75rem;
+  --radius-pill: 999px;
 
-  /* ── Ombre: altezza = tempo (futuro alto, passato posato, soldi inciso) ── */
-  --shadow-svolto: 0 1px 2px rgba(42, 39, 32, 0.07);
-  --shadow-carta: 0 2px 8px -2px rgba(42, 39, 32, 0.12), inset 0 1px 0 rgba(255, 253, 247, 0.6);
-  --shadow-programmato: 0 12px 26px -10px rgba(42, 39, 32, 0.22);
-  --shadow-cassa: inset 0 2px 7px rgba(0, 0, 0, 0.38);
-  --shadow-targhetta: 0 9px 20px -5px rgba(124, 93, 40, 0.5), 0 2px 5px rgba(42, 39, 32, 0.22);
+  /* ── Ombre = profondità (non glow) ── */
+  --shadow-vetro: 0 18px 44px -14px rgba(0, 0, 0, 0.6);
+  --shadow-flottante: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
 }
 
 @layer base {
@@ -63,12 +59,11 @@
 
   body {
     margin: 0;
-    background-color: var(--color-carta);
-    color: var(--color-inchiostro);
+    background-color: var(--color-fondo);
+    color: var(--color-bianco);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
-    /* zone sicure mobile (notch / barra) */
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
       env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
@@ -78,25 +73,37 @@
   h3 {
     font-family: var(--font-display);
     font-weight: 600;
+    letter-spacing: -0.01em;
   }
 }
 
 @layer utilities {
-  /* Grana di carta: rumore SVG leggero, offline, niente raster pesanti */
-  .grana {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  /* Vetro smerigliato — niente bordo, solo blur + traslucenza + filo di luce in alto */
+  .glass {
+    background-color: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(24px) saturate(140%);
+    -webkit-backdrop-filter: blur(24px) saturate(140%);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), var(--shadow-vetro);
   }
-
-  /* Vignetta morbida: il foglio ha profondita' ai bordi */
-  .vignetta {
-    box-shadow: inset 0 0 90px rgba(42, 39, 32, 0.05);
+  .glass-alta {
+    background-color: rgba(255, 255, 255, 0.14);
+    backdrop-filter: blur(28px) saturate(150%);
+    -webkit-backdrop-filter: blur(28px) saturate(150%);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18), var(--shadow-vetro);
   }
-
-  /* Reticolo "millimetrato" tenue per le superfici Programmato */
-  .reticolo {
-    background-image:
-      linear-gradient(to right, rgba(90, 100, 120, 0.07) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(90, 100, 120, 0.07) 1px, transparent 1px);
-    background-size: 0.75rem 0.75rem;
+  .glass-bassa {
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  }
+  .glass-scura {
+    background-color: rgba(8, 10, 14, 0.55);
+    backdrop-filter: blur(20px) saturate(120%);
+    -webkit-backdrop-filter: blur(20px) saturate(120%);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+  }
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 }
