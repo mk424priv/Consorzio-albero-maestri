@@ -41,7 +41,7 @@ export function HeroMesh({ tono, eyebrow, children }: { tono: MeshTono; eyebrow:
 
 export function AvatarHero({ iniziali }: { iniziali: string }) {
   return (
-    <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl border border-white/35 bg-white/20 text-xl font-bold text-white backdrop-blur">
+    <span className="grid h-14 w-14 shrink-0 place-items-center rounded-2xl bg-white/25 text-xl font-bold text-white backdrop-blur">
       {iniziali}
     </span>
   );

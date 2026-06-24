@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Calendar, Check, Clock, type LucideIcon, PieChart } from "lucide-react";
+import { Calendar, Check, Clock, type LucideIcon, MoreHorizontal, PieChart } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { codiceCliente } from "@/lib/codice-parlante";
@@ -8,8 +8,10 @@ import { notificaUndo } from "@/lib/undo";
 import { formatData, formatEuro, formatOre } from "@/lib/format";
 import { calcoloLavoro, operatoreIo } from "@/lib/lavoro-calc";
 import type { Lavoro } from "@/lib/types";
+import { useLongPress } from "@/lib/useLongPress";
 import { incassaLavoro, segnaSvolto } from "@/store/azioni";
 import { useStore } from "@/store/store";
+import { MenuLavoro } from "./MenuLavoro";
 import { Button, Codice, StatePill } from "./ui";
 
 type StatoSvolto = "incassare" | "parziale" | "pagato";
@@ -25,6 +27,8 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const navigate = useNavigate();
   const [incassaOpen, setIncassaOpen] = useState(false);
   const [altro, setAltro] = useState("");
+  const [menuOpen, setMenuOpen] = useState(false);
+  const lp = useLongPress(() => setMenuOpen(true));
 
   const calc = calcoloLavoro(dati, lavoro);
   const cliente = lavoro.clienteId ? dati.clienti.find((c) => c.id === lavoro.clienteId) : undefined;
@@ -63,8 +67,8 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   // ── PROGRAMMATO: forma diversa (tratteggio / fantasma, blu) ──
   if (lavoro.fase === "da_fare") {
     return (
-      <motion.div whileTap={{ scale: 0.99 }} className="rounded-vetro border border-dashed border-blu/40 bg-blu/[0.06] px-3.5 py-3 text-bianco shadow-card">
-        <div role="button" tabIndex={0} onClick={apri} onKeyDown={(e) => { if (e.key === "Enter") apri(); }} className="flex w-full cursor-pointer items-center justify-between gap-3 text-left">
+      <motion.div whileTap={{ scale: 0.99 }} className="statocard statocard--programmato px-3.5 py-3 text-bianco">
+        <div role="button" tabIndex={0} {...lp.handlers} onClick={() => { if (lp.fired.current) { lp.fired.current = false; return; } apri(); }} onKeyDown={(e) => { if (e.key === "Enter") apri(); }} className="flex w-full cursor-pointer items-center justify-between gap-3 text-left">
           <span className="flex min-w-0 items-center gap-2.5">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-blu/15 text-blu"><Calendar className="h-4 w-4" /></span>
             <span className="flex min-w-0 flex-col gap-0.5">
@@ -79,8 +83,12 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
         </div>
         <div className="mt-2.5 flex items-center justify-between gap-2">
           <Chips />
-          <Button size="sm" variant="inchiostro" onClick={async () => notificaUndo("Segnato come svolto", await segnaSvolto(lavoro.id))}>Svolto</Button>
+          <span className="flex shrink-0 items-center gap-1.5">
+            <Button size="sm" variant="inchiostro" onClick={async () => notificaUndo("Segnato come svolto", await segnaSvolto(lavoro.id))}>Svolto</Button>
+            <button type="button" onClick={() => setMenuOpen(true)} aria-label="Azioni" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-fumo hover:text-bianco"><MoreHorizontal className="h-4 w-4" /></button>
+          </span>
         </div>
+        <MenuLavoro lavoro={lavoro} open={menuOpen} onOpenChange={setMenuOpen} />
       </motion.div>
     );
   }
@@ -95,7 +103,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
     <motion.div
       whileTap={{ scale: 0.99 }}
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
-      className={cn("statocard px-3.5 py-3 text-bianco", `statocard--${stato}`, stato === "pagato" && "opacity-90")}
+      className={cn("statocard px-3.5 text-bianco", stato === "pagato" ? "py-2.5" : "py-3", `statocard--${stato}`, stato === "pagato" && "opacity-90")}
     >
       <div role="button" tabIndex={0} onClick={apri} onKeyDown={(e) => { if (e.key === "Enter") apri(); }} className="flex w-full cursor-pointer items-center justify-between gap-3 text-left">
         <span className="flex min-w-0 items-center gap-2.5">
@@ -107,7 +115,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
           <StatePill stato={stato} />
-          <span className={cn("text-base font-bold tracking-tight tabular-nums", s.amount)}>{formatEuro(amount)}</span>
+          <span className={cn("font-bold tracking-tight tabular-nums", stato === "incassare" ? "text-lg" : stato === "pagato" ? "text-sm" : "text-base", s.amount)}>{formatEuro(amount)}</span>
         </span>
       </div>
 
@@ -117,11 +125,14 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
           {stato === "parziale" && <span className="shrink-0 text-verde">· {formatEuro(calc.incassato)} inc.</span>}
           <Chips />
         </span>
-        {stato === "pagato" ? (
-          <span className="flex shrink-0 items-center gap-1 text-[11px] font-medium text-verde"><Check className="h-3 w-3" /> saldato</span>
-        ) : (
-          <Button size="sm" onClick={() => setIncassaOpen((v) => !v)}>Incassa</Button>
-        )}
+        <span className="flex shrink-0 items-center gap-1.5">
+          {stato === "pagato" ? (
+            <span className="flex items-center gap-1 text-[11px] font-medium text-verde"><Check className="h-3 w-3" /> saldato</span>
+          ) : (
+            <Button size="sm" onClick={() => setIncassaOpen((v) => !v)}>Incassa</Button>
+          )}
+          <button type="button" onClick={() => setMenuOpen(true)} aria-label="Azioni" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-black/[0.05] text-fumo hover:text-bianco"><MoreHorizontal className="h-4 w-4" /></button>
+        </span>
       </div>
 
       {stato !== "pagato" && incassaOpen && (
@@ -143,6 +154,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
           </div>
         </motion.div>
       )}
+      <MenuLavoro lavoro={lavoro} open={menuOpen} onOpenChange={setMenuOpen} />
     </motion.div>
   );
 }

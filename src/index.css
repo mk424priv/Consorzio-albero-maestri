@@ -94,6 +94,10 @@
 @layer utilities {
   /* stato = velatura ad acquerello + ombra. NIENTE bordi (canone 08). */
   .statocard { position: relative; overflow: hidden; border-radius: var(--radius-vetro); }
+  .statocard--programmato {
+    background: radial-gradient(150% 130% at 100% -25%, rgba(59, 110, 245, 0.08), rgba(59, 110, 245, 0) 54%), var(--color-superficie);
+    box-shadow: var(--shadow-card);
+  }
   .statocard--incassare {
     background: radial-gradient(150% 130% at 100% -25%, rgba(239, 91, 82, 0.12), rgba(239, 91, 82, 0) 54%), var(--color-superficie);
     box-shadow: var(--shadow-card);
