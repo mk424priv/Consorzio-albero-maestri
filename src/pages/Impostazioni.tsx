@@ -1,4 +1,4 @@
-import { ArrowLeft, Download, RotateCcw, Trash2, Undo2, Upload, UserRound } from "lucide-react";
+import { ArrowLeft, Download, RotateCcw, Trash2, Undo2, Upload, UserRound, Warehouse } from "lucide-react";
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Intestazione } from "@/components/Intestazione";
@@ -115,6 +115,14 @@ export function Impostazioni() {
             <UserRound className="h-4 w-4" /> Apri il mio profilo ({io.nome})
           </Button>
         )}
+      </Card>
+
+      <Card tono="alta" className="flex flex-col gap-3 p-4">
+        <h2 className="font-display text-lg text-bianco">Garage</h2>
+        <p className="text-sm text-fumo-2">Parco auto e attrezzi: valore, consumi e percorsi. Lo apri di rado, quindi vive qui.</p>
+        <Button variant="tenue" className="self-start" onClick={() => navigate("/garage")}>
+          <Warehouse className="h-4 w-4" /> Apri il garage
+        </Button>
       </Card>
 
       <Card tono="alta" className="flex flex-col gap-3 p-4">

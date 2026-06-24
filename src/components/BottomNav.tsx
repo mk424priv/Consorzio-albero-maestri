@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { CalendarDays, LayoutDashboard, Users, Wallet, Warehouse } from "lucide-react";
+import { CalendarDays, LayoutDashboard, Users, Wallet } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/cn";
 
@@ -7,7 +7,6 @@ import { cn } from "@/lib/cn";
 const items = [
   { to: "/", label: "Agenda", Icon: CalendarDays, end: true },
   { to: "/soldi", label: "Soldi", Icon: Wallet, end: false },
-  { to: "/garage", label: "Garage", Icon: Warehouse, end: false },
   { to: "/dashboard", label: "Dati", Icon: LayoutDashboard, end: false },
   { to: "/anagrafiche", label: "Rubrica", Icon: Users, end: false },
 ];
