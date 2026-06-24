@@ -1,53 +1,54 @@
 @import "tailwindcss";
 
 /*
-  Albero Maestri — "Vetro Vivo" (canone 04).
-  Vetro smerigliato su mondi di colore profondi. Zero bordi: gerarchia per
-  profondità, blur e contrasto. Accento lime. Dark-first.
+  Albero Maestri — "Vetro Vivo" v2 (canone 04).
+  Vetro CONTRASTATO e robusto: superfici definite (anche senza backdrop-filter),
+  filo di luce sui bordi per dare peso, gerarchia chiara, accento lime vivo.
+  Mobile-first.
 */
 @theme {
-  /* ── Fondo base ── */
-  --color-fondo: #0b0c10;
+  /* ── Fondo base (scuro profondo) ── */
+  --color-fondo: #06070b;
 
-  /* ── Mondi (tinte dei gradienti/shader per sezione) ── */
-  --color-notte-1: #0e1430;
-  --color-notte-2: #2a44a8;
-  --color-linfa-1: #06231a;
-  --color-linfa-2: #0d6044;
-  --color-ambra-1: #2a1606;
-  --color-ambra-2: #9c440d;
-  --color-grafite-1: #0b0b0e;
-  --color-grafite-2: #1c1c24;
-  --color-ossidiana-1: #0a0b0f;
-  --color-ossidiana-2: #15161d;
+  /* ── Mondi (tinte dei gradienti/shader) ── */
+  --color-notte-1: #0b1330;
+  --color-notte-2: #3358d8;
+  --color-linfa-1: #052018;
+  --color-linfa-2: #11a06a;
+  --color-ambra-1: #2a1206;
+  --color-ambra-2: #e0702a;
+  --color-grafite-1: #08090d;
+  --color-grafite-2: #23242e;
+  --color-ossidiana-1: #070810;
+  --color-ossidiana-2: #181a26;
 
-  /* ── Inchiostro su scuro ── */
+  /* ── Inchiostro su scuro (più leggibile) ── */
   --color-bianco: #ffffff;
-  --color-fumo: #ffffffb3; /* 70% */
-  --color-fumo-2: #ffffff73; /* 45% */
+  --color-fumo: #ffffffd1;   /* ~82% */
+  --color-fumo-2: #ffffff8f; /* ~56% */
 
-  /* ── Accento brand (lime) ── */
-  --color-lime: #cff54a;
-  --color-lime-scuro: #b6e421;
+  /* ── Accento brand (lime vivo) ── */
+  --color-lime: #c8ff32;
+  --color-lime-scuro: #a6e617;
 
-  /* ── Status (saturi, non neon) ── */
-  --color-positivo: #2fe6a8;
-  --color-attenzione: #ffb020;
-  --color-critico: #ff5d5d;
+  /* ── Status (vividi) ── */
+  --color-positivo: #2bf0a8;
+  --color-attenzione: #ffc23d;
+  --color-critico: #ff6363;
 
   /* ── Font ── */
   --font-display: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
 
-  /* ── Raggi (morbidi, dischiusi) ── */
-  --radius-vetro: 1.5rem;
+  /* ── Raggi ── */
+  --radius-vetro: 1.375rem;
   --radius-bolla: 1.75rem;
   --radius-pill: 999px;
 
-  /* ── Ombre = profondità (non glow) ── */
-  --shadow-vetro: 0 18px 44px -14px rgba(0, 0, 0, 0.6);
-  --shadow-flottante: 0 12px 32px -8px rgba(0, 0, 0, 0.55);
+  /* ── Ombre = profondità ── */
+  --shadow-vetro: 0 16px 40px -18px rgba(0, 0, 0, 0.85);
+  --shadow-flottante: 0 12px 30px -8px rgba(0, 0, 0, 0.7);
 }
 
 @layer base {
@@ -64,6 +65,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
+    overflow-x: hidden;
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
       env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
@@ -73,37 +75,80 @@
   h3 {
     font-family: var(--font-display);
     font-weight: 600;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
   }
 }
 
 @layer utilities {
-  /* Vetro smerigliato — niente bordo, solo blur + traslucenza + filo di luce in alto */
+  /*
+    Vetro: leggibile OVUNQUE. Base traslucida + filo di luce sul bordo (peso) +
+    ombra. Dove c'è backdrop-filter si aggiunge il blur; dove non c'è, la base
+    diventa più opaca (fallback) così le card non spariscono mai.
+  */
   .glass {
-    background-color: rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(24px) saturate(140%);
-    -webkit-backdrop-filter: blur(24px) saturate(140%);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.12), var(--shadow-vetro);
+    background-color: rgba(255, 255, 255, 0.07);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.10),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
+      var(--shadow-vetro);
   }
   .glass-alta {
-    background-color: rgba(255, 255, 255, 0.14);
-    backdrop-filter: blur(28px) saturate(150%);
-    -webkit-backdrop-filter: blur(28px) saturate(150%);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.18), var(--shadow-vetro);
+    background-color: rgba(255, 255, 255, 0.12);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.16),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.26),
+      var(--shadow-vetro);
   }
   .glass-bassa {
     background-color: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   }
   .glass-scura {
-    background-color: rgba(8, 10, 14, 0.55);
-    backdrop-filter: blur(20px) saturate(120%);
-    -webkit-backdrop-filter: blur(20px) saturate(120%);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08);
+    background-color: rgba(7, 9, 14, 0.62);
+    box-shadow:
+      inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
+      var(--shadow-vetro);
   }
+
+  @supports ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
+    .glass {
+      -webkit-backdrop-filter: blur(20px) saturate(170%);
+      backdrop-filter: blur(20px) saturate(170%);
+    }
+    .glass-alta {
+      background-color: rgba(255, 255, 255, 0.10);
+      -webkit-backdrop-filter: blur(26px) saturate(180%);
+      backdrop-filter: blur(26px) saturate(180%);
+    }
+    .glass-bassa {
+      -webkit-backdrop-filter: blur(12px);
+      backdrop-filter: blur(12px);
+    }
+    .glass-scura {
+      background-color: rgba(7, 9, 14, 0.5);
+      -webkit-backdrop-filter: blur(22px) saturate(140%);
+      backdrop-filter: blur(22px) saturate(140%);
+    }
+  }
+
   .tabular-nums {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Fallback animato per i mondi: gradiente che respira (anche senza WebGL) */
+@keyframes mondoDeriva {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 100%; }
+  100% { background-position: 0% 0%; }
+}
+.mondo-anim {
+  background-size: 180% 180%;
+  animation: mondoDeriva 24s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mondo-anim {
+    animation: none;
   }
 }

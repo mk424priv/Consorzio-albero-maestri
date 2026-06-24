@@ -48,8 +48,9 @@ const fragment = /* glsl */ `
     float blob = fbm(p * 0.7 + t * 0.5);
     col += uColorB * 0.16 * smoothstep(0.45, 0.95, blob);
     float vig = smoothstep(1.25, 0.20, length(uv - 0.5));
-    col *= mix(0.72, 1.06, vig);
-    gl_FragColor = vec4(col, 1.0);
+    col *= mix(0.72, 1.12, vig);
+    // overlay sottile: il gradiente CSS vivido sotto domina, lo shader aggiunge moto
+    gl_FragColor = vec4(col, 0.4);
   }
 `;
 
