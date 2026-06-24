@@ -210,6 +210,16 @@ export function squadraDelCliente(dati: Dati, clienteId: string): OperaioCliente
     .sort((a, b) => b.ore - a.ore);
 }
 
+/** Credito del cliente: somma degli importi incassati oltre il lordo (08 D1). */
+export function creditoCliente(dati: Dati, clienteId: string): number {
+  let credito = 0;
+  for (const l of dati.lavori.filter((l) => !l.deleted && l.clienteId === clienteId && l.fase === "fatto")) {
+    const c = calcoloLavoro(dati, l);
+    credito += Math.max(0, c.incassato - c.lordo);
+  }
+  return arrotonda(credito);
+}
+
 /** L'entità ha relazioni? Allora si ARCHIVIA (reversibile), non si elimina (08 §2.3). */
 export function haRelazioni(dati: Dati, tipo: "cliente" | "operatore" | "attrezzo", id: string): boolean {
   if (tipo === "cliente") {

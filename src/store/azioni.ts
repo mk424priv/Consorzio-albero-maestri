@@ -1,10 +1,10 @@
 // Azioni di dominio: ogni mutazione passa dallo store (canone AGENTS / 02 §6,§9).
 // Ogni azione critica ritorna una funzione `Annulla` per l'undo (cancellazioni soft).
 import type { MetodoPagamento } from "@/lib/dominio";
-import { arrotonda, oggiISO } from "@/lib/format";
+import { arrotonda, dataDaISO, oggiISO } from "@/lib/format";
 import { nuovoId } from "@/lib/id";
 import { operatoreIo, pagamentoApertoLavoro } from "@/lib/lavoro-calc";
-import type { Pagamento } from "@/lib/types";
+import type { Lavoro, Pagamento } from "@/lib/types";
 import { useStore } from "./store";
 
 export type Annulla = () => Promise<void>;
@@ -179,4 +179,71 @@ export async function pagaOperaio(operatoreId: string, importo: number, metodo?:
   const id = nuovoId();
   await salva("compensi", { id, operatoreId, importo: arrotonda(importo), data: oggiISO(), periodo, metodo, creatoIl: oggiISO(), updatedAt: "" });
   return async () => { await elimina("compensi", id); };
+}
+
+/** Storno: riduce l'incassato di un lavoro (clamp ≥0); se va a 0 riapre il pagamento. (08 §5.2) */
+export async function stornaIncasso(lavoroId: string, importo: number): Promise<Annulla> {
+  const { dati, salva } = useStore.getState();
+  const pag = dati.pagamenti.find((p) => p.lavoroId === lavoroId && !p.deleted && p.importoIncassato > 0);
+  if (!pag || importo <= 0) return noop;
+  const prima = { ...pag };
+  const nuovoInc = arrotonda(Math.max(0, pag.importoIncassato - importo));
+  await salva("pagamenti", { ...pag, importoIncassato: nuovoInc, dataIncasso: nuovoInc > 0 ? pag.dataIncasso : undefined });
+  return async () => { await salva("pagamenti", prima); };
+}
+
+/** Spezza: il corrente diventa svolto (parte fatta) + nuovo programmato «· resto». (08 §5.1) */
+export async function spezzaLavoro(lavoroId: string): Promise<{ id: string; annulla: Annulla } | null> {
+  const { dati, salva, elimina } = useStore.getState();
+  const l = dati.lavori.find((x) => x.id === lavoroId);
+  if (!l) return null;
+  const prima = { ...l };
+  await salva("lavori", { ...l, fase: "fatto" });
+  const id = nuovoId();
+  await salva("lavori", {
+    ...l, id, fase: "da_fare", data: oggiISO(), titolo: `${l.titolo} · resto`, creatoIl: oggiISO(),
+    partecipanti: l.partecipanti.map((p) => ({ ...p, oreTotale: 0 })), rev: undefined, deleted: false, updatedAt: "",
+  });
+  return { id, annulla: async () => { await elimina("lavori", id); await salva("lavori", prima); } };
+}
+
+/** Crea N occorrenze future di un programmato (settimanale/mensile). (08 §5.4) */
+export async function creaRicorrenze(lavoroId: string, periodicita: "settimana" | "mese", volte: number): Promise<Annulla> {
+  const { dati, salva, elimina } = useStore.getState();
+  const l = dati.lavori.find((x) => x.id === lavoroId);
+  if (!l || volte <= 0) return noop;
+  const isoDi = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const base = dataDaISO(l.data);
+  const creati: string[] = [];
+  for (let i = 1; i <= volte; i++) {
+    const d = new Date(base);
+    if (periodicita === "settimana") d.setDate(d.getDate() + 7 * i);
+    else d.setMonth(d.getMonth() + i);
+    const id = nuovoId();
+    await salva("lavori", {
+      ...l, id, fase: "da_fare", data: isoDi(d), creatoIl: oggiISO(),
+      partecipanti: l.partecipanti.map((p) => ({ ...p, oreTotale: 0 })), rev: undefined, deleted: false, updatedAt: "",
+    });
+    creati.push(id);
+  }
+  return async () => { for (const id of creati) await elimina("lavori", id); };
+}
+
+/** Converte programmato → svolto chiedendo ore reali (modo ore) o prezzo (preventivo). (08 §5.3) */
+export async function convertiSvolto(lavoroId: string, ore?: number, prezzo?: number): Promise<Annulla> {
+  const { dati, salva, elimina } = useStore.getState();
+  const l = dati.lavori.find((x) => x.id === lavoroId);
+  if (!l || l.fase === "fatto") return noop;
+  const prima = { ...l };
+  const io = operatoreIo(dati);
+  const patch: Partial<Lavoro> = { fase: "fatto" };
+  if (l.modo === "preventivo" && prezzo != null && prezzo > 0) patch.prezzo = arrotonda(prezzo);
+  await salva("lavori", { ...l, ...patch });
+  const oreCreate: string[] = [];
+  if (l.modo === "ore" && ore && ore > 0 && io) {
+    const id = nuovoId();
+    await salva("ore", { id, lavoroId, clienteId: l.clienteId, operatoreId: io.id, data: l.data, ore, creatoIl: oggiISO(), updatedAt: "" });
+    oreCreate.push(id);
+  }
+  return async () => { for (const id of oreCreate) await elimina("ore", id); await salva("lavori", prima); };
 }

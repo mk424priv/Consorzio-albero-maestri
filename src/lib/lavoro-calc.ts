@@ -111,6 +111,13 @@ export function calcoloLavoro(dati: Dati, l: Lavoro): CalcoloLavoro {
   };
 }
 
+/** Lavoro a ore senza tariffa nota → «da quotare» (prezzo non ancora deciso). (08 §5.5) */
+export function statoQuotazione(dati: Dati, l: Lavoro): boolean {
+  if (l.modo !== "ore") return false;
+  const t = l.tariffaClienteSnapshot ?? dati.clienti.find((c) => c.id === l.clienteId)?.tariffaOraria ?? null;
+  return t == null;
+}
+
 /** Pagamento aperto (residuo > soglia) di un lavoro, per l'azione "Incassa". */
 export function pagamentoApertoLavoro(dati: Dati, lavoroId: string): Pagamento | undefined {
   return dati.pagamenti.find(

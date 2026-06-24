@@ -118,7 +118,7 @@ export function OperaioScheda() {
                       tabIndex={0}
                       onClick={() => navigate(`/lavoro/${l.id}`)}
                       onKeyDown={(e) => { if (e.key === "Enter") navigate(`/lavoro/${l.id}`); }}
-                      className={svolto ? "flex cursor-pointer items-center justify-between gap-2 rounded-vetro bg-superficie px-3 py-2.5 text-left" : "flex cursor-pointer items-center justify-between gap-2 rounded-vetro border border-dashed border-black/[0.12] px-3 py-2.5 text-left"}
+                      className={svolto ? "flex cursor-pointer items-center justify-between gap-2 rounded-vetro bg-superficie px-3 py-2.5 text-left shadow-card" : "statocard statocard--programmato flex cursor-pointer items-center justify-between gap-2 px-3 py-2.5 text-left"}
                     >
                       <span className="flex min-w-0 flex-col items-start">
                         <span className="truncate text-sm font-medium">

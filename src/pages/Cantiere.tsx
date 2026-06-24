@@ -79,7 +79,7 @@ export function Cantiere() {
         <Riga label="Ore totali" valore={formatOre(calc.oreTotali)} />
         <Riga label="Costo collaboratori" valore={formatEuro(calc.costoCollaboratori)} />
         <Riga label="Spese" valore={formatEuro(calc.speseTotali)} />
-        <div className="my-1 border-t border-bordo" />
+        <div className="my-1 h-px bg-black/[0.06]" />
         <Riga label="Netto" valore={formatEuro(calc.netto)} forte />
         {svolto && <Riga label="Incassato" valore={formatEuro(calc.incassato)} />}
         {svolto && <Riga label="Da incassare" valore={formatEuro(calc.daIncassare)} />}

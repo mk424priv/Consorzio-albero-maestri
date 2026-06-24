@@ -118,7 +118,7 @@ export function Agenda() {
           <button
             type="button"
             onClick={() => navigate("/nuovo", { state: { riprendi: true } })}
-            className="flex w-full items-center justify-between gap-2 rounded-vetro border border-blu/30 bg-blu/[0.07] px-4 py-3 text-left transition-transform active:scale-[0.99]"
+            className="statocard statocard--programmato flex w-full items-center justify-between gap-2 px-4 py-3 text-left transition-transform active:scale-[0.99]"
           >
             <span className="flex items-center gap-2 text-sm font-medium text-bianco">
               <PencilLine size={16} className="text-blu" /> Riprendi la registrazione
@@ -171,7 +171,7 @@ export function Agenda() {
                 </div>
                 <div className="mt-2.5 flex flex-col gap-2.5">
                   {ls.length === 0 ? (
-                    <button type="button" onClick={() => navigate("/nuovo", { state: { data: iso } })} className="rounded-vetro border border-dashed border-black/[0.12] py-3 text-center font-mono text-xs text-fumo-2 hover:border-black/20">
+                    <button type="button" onClick={() => navigate("/nuovo", { state: { data: iso } })} className="rounded-vetro bg-black/[0.03] py-3 text-center font-mono text-xs text-fumo-2 transition-colors hover:bg-black/[0.05]">
                       ＋ crea lavoro
                     </button>
                   ) : (

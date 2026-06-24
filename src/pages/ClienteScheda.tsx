@@ -125,7 +125,7 @@ export function ClienteScheda() {
                 <span className="font-mono text-xs text-verde">{"●".repeat(v.fatto)}<span className="text-fumo-2">{"◌".repeat(v.daFare)}</span></span>
               </div>
             ))}
-            {prossimo && <p className="mt-1 border-t border-bordo pt-1.5 font-mono text-xs text-blu">prossimo: ◌ {prossimo.titolo}</p>}
+            {prossimo && <p className="mt-1 border-t border-black/[0.06] pt-1.5 font-mono text-xs text-blu">prossimo: ◌ {prossimo.titolo}</p>}
           </div>
         )}
 

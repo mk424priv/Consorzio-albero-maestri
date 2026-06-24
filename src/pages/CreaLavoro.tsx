@@ -644,7 +644,7 @@ function ScegliCliente({ onIndietro, onScelto }: { onIndietro: () => void; onSce
               {c.luogo && <span className="font-mono text-xs text-fumo-2">{c.luogo}</span>}
             </button>
           ))}
-          <button type="button" onClick={() => setNuovo(true)} className="flex items-center gap-2 rounded-2xl border border-dashed border-lime/50 px-3 py-3 text-sm text-lime">
+          <button type="button" onClick={() => setNuovo(true)} className="flex items-center gap-2 rounded-2xl bg-blu/[0.08] px-3 py-3 text-sm text-blu">
             <Plus className="h-4 w-4" /> Nuovo cliente
           </button>
         </>
@@ -693,7 +693,7 @@ function ScegliOperaio({ esistenti, onIndietro, onScelto }: { esistenti: string[
               <Badge stato="neutro">{o.tariffaOraria ?? 0} €/h</Badge>
             </button>
           ))}
-          <button type="button" onClick={() => setNuovo(true)} className="flex items-center gap-2 rounded-2xl border border-dashed border-lime/50 px-3 py-3 text-sm text-lime">
+          <button type="button" onClick={() => setNuovo(true)} className="flex items-center gap-2 rounded-2xl bg-blu/[0.08] px-3 py-3 text-sm text-blu">
             <Plus className="h-4 w-4" /> Nuovo operaio
           </button>
         </>
