@@ -8,6 +8,7 @@ import { Cantiere } from "@/pages/Cantiere";
 import { ClienteScheda } from "@/pages/ClienteScheda";
 import { CreaLavoro } from "@/pages/CreaLavoro";
 import { Dashboard } from "@/pages/Dashboard";
+import { Impostazioni } from "@/pages/Impostazioni";
 import { Kitchen } from "@/pages/Kitchen";
 import { NuovoCliente } from "@/pages/NuovoCliente";
 import { NuovoOperaio } from "@/pages/NuovoOperaio";
@@ -50,6 +51,7 @@ export function App() {
               <Route path="/cliente/:id" element={<ClienteScheda />} />
               <Route path="/operaio/nuovo" element={<NuovoOperaio />} />
               <Route path="/operaio/:id" element={<OperaioScheda />} />
+              <Route path="/impostazioni" element={<Impostazioni />} />
             </Route>
           </Routes>
         </BrowserRouter>

@@ -35,4 +35,15 @@ export default defineConfig({
     alias: { "@": path.resolve(__dirname, "src") },
   },
   server: { port: 3000, host: true },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ["react", "react-dom", "react-router-dom"],
+          motion: ["framer-motion"],
+          db: ["dexie", "dexie-react-hooks"],
+        },
+      },
+    },
+  },
 });

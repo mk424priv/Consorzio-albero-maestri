@@ -1,8 +1,8 @@
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Settings } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Intestazione } from "@/components/Intestazione";
-import { Badge, Codice } from "@/components/ui";
+import { Badge, Button, Codice } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { dovutoOperatore, riepilogoCliente } from "@/lib/conti";
 import { formatEuro } from "@/lib/format";
@@ -25,7 +25,15 @@ export function Anagrafiche() {
 
   return (
     <div className="flex flex-col gap-5">
-      <Intestazione titolo="Anagrafiche" sottotitolo={`${dati.clienti.length} clienti · ${operatori.length} operai`} />
+      <Intestazione
+        titolo="Anagrafiche"
+        sottotitolo={`${dati.clienti.length} clienti · ${operatori.length} operai`}
+        azione={
+          <Button size="icona" variant="tenue" onClick={() => navigate("/impostazioni")} aria-label="Impostazioni">
+            <Settings className="h-5 w-5" />
+          </Button>
+        }
+      />
 
       <div className="relative flex items-center">
         <Search className="absolute left-3 h-4 w-4 text-inchiostro-debole" />

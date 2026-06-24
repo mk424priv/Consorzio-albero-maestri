@@ -1,50 +1,54 @@
 # Albero Maestri — guida per chi sviluppa
 
-App **Vite + React 19 + TypeScript + Tailwind CSS v4**. SPA che gira
-interamente nel browser: i dati vivono in `localStorage` tramite uno store
-**Zustand**, con dati d'esempio precaricati. Nessun backend richiesto.
+> ⚠️ **Prodotto nuovo (greenfield).** L'app precedente è stata scartata. La
+> **fonte di verità** è il canone in [`canone/`](canone/): `01` (visione UX),
+> `02` (specifica), `03` (piano). Dove il codice diverge dal canone, vince il canone.
+
+App **Vite + React 19 + TypeScript + Tailwind CSS v4**, **local-first PWA**:
+nessun backend in v1, i dati vivono in **IndexedDB (Dexie)**. Identità visiva
+"Quaderno di bottega" (carta/inchiostro/ottone).
 
 ## Struttura
 
 ```
+canone/         i 3 documenti del canone (verità del prodotto)
 src/
-  lib/            dominio (enum + etichette), format, codice-parlante, conti (motore), types, id
-  data/seed.ts    dati d'esempio (clienti, lavori, preventivi, ore, pagamenti, spese, attrezzi)
-  store/          store Zustand (CRUD + persistenza) e store dei toast
-  components/     Layout, UI (ui.tsx), Modal, Toaster, RigaEditabile (modifica inline)
-  pages/          una pagina per "stanza" (Cruscotto, Calendario, Clienti, …)
-  App.tsx         rotte + guardia d'accesso
-  index.css       design system (token, componenti, animazioni)
+  lib/          types, dominio (enum+etichette), format, id (ULID), codice-parlante,
+                lavoro-calc (motore conti), conti (aggregati), backup; *.test.ts (vitest)
+  db/           schema Dexie, interfaccia Repository + DexieRepository (cucitura sync-ready)
+  store/        Zustand (idratato da Dexie, CRUD via repository), bozza (draft creazione), azioni
+  data/seed.ts  dati d'esempio
+  components/   Layout, BottomNav, CardLavoro, Intestazione, ui/ (primitivi su Radix)
+  pages/        Agenda, Soldi, Anagrafiche, Dashboard, Crea/schede, Impostazioni
+  app/App.tsx   router + idratazione store
+  index.css     token @theme (Carta/Inchiostro/Ottone/Lichene), grana, utility
 ```
 
 ## Principi
 
-- **I dati derivati si calcolano, non si duplicano**: codice parlante, totali,
-  stato dei pagamenti e storico vivono in `src/lib/` e si ricalcolano alla
-  lettura. Le pagine non memorizzano valori aggregati.
-- **Logica nello store**: ogni mutazione passa per un'azione di `useStore`.
-  Per collegare un vero backend basta sostituire l'implementazione delle
-  azioni con chiamate HTTP — l'interfaccia resta identica.
-- **Stile coerente**: usa le classi del design system (`.btn`, `.field`,
-  `.am-card`, `.badge`, `.codice`, `.am-table`) e i componenti di
-  `components/ui.tsx`. I colori passano sempre dai token in `index.css`.
+- **Derived-not-stored**: `codice parlante`, totali, stati pagamento si
+  ricalcolano alla lettura in `src/lib/`. Il DB salva solo fatti-eventi.
+- **Cucitura repository**: la UI parla con lo store, lo store con `Repository`.
+  Per un backend reale si sostituisce solo l'implementazione (Dexie → sync → HTTP),
+  nessuno schermo cambia. ID = ULID, `updatedAt` + tombstone `deleted` già presenti.
+- **Stile dai token**: usa i primitivi di `src/components/ui` e i token `@theme`;
+  niente colori hard-coded. Personalità per schermo (canone 01 §2).
 
 ## Comandi
 
 | Comando | Azione |
 |---|---|
 | `npm run dev` | Server di sviluppo (http://localhost:3000) |
-| `npm run build` | Type-check + build di produzione in `dist/` |
+| `npm run build` | Type-check (`tsc -b`) + build di produzione in `dist/` |
 | `npm run preview` | Anteprima della build |
+| `npm test` | Test del motore conti (vitest) |
+| `npm run lint` | ESLint |
 
-Accesso: password predefinita `albero`.
+Nessuna password: l'app è local-first, si apre diretta. Backup: Impostazioni → Esporta/Importa (file JSON).
 
-## Flusso di lavoro (OBBLIGATORIO)
+## Flusso di lavoro
 
-- **Commit + push dopo ogni modifica.** Ogni volta che apporti modifiche al
-  progetto, esegui sempre `git commit` e `git push` per innescare il redeploy
-  automatico su Vercel. Non lasciare modifiche solo in locale.
-- Prima del commit verifica sempre con `npm run build` (type-check + build).
-- Sviluppa sul branch `claude/vite-react-refactor-x4ag6f` e, una volta che la
-  build passa, allinea `main` (fast-forward) così Vercel pubblica la versione
-  aggiornata.
+- Sviluppa sul branch **`canone/nuovo-prodotto`** (mai su `main`).
+- **Commit a ogni tappa** (Conventional Commits); `npm run build` deve passare prima del commit.
+- **Push solo su richiesta** dell'utente (niente auto-deploy: l'infra Vercel del vecchio
+  prodotto è stata abbandonata; il deploy del nuovo prodotto si concorda a parte).

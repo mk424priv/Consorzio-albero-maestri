@@ -1,39 +1,38 @@
 # 🌳 Albero Maestri
 
-Spazio di lavoro per un'attività nel verde (potatura, abbattimento,
-manutenzione giardini). **Non un cruscotto: un workspace** costruito attorno ai
-clienti, dove lavori, ore, incassi, squadra e compensi vivono collegati tra
-loro — pensato prima per lo smartphone.
+Il **taccuino del maestro**: un'app per chi fa lavori nel verde (potatura,
+giardini, manutenzione) sull'Isola d'Elba. Non un CRM — un quaderno di bottega
+in cui registri il lavoro (fatto o da fare), i clienti, gli operai e i soldi.
+Pensato per il telefono, **local-first**: funziona offline, i dati vivono nel
+dispositivo.
 
-- **Visione & architettura**: [docs/VISIONE.md](docs/VISIONE.md)
-- **PRD frontend**: [docs/PRD-FRONTEND.md](docs/PRD-FRONTEND.md)
-- **Concezione originale**: [Presentazione-Concezione.md](Presentazione-Concezione.md)
+> Questo è un **prodotto nuovo**. La verità del prodotto vive in
+> [`canone/`](canone/): visione UX (`01`), specifica (`02`), piano (`03`).
 
 ## L'esperienza
 
-| Superficie | Cosa offre |
-|---|---|
-| 🌱 **Spazio** | La bacheca dei clienti (carte o tabella stile Notion). Carte espandibili, codice parlante, saldi, azioni rapide. Il pilota di comando. |
-| 🌿 **Scheda cliente** | L'hub di ogni cliente: panoramica con feed attività, lavori, pagamenti, ore, spese — tutto collegato, con creazione contestuale. |
-| 🧑‍🌾 **Squadra** | Gli operatori e il loro libro mastro: ore → dovuto, pagato, **da pagare**. Registri i compensi alla squadra. |
-| 💶 **Soldi** | Il flusso del denaro: movimenti (incassi/compensi/spese), storico mensile con micro-grafici, patrimonio attrezzi. |
-| 📅 **Agenda** | I lavori nel tempo, per giorno e per operatore, con azioni rapide. |
+- **Agenda** — la home: feed mensile dei lavori, con la *targhetta* di ottone
+  della data che segue lo scroll. Card `svolto` (ricevuta calda) vs `programmato`
+  (copia a matita), con incasso al volo.
+- **Crea registrazione** — il cuore: scegli il carattere (`svolto`/`programmato`)
+  e la modalità (`preventivo`/`ore`/`giornate`/`totale`); cliente, spese,
+  collaborazione, "Già incassato?". Tutto cresce dal basso, niente campi vuoti.
+- **Cliente** — la scheda-dossier: `codice parlante` (`MR-03-12-05`), riepilogo,
+  stati separati (pagato / da incassare / da fare), chiusura pagamenti inline.
+- **Operaio** — statistica minima + azioni; `Paga operaio`. Le *mie* ore sono
+  profitto, non costo.
+- **Soldi** — il centro: `da incassare` ⇄ `da pagare`, `Incasso Subito`, prelievo,
+  e tre dashboard (guadagnato / incassato / da incassare) che aprono la Dashboard.
 
-Ogni entità ha la sua **tinta-guida** (cliente, operatore, lavoro, preventivo,
-incasso, compenso, spesa, patrimonio): l'occhio riconosce *cosa* sta guardando.
-Creazione e modifica avvengono in **fogli** (bottom-sheet su telefono, dialog su
-desktop). Navigazione a **bottom-nav** su mobile, **rail laterale** su desktop.
-
-Il **codice parlante** (`MR-03-14-01`) riassume ogni cliente — iniziali, giorni
-medi per incassare, spesa media a lavoro, anni insieme — ricalcolato dai dati.
+Il **codice parlante** riassume ogni cliente (iniziali, giorni medi per
+incassare, spesa media a lavoro, anni insieme), ricalcolato dai dati.
 
 ## Stack
 
-**Vite · React 19 · TypeScript · Tailwind CSS v4 · Zustand · React Router ·
-Framer Motion · Radix UI · Lucide.** SPA che gira nel browser: i dati sono
-persistiti in `localStorage` (con dati d'esempio pronti), nessun backend
-richiesto. Lo store è progettato per essere sostituito da un'API reale senza
-toccare l'interfaccia.
+**Vite · React 19 · TypeScript · Tailwind CSS v4** · **Dexie (IndexedDB)** ·
+Zustand · React Router · Framer Motion · Radix UI · Lucide · font self-hosted
+(Fraunces / Inter / IBM Plex Mono) · PWA (Workbox). Local-first: nessun backend
+in v1; la cucitura repository permette di aggiungere un sync senza riscrivere la UI.
 
 ## Avvio
 
@@ -44,32 +43,20 @@ npm install
 npm run dev        # http://localhost:3000
 ```
 
-Accesso: password predefinita `albero`.
+L'app si apre diretta (nessuna password). Allo start carica dati d'esempio.
 
 ## Script
 
 | Comando | Azione |
 |---|---|
 | `npm run dev` | Server di sviluppo |
-| `npm run build` | Type-check + build di produzione (`dist/`) |
+| `npm run build` | Type-check + build (`dist/`) |
 | `npm run preview` | Anteprima della build |
+| `npm test` | Test del motore conti (vitest) |
 | `npm run lint` | ESLint |
 
-## Dati
+## Dati & backup
 
-Vivono nel browser (`localStorage`, chiave `albero-maestri`). Allo start trovi
-uno scenario d'esempio (clienti dell'Isola d'Elba, una squadra di due operatori
-con compensi saldati e in sospeso). Dal menù profilo puoi **ricaricare gli
-esempi** o **svuotare tutto**.
-
-## Struttura
-
-```
-docs/             VISIONE.md (concezione) · PRD-FRONTEND.md (specifica)
-src/lib/          dominio, format, codice-parlante, conti, squadra, movimenti, entità (tinte), motion
-src/data/seed.ts  dati d'esempio
-src/store/        store dati (Zustand) · store UI (fogli/conferme) · toast
-src/components/ui/ libreria UI (Button, Field, Sheet, Tabs, Table, Menu, …)
-src/components/   Shell (nav) · sheets (creazioni/modifiche globali)
-src/pages/        Spazio · ClienteScheda · Squadra · OperatoreScheda · Soldi · Agenda · Login
-```
+Vivono nel browser via **Dexie/IndexedDB** (local-first). Da **Impostazioni**
+puoi **esportare/importare** un file JSON (backup e trasferimento) o **ricaricare
+i dati d'esempio**.
