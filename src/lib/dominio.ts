@@ -5,6 +5,8 @@ export type Fase = "fatto" | "da_fare"; // temporale: svolto | programmato
 export type Modo = "preventivo" | "ore"; // compenso
 export type Conteggio = "totale" | "per_giorni"; // conteggio ore
 export type StatoIncasso = "non_pagato" | "parziale" | "pagato"; // per-lavoro
+export type FasciaGiornata = "giornata" | "mattina" | "pomeriggio" | "orario"; // collocazione nel giorno
+export type StatoPreventivo = "da_fare" | "inviato" | "accettato" | "rifiutato"; // ciclo preventivo (solo modo = preventivo)
 
 // ── Altri enum ──
 export type Modalita = "preventivo" | "ore"; // modo predefinito del cliente
@@ -13,7 +15,7 @@ export type OriginePagamento = "preventivo" | "acconto" | "saldo" | "ore" | "man
 export type StatoPagamento = "in_attesa" | "pagato" | "in_ritardo"; // per-pagamento (invoice)
 export type StatoCompenso = "da_pagare" | "parziale" | "saldato"; // per-operatore
 export type CategoriaSpesa = "benzina" | "materiali" | "attrezzi" | "altro";
-export type MetodoPagamento = "contanti" | "bonifico" | "altro";
+export type MetodoPagamento = "contanti" | "bonifico" | "carta" | "assegno" | "altro";
 
 export const ETICHETTE: Record<string, string> = {
   // modo / modalita / origine
@@ -38,6 +40,15 @@ export const ETICHETTE: Record<string, string> = {
   // stato compenso
   da_pagare: "Da pagare",
   saldato: "Saldato",
+  // fascia giornata
+  giornata: "Giornata",
+  mattina: "Mattina",
+  pomeriggio: "Pomeriggio",
+  orario: "Orario",
+  // stato preventivo ("da_fare" già sopra)
+  inviato: "Inviato",
+  accettato: "Accettato",
+  rifiutato: "Rifiutato",
   // categoria spesa
   benzina: "Benzina",
   materiali: "Materiali",
@@ -46,6 +57,8 @@ export const ETICHETTE: Record<string, string> = {
   // metodo
   contanti: "Contanti",
   bonifico: "Bonifico",
+  carta: "Carta",
+  assegno: "Assegno",
   // ruolo
   titolare: "Titolare",
   collaboratore: "Collaboratore",
@@ -73,4 +86,10 @@ export const TONO_COMPENSO: Record<StatoCompenso, Tono> = {
   da_pagare: "attenzione",
   parziale: "lichene",
   saldato: "positivo",
+};
+export const TONO_PREVENTIVO: Record<StatoPreventivo, Tono> = {
+  da_fare: "attenzione",
+  inviato: "ottone",
+  accettato: "positivo",
+  rifiutato: "critico",
 };

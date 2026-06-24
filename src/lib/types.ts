@@ -2,11 +2,13 @@ import type {
   CategoriaSpesa,
   Conteggio,
   Fase,
+  FasciaGiornata,
   MetodoPagamento,
   Modalita,
   Modo,
   OriginePagamento,
   RuoloOperatore,
+  StatoPreventivo,
 } from "./dominio";
 
 /*
@@ -72,6 +74,10 @@ export interface Lavoro {
   // preventivo
   periodo?: { dal: string; al: string } | null;
   prezzo?: number | null;
+  /** Ciclo di vita del preventivo (rilevante solo se modo = "preventivo"). */
+  statoPreventivo?: StatoPreventivo;
+  /** Collocazione nel giorno: "orario" usa oraInizio/oraFine; le altre sono fasce grossolane. */
+  fascia?: FasciaGiornata;
   // fascia oraria opzionale
   oraInizio?: string;
   oraFine?: string;

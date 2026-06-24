@@ -68,7 +68,7 @@ export function creaSeed(): Dati {
   // L1 — svolto · ore · totale — Rossi, io+Luca, pagato pieno (lordo 300)
   const l1: Lavoro = {
     id: nuovoId(), clienteId: rossi.id, titolo: "Potatura siepi e ulivi", luogo: "Marciana Marina",
-    data: g(4), fase: "fatto", modo: "ore", conteggio: "totale", tariffaClienteSnapshot: 25,
+    data: g(4), fase: "fatto", modo: "ore", conteggio: "totale", fascia: "giornata", tariffaClienteSnapshot: 25,
     partecipanti: [
       { collaboratoreId: io.id, tariffaSnapshot: 0, oreTotale: 6 },
       { collaboratoreId: luca.id, tariffaSnapshot: 12, oreTotale: 6 },
@@ -84,7 +84,7 @@ export function creaSeed(): Dati {
   // L2 — svolto · preventivo — Bianchi, prezzo 800, parziale (acconto 300)
   const l2: Lavoro = {
     id: nuovoId(), clienteId: bianchi.id, titolo: "Sistemazione giardino villa", luogo: "Portoferraio",
-    data: g(8), fase: "fatto", modo: "preventivo", conteggio: "totale", prezzo: 800, periodo: { dal: g(8), al: g(12) },
+    data: g(8), fase: "fatto", modo: "preventivo", conteggio: "totale", fascia: "giornata", statoPreventivo: "accettato", prezzo: 800, periodo: { dal: g(8), al: g(12) },
     partecipanti: [{ collaboratoreId: io.id, tariffaSnapshot: 0 }],
     creatoIl: g(8), updatedAt: ora,
   };
@@ -94,7 +94,7 @@ export function creaSeed(): Dati {
   // L3 — svolto · ore · per_giorni — Comune, io+Marta su 3 giorni, aperto (lordo 672)
   const l3: Lavoro = {
     id: nuovoId(), clienteId: comune.id, titolo: "Manutenzione verde pubblico", luogo: "Marciana",
-    data: g(15), fase: "fatto", modo: "ore", conteggio: "per_giorni", tariffaClienteSnapshot: 28,
+    data: g(15), fase: "fatto", modo: "ore", conteggio: "per_giorni", fascia: "giornata", tariffaClienteSnapshot: 28,
     partecipanti: [
       { collaboratoreId: io.id, tariffaSnapshot: 0 },
       { collaboratoreId: marta.id, tariffaSnapshot: 14 },
@@ -112,7 +112,7 @@ export function creaSeed(): Dati {
   // L4 — programmato (da_fare) — Verdi, pianificato
   const l4: Lavoro = {
     id: nuovoId(), clienteId: verdi.id, titolo: "Impianto nuovo prato", descrizione: "Preparare terreno e semina", luogo: "Capoliveri",
-    data: g(28), fase: "da_fare", modo: "ore", conteggio: "totale", tariffaClienteSnapshot: 22,
+    data: g(28), fase: "da_fare", modo: "ore", conteggio: "totale", fascia: "mattina", tariffaClienteSnapshot: 22,
     partecipanti: [{ collaboratoreId: io.id, tariffaSnapshot: 0 }],
     creatoIl: oggi, updatedAt: ora,
   };
@@ -121,13 +121,23 @@ export function creaSeed(): Dati {
   // L5 — svolto · ore — Rossi, solo io, aperto (lordo 100)
   const l5: Lavoro = {
     id: nuovoId(), clienteId: rossi.id, titolo: "Taglio erba uliveto", luogo: "Marciana Marina",
-    data: g(20), fase: "fatto", modo: "ore", conteggio: "totale", tariffaClienteSnapshot: 25,
+    data: g(20), fase: "fatto", modo: "ore", conteggio: "totale", fascia: "pomeriggio", tariffaClienteSnapshot: 25,
     partecipanti: [{ collaboratoreId: io.id, tariffaSnapshot: 0, oreTotale: 4 }],
     creatoIl: g(20), updatedAt: ora,
   };
   lavori.push(l5);
   regOra(l5, io.id, g(20), 4);
   pagamenti.push({ id: nuovoId(), clienteId: rossi.id, lavoroId: l5.id, origine: "ore", importoAtteso: 100, importoIncassato: 0, dataEmissione: g(20), updatedAt: ora });
+
+  // L6 — programmato · preventivo — Bianchi, preventivo inviato in attesa di risposta
+  const l6: Lavoro = {
+    id: nuovoId(), clienteId: bianchi.id, titolo: "Preventivo ristrutturazione aiuole", luogo: "Portoferraio",
+    data: g(30), fase: "da_fare", modo: "preventivo", conteggio: "totale", fascia: "mattina",
+    statoPreventivo: "inviato", prezzo: 500, periodo: { dal: g(30), al: g(30) },
+    partecipanti: [{ collaboratoreId: io.id, tariffaSnapshot: 0 }],
+    creatoIl: oggi, updatedAt: ora,
+  };
+  lavori.push(l6);
 
   // compenso parziale a Luca
   compensi.push({ id: nuovoId(), operatoreId: luca.id, importo: 40, data: g(12), metodo: "contanti", periodo: mese, updatedAt: ora });
