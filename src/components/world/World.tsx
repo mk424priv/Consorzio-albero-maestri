@@ -3,33 +3,13 @@ import { ShaderWorld } from "./ShaderWorld";
 
 export type Mondo = "agenda" | "soldi" | "ambra" | "grafite" | "ossidiana";
 
-// Gradiente a strati: glow radiale acceso + base profonda = contrasto e profondità.
+// Tela quasi-nera + glow di sezione FIOCO in alto. Le card sono solide sopra.
 export const MONDI: Record<Mondo, { a: string; b: string; css: string }> = {
-  agenda: {
-    a: "#0b1330",
-    b: "#3358d8",
-    css: "radial-gradient(130% 90% at 82% 4%, #3a63f0 0%, rgba(58,99,240,0) 52%), radial-gradient(120% 80% at 0% 100%, #1b2a6b 0%, rgba(27,42,107,0) 50%), linear-gradient(160deg, #0a1230, #070b1c)",
-  },
-  soldi: {
-    a: "#052018",
-    b: "#11a06a",
-    css: "radial-gradient(130% 90% at 80% 2%, #1bd089 0%, rgba(27,208,137,0) 52%), radial-gradient(120% 80% at 0% 100%, #0a5e40 0%, rgba(10,94,64,0) 50%), linear-gradient(160deg, #062018, #04130d)",
-  },
-  ambra: {
-    a: "#2a1206",
-    b: "#e0702a",
-    css: "radial-gradient(130% 90% at 82% 2%, #ff8c3a 0%, rgba(255,140,58,0) 52%), radial-gradient(120% 80% at 0% 100%, #93420f 0%, rgba(147,66,15,0) 50%), linear-gradient(160deg, #2a1206, #170a04)",
-  },
-  grafite: {
-    a: "#08090d",
-    b: "#23242e",
-    css: "radial-gradient(130% 90% at 80% 2%, #34374a 0%, rgba(52,55,74,0) 55%), linear-gradient(160deg, #131420, #06070b)",
-  },
-  ossidiana: {
-    a: "#070810",
-    b: "#181a26",
-    css: "radial-gradient(130% 90% at 82% 2%, #2a2d44 0%, rgba(42,45,68,0) 55%), linear-gradient(160deg, #0c0e1a, #050610)",
-  },
+  agenda: { a: "#0c1230", b: "#1b2a6b", css: "radial-gradient(120% 70% at 50% -12%, rgba(44,64,150,0.5) 0%, rgba(44,64,150,0) 60%), #08080a" },
+  soldi: { a: "#06231a", b: "#0c5a3e", css: "radial-gradient(120% 70% at 50% -12%, rgba(20,128,86,0.46) 0%, rgba(20,128,86,0) 60%), #08080a" },
+  ambra: { a: "#2a1206", b: "#7a3b0e", css: "radial-gradient(120% 70% at 50% -12%, rgba(160,86,32,0.46) 0%, rgba(160,86,32,0) 60%), #08080a" },
+  grafite: { a: "#0c0c10", b: "#1a1a20", css: "radial-gradient(120% 70% at 50% -12%, rgba(64,64,80,0.4) 0%, rgba(64,64,80,0) 60%), #08080a" },
+  ossidiana: { a: "#0a0a10", b: "#15151d", css: "radial-gradient(120% 70% at 50% -12%, rgba(44,44,66,0.36) 0%, rgba(44,44,66,0) 60%), #08080a" },
 };
 
 export function mondoFromPath(path: string): Mondo {
@@ -40,7 +20,7 @@ export function mondoFromPath(path: string): Mondo {
   return "agenda";
 }
 
-/** Sfondo vivo per sezione: gradiente animato (sempre) + shader WebGL sopra (se disponibile). */
+/** Sfondo: glow di sezione fioco e animato + shader sottilissimo sopra (ambient). */
 export function World() {
   const { pathname } = useLocation();
   const m = MONDI[mondoFromPath(pathname)];

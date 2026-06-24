@@ -11,13 +11,14 @@ const base =
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/60";
 
 // I nomi delle variant restano stabili (compat con le pagine); cambia solo lo stile.
-// Ruoli chiari: lime PIENO = azione primaria · outline = secondaria · vetro = utility · ghost
+// Bottoni NEUTRI (Revolut): l'accento non sta mai sulla superficie del bottone.
+// primaria = bianco pieno · secondaria = grigio solido · utility/ghost
 const variants: Record<Variant, string> = {
-  ottone: "bg-lime text-fondo shadow-flottante hover:bg-lime-scuro", // primaria
-  inchiostro: "bg-transparent text-bianco shadow-[inset_0_0_0_1.5px_rgba(255,255,255,0.30)] hover:bg-white/10", // secondaria (outline)
-  fantasma: "text-fumo hover:bg-white/10 hover:text-bianco", // terziaria
-  tenue: "glass-bassa text-bianco", // utility (es. icona)
-  critico: "bg-transparent text-critico shadow-[inset_0_0_0_1.5px_rgba(255,99,99,0.42)] hover:bg-critico/10",
+  ottone: "bg-white text-fondo font-semibold shadow-flottante hover:bg-white/90", // primaria
+  inchiostro: "bg-superficie-alta text-bianco hover:bg-[#2a2a31]", // secondaria
+  fantasma: "text-fumo hover:bg-white/8 hover:text-bianco", // terziaria
+  tenue: "bg-superficie text-fumo hover:bg-superficie-alta", // utility (es. icona)
+  critico: "bg-critico/12 text-critico hover:bg-critico/20",
 };
 
 const sizes: Record<Size, string> = {

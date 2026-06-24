@@ -1,54 +1,49 @@
 @import "tailwindcss";
 
 /*
-  Albero Maestri — "Vetro Vivo" v2 (canone 04).
-  Vetro CONTRASTATO e robusto: superfici definite (anche senza backdrop-filter),
-  filo di luce sui bordi per dare peso, gerarchia chiara, accento lime vivo.
-  Mobile-first.
+  Albero Maestri — sistema "Revolut-like" (canone 04 v3).
+  Superfici SOLIDE su tela quasi-nera, alto contrasto, font geometrico (Manrope)
+  + Inter, accenti puntuali (mai sui bottoni). Niente vetro trasparente.
 */
 @theme {
-  /* ── Fondo base (scuro profondo) ── */
-  --color-fondo: #06070b;
+  --color-fondo: #08080a; /* tela quasi-nera */
+  --color-superficie: #161619; /* card solida */
+  --color-superficie-alta: #1f1f25; /* elevata */
+  --color-superficie-bassa: #101012; /* incassata / track */
+  --color-bordo: #ffffff14;
 
-  /* ── Mondi (tinte dei gradienti/shader) ── */
-  --color-notte-1: #0b1330;
-  --color-notte-2: #3358d8;
-  --color-linfa-1: #052018;
-  --color-linfa-2: #11a06a;
-  --color-ambra-1: #2a1206;
-  --color-ambra-2: #e0702a;
-  --color-grafite-1: #08090d;
-  --color-grafite-2: #23242e;
-  --color-ossidiana-1: #070810;
-  --color-ossidiana-2: #181a26;
+  /* tinte di sezione (fioche, ambient) */
+  --color-notte: #1b2a6b;
+  --color-linfa: #0c5a3e;
+  --color-ambra: #7a3b0e;
+  --color-grafite: #1a1a20;
+  --color-ossidiana: #111118;
 
-  /* ── Inchiostro su scuro (più leggibile) ── */
+  /* inchiostro */
   --color-bianco: #ffffff;
-  --color-fumo: #ffffffd1;   /* ~82% */
-  --color-fumo-2: #ffffff8f; /* ~56% */
+  --color-fumo: #ffffffb0; /* ~69% */
+  --color-fumo-2: #ffffff70; /* ~44% */
 
-  /* ── Accento brand (lime vivo) ── */
-  --color-lime: #c8ff32;
-  --color-lime-scuro: #a6e617;
+  /* accento (highlight/icone, NON superfici dei bottoni) */
+  --color-lime: #c8ff3c;
+  --color-lime-scuro: #aee01f;
 
-  /* ── Status (vividi) ── */
+  /* status */
   --color-positivo: #2bf0a8;
-  --color-attenzione: #ffc23d;
-  --color-critico: #ff6363;
+  --color-attenzione: #ffb03a;
+  --color-critico: #ff5f5f;
 
-  /* ── Font ── */
-  --font-display: "Space Grotesk Variable", ui-sans-serif, system-ui, sans-serif;
+  /* font: Manrope (display, ~Aeonik) + Inter (corpo) + mono per codici */
+  --font-display: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
 
-  /* ── Raggi ── */
-  --radius-vetro: 1.375rem;
-  --radius-bolla: 1.75rem;
+  --radius-vetro: 1.25rem; /* 20px */
+  --radius-bolla: 1.5rem;
   --radius-pill: 999px;
 
-  /* ── Ombre = profondità ── */
-  --shadow-vetro: 0 16px 40px -18px rgba(0, 0, 0, 0.85);
-  --shadow-flottante: 0 12px 30px -8px rgba(0, 0, 0, 0.7);
+  --shadow-vetro: 0 10px 28px -12px rgba(0, 0, 0, 0.7);
+  --shadow-flottante: 0 8px 22px -8px rgba(0, 0, 0, 0.6);
 }
 
 @layer base {
@@ -74,86 +69,38 @@
   h2,
   h3 {
     font-family: var(--font-display);
-    font-weight: 600;
-    letter-spacing: -0.015em;
+    font-weight: 700;
+    letter-spacing: -0.02em;
   }
 }
 
 @layer utilities {
-  /*
-    Vetro: leggibile OVUNQUE. Base traslucida + filo di luce sul bordo (peso) +
-    ombra. Dove c'è backdrop-filter si aggiunge il blur; dove non c'è, la base
-    diventa più opaca (fallback) così le card non spariscono mai.
-  */
+  /* Superfici SOLIDE — leggibili sempre (niente trasparenza/blur). */
   .glass {
-    background-color: rgba(255, 255, 255, 0.07);
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.10),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
-      var(--shadow-vetro);
+    background-color: var(--color-superficie);
+    box-shadow: inset 0 0 0 1px var(--color-bordo), var(--shadow-vetro);
   }
   .glass-alta {
-    background-color: rgba(255, 255, 255, 0.12);
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.16),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.26),
-      var(--shadow-vetro);
+    background-color: var(--color-superficie-alta);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), var(--shadow-vetro);
   }
   .glass-bassa {
-    background-color: rgba(255, 255, 255, 0.05);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    background-color: var(--color-superficie-bassa);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
   }
   .glass-scura {
-    background-color: rgba(7, 9, 14, 0.62);
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 255, 255, 0.08),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
-      var(--shadow-vetro);
+    background-color: #121216;
+    box-shadow: inset 0 0 0 1px var(--color-bordo), var(--shadow-vetro);
   }
-
-  @supports ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
-    .glass {
-      -webkit-backdrop-filter: blur(20px) saturate(170%);
-      backdrop-filter: blur(20px) saturate(170%);
-    }
-    .glass-alta {
-      background-color: rgba(255, 255, 255, 0.10);
-      -webkit-backdrop-filter: blur(26px) saturate(180%);
-      backdrop-filter: blur(26px) saturate(180%);
-    }
-    .glass-bassa {
-      -webkit-backdrop-filter: blur(12px);
-      backdrop-filter: blur(12px);
-    }
-    .glass-scura {
-      background-color: rgba(7, 9, 14, 0.5);
-      -webkit-backdrop-filter: blur(22px) saturate(140%);
-      backdrop-filter: blur(22px) saturate(140%);
-    }
-  }
-
   .tabular-nums {
     font-variant-numeric: tabular-nums;
   }
-}
-
-/* Fallback animato per i mondi: gradiente che respira (anche senza WebGL) */
-@keyframes mondoDeriva {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 100% 100%; }
-  100% { background-position: 0% 0%; }
-}
-.mondo-anim {
-  background-size: 180% 180%;
-  animation: mondoDeriva 24s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .mondo-anim {
-    animation: none;
+  .tracking-label {
+    letter-spacing: 0.05em;
   }
 }
 
-/* ── Card per stato: barra-accento a sinistra + gradiente interno + anello ── */
+/* Card per stato: solide + tinta sottile + barra-accento a sinistra. */
 @layer utilities {
   .statocard {
     position: relative;
@@ -161,41 +108,31 @@
     border-radius: var(--radius-vetro);
   }
   .statocard--programmato {
-    background:
-      linear-gradient(135deg, rgba(255, 194, 61, 0.20), rgba(255, 194, 61, 0.02) 56%),
-      rgba(255, 255, 255, 0.05);
-    box-shadow:
-      inset 0 0 0 1px rgba(255, 194, 61, 0.24),
-      inset 4px 0 0 0 rgba(255, 194, 61, 0.95),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.18),
-      var(--shadow-vetro);
+    background: linear-gradient(118deg, rgba(255, 176, 58, 0.14), rgba(255, 176, 58, 0) 52%), var(--color-superficie);
+    box-shadow: inset 0 0 0 1px rgba(255, 176, 58, 0.22), inset 4px 0 0 0 var(--color-attenzione), var(--shadow-vetro);
   }
   .statocard--incassare {
-    background:
-      linear-gradient(135deg, rgba(200, 255, 50, 0.16), rgba(200, 255, 50, 0.02) 56%),
-      rgba(255, 255, 255, 0.06);
-    box-shadow:
-      inset 0 0 0 1px rgba(200, 255, 50, 0.22),
-      inset 4px 0 0 0 rgba(200, 255, 50, 0.95),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.2),
-      var(--shadow-vetro);
+    background: linear-gradient(118deg, rgba(200, 255, 60, 0.12), rgba(200, 255, 60, 0) 52%), var(--color-superficie);
+    box-shadow: inset 0 0 0 1px rgba(200, 255, 60, 0.18), inset 4px 0 0 0 var(--color-lime), var(--shadow-vetro);
   }
   .statocard--pagato {
-    background:
-      linear-gradient(135deg, rgba(43, 240, 168, 0.13), rgba(43, 240, 168, 0.015) 56%),
-      rgba(255, 255, 255, 0.035);
-    box-shadow:
-      inset 0 0 0 1px rgba(43, 240, 168, 0.18),
-      inset 4px 0 0 0 rgba(43, 240, 168, 0.7),
-      inset 0 1px 0 0 rgba(255, 255, 255, 0.12),
-      var(--shadow-vetro);
+    background: linear-gradient(118deg, rgba(43, 240, 168, 0.1), rgba(43, 240, 168, 0) 52%), var(--color-superficie);
+    box-shadow: inset 0 0 0 1px rgba(43, 240, 168, 0.14), inset 4px 0 0 0 rgba(43, 240, 168, 0.65), var(--shadow-vetro);
   }
-  @supports ((backdrop-filter: blur(2px)) or (-webkit-backdrop-filter: blur(2px))) {
-    .statocard--programmato,
-    .statocard--incassare,
-    .statocard--pagato {
-      -webkit-backdrop-filter: blur(20px) saturate(165%);
-      backdrop-filter: blur(20px) saturate(165%);
-    }
+}
+
+/* Sfondo ambient (fioco) che respira — sotto card solide. */
+@keyframes mondoDeriva {
+  0% { background-position: 0% 0%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 0%; }
+}
+.mondo-anim {
+  background-size: 160% 160%;
+  animation: mondoDeriva 28s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .mondo-anim {
+    animation: none;
   }
 }

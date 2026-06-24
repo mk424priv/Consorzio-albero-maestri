@@ -41,18 +41,16 @@ const fragment = /* glsl */ `
   void main(){
     vec2 uv = vUv;
     vec2 p = uv * vec2(uRes.x / max(uRes.y, 1.0), 1.0) * 2.4;
-    float t = uTime * 0.11;                       // flusso piu' veloce e visibile
-    float flow = fbm(p + vec2(t, t * 0.7) + fbm(p * 1.3 - t * 0.5));
-    float g = smoothstep(-0.2, 1.1, uv.y + flow * 0.5);
+    float t = uTime * 0.06;                       // ambient lento, scuro
+    float flow = fbm(p + vec2(t, t * 0.7) + fbm(p * 1.2 - t * 0.4));
+    float g = smoothstep(-0.2, 1.1, uv.y + flow * 0.45);
     vec3 col = mix(uColorA, uColorB, g);
-    // bande di luce che scorrono — il movimento si VEDE
-    float bands = fbm(p * 0.9 + vec2(-t * 1.5, t * 1.1));
-    float glow = smoothstep(0.52, 0.96, bands);
-    col += uColorB * 0.95 * glow;
-    col += vec3(0.78, 0.95, 0.2) * 0.22 * smoothstep(0.78, 1.0, bands); // scintille lime
-    float vig = smoothstep(1.32, 0.12, length(uv - 0.5));
-    col *= mix(0.5, 1.28, vig);
-    gl_FragColor = vec4(col, 0.62);
+    float bands = fbm(p * 0.85 + vec2(-t * 1.3, t));
+    float glow = smoothstep(0.58, 0.97, bands);
+    col += uColorB * 0.5 * glow;                  // moto soffuso, non invadente
+    float vig = smoothstep(1.32, 0.16, length(uv - 0.5));
+    col *= mix(0.4, 1.08, vig);
+    gl_FragColor = vec4(col, 0.32);
   }
 `;
 
