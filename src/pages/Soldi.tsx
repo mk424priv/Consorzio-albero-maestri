@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
 import { Intestazione } from "@/components/Intestazione";
-import { Badge, Button, Card, Codice, Field, Segmented, Sheet } from "@/components/ui";
+import { Badge, Button, Card, Codice, Field, NumberHero, Segmented, Sheet } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { libroOperatore, riepilogoCliente, riepilogoSoldi } from "@/lib/conti";
 import { chiaveMese, formatEuro, formatMese, oggiISO } from "@/lib/format";
@@ -19,11 +19,9 @@ function meseAdiacente(chiave: string, delta: number): string {
 
 function Dash({ label, valore, accento }: { label: string; valore: number; accento?: boolean }) {
   return (
-    <div className="flex flex-col gap-1 rounded-vetro glass-scura p-3">
-      <span className="font-mono text-[0.58rem] uppercase tracking-wider text-fumo">{label}</span>
-      <span className={accento ? "font-mono text-sm font-medium tabular-nums text-attenzione" : "font-mono text-sm font-medium tabular-nums text-lime"}>
-        {formatEuro(valore)}
-      </span>
+    <div className="flex flex-col gap-1.5 rounded-vetro glass-scura p-3.5">
+      <span className="font-mono text-[0.55rem] uppercase tracking-wider text-fumo-2">{label}</span>
+      <NumberHero value={valore} euro className={accento ? "text-[0.95rem] text-attenzione" : "text-[0.95rem] text-lime"} />
     </div>
   );
 }
