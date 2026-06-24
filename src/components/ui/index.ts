@@ -22,3 +22,4 @@ export { Swipeable } from "./Swipeable";
 export { Testata } from "./Testata";
 export { Cruscotto } from "./Cruscotto";
 export { Conferma } from "./Conferma";
+export { CampoFacolt } from "./CampoFacolt";
