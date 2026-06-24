@@ -1,7 +1,8 @@
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, ShieldAlert, Trash2 } from "lucide-react";
+import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { Intestazione } from "@/components/Intestazione";
-import { Badge, Button, Card, Codice, Stamp } from "@/components/ui";
+import { toast } from "sonner";
+import { Badge, Button, Codice, Foglio, Stamp } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { cn } from "@/lib/cn";
 import { etichetta } from "@/lib/dominio";
@@ -14,9 +15,7 @@ function Riga({ label, valore, forte }: { label: string; valore: string; forte?:
   return (
     <div className="flex items-center justify-between">
       <span className="text-sm text-fumo">{label}</span>
-      <span className={cn("font-mono tabular-nums", forte ? "text-base text-lime" : "text-sm text-fumo")}>
-        {valore}
-      </span>
+      <span className={cn("font-mono tabular-nums", forte ? "text-base font-bold text-bianco" : "text-sm text-fumo")}>{valore}</span>
     </div>
   );
 }
@@ -25,12 +24,13 @@ export function Cantiere() {
   const { id = "" } = useParams();
   const navigate = useNavigate();
   const dati = useStore((s) => s.dati);
+  const [pericolo, setPericolo] = useState(false);
   const lavoro = dati.lavori.find((l) => l.id === id);
 
   if (!lavoro) {
     return (
-      <div className="flex flex-col gap-3">
-        <Intestazione titolo="Lavoro" />
+      <div className="px-5 pt-6">
+        <button type="button" onClick={() => navigate(-1)} className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo"><ArrowLeft size={18} /></button>
         <p className="text-sm text-fumo-2">Lavoro non trovato.</p>
       </div>
     );
@@ -42,20 +42,19 @@ export function Cantiere() {
 
   const elimina = async () => {
     await eliminaLavoro(lavoro.id);
+    toast.success("Lavoro eliminato");
     navigate(-1);
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <Intestazione
-        titolo={lavoro.titolo}
-        sottotitolo={cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() : "Senza cliente"}
-        azione={
-          <Button size="icona" variant="tenue" onClick={() => navigate(-1)} aria-label="Indietro">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        }
-      />
+    <div className="flex flex-col gap-4 px-5 pt-5 pb-10">
+      <header className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight">{lavoro.titolo}</h1>
+          <p className="text-sm text-fumo">{cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() : "Senza cliente"}</p>
+        </div>
+        <button type="button" onClick={() => navigate(-1)} aria-label="Indietro" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-superficie text-fumo hover:text-bianco"><ArrowLeft size={18} /></button>
+      </header>
 
       <div className="flex flex-wrap items-center gap-2">
         {cliente && <Codice value={codiceCliente(dati, cliente.id)} />}
@@ -64,49 +63,52 @@ export function Cantiere() {
         <span className="font-mono text-xs text-fumo-2">{formatData(lavoro.data)}</span>
       </div>
 
-      {lavoro.periodo && (
-        <p className="font-mono text-xs text-fumo-2">
-          Periodo: {formatData(lavoro.periodo.dal)} – {formatData(lavoro.periodo.al)}
-        </p>
-      )}
+      {lavoro.periodo && <p className="font-mono text-xs text-fumo-2">Periodo: {formatData(lavoro.periodo.dal)} – {formatData(lavoro.periodo.al)}</p>}
 
-      <Card tono="incasso" className="flex flex-col gap-2 p-4">
+      <div className="flex flex-col gap-2 rounded-vetro bg-superficie p-4">
         <Riga label="Lordo" valore={formatEuro(calc.lordo)} forte />
         <Riga label="Ore totali" valore={formatOre(calc.oreTotali)} />
         <Riga label="Costo collaboratori" valore={formatEuro(calc.costoCollaboratori)} />
         <Riga label="Spese" valore={formatEuro(calc.speseTotali)} />
-        <div className="my-1 border-t border-white/10" />
+        <div className="my-1 border-t border-bordo" />
         <Riga label="Netto" valore={formatEuro(calc.netto)} forte />
         {svolto && <Riga label="Incassato" valore={formatEuro(calc.incassato)} />}
         {svolto && <Riga label="Da incassare" valore={formatEuro(calc.daIncassare)} />}
-      </Card>
+      </div>
 
-      <section className="flex flex-col gap-1.5">
-        <h2 className="font-mono text-xs uppercase tracking-wider text-fumo-2">Operai</h2>
-        {calc.partecipanti.map((p) => (
-          <div key={p.collaboratoreId} className="flex items-center justify-between rounded-2xl bg-white/[0.08] px-3 py-2 text-sm">
-            <span>{p.nome}</span>
-            <span className="font-mono text-xs text-fumo-2">
-              {formatOre(p.ore)} · costo {formatEuro(p.costo)}
-            </span>
-          </div>
-        ))}
-      </section>
+      {calc.partecipanti.length > 0 && (
+        <section className="flex flex-col gap-2">
+          <h2 className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Operai</h2>
+          {calc.partecipanti.map((p) => (
+            <div key={p.collaboratoreId} className="flex items-center justify-between rounded-vetro bg-superficie px-3.5 py-2.5 text-sm">
+              <span className="font-medium">{p.nome}</span>
+              <span className="font-mono text-xs text-fumo-2">{formatOre(p.ore)} · costo {formatEuro(p.costo)}</span>
+            </div>
+          ))}
+        </section>
+      )}
 
-      <div className="flex flex-wrap gap-2 pt-2">
+      <div className="flex flex-wrap gap-2 pt-1">
         {svolto ? (
-          <Button variant="fantasma" onClick={() => void riprogramma(lavoro.id)}>
-            Riprogramma
-          </Button>
+          <Button variant="inchiostro" onClick={() => void riprogramma(lavoro.id)}>Riprogramma</Button>
         ) : (
-          <Button variant="inchiostro" onClick={() => void segnaSvolto(lavoro.id)}>
-            Segna svolto
-          </Button>
+          <Button onClick={() => void segnaSvolto(lavoro.id)}>Segna svolto</Button>
         )}
-        <Button variant="critico" onClick={() => void elimina()}>
-          <Trash2 className="h-4 w-4" /> Elimina
+        <Button variant="critico" onClick={() => setPericolo(true)}>
+          <Trash2 size={16} /> Elimina
         </Button>
       </div>
+
+      <Foglio open={pericolo} onOpenChange={setPericolo} variante="pericolo" titolo="Eliminare il lavoro?">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-rosso/10 text-rosso"><ShieldAlert size={30} /></div>
+          <p className="leading-relaxed text-fumo">Azione irreversibile. Lo storico collegato resta nei conti.</p>
+          <div className="flex w-full flex-col gap-2">
+            <Button size="lg" variant="critico" className="bg-rosso text-white hover:bg-rosso/90" onClick={() => void elimina()}>Elimina lavoro</Button>
+            <Button size="lg" variant="fantasma" onClick={() => setPericolo(false)}>Annulla</Button>
+          </div>
+        </div>
+      </Foglio>
     </div>
   );
 }

@@ -41,7 +41,7 @@ export function Impostazioni() {
   };
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
+    <div className="flex flex-col gap-4 px-5 pt-5 pb-10">
       <Intestazione
         titolo="Impostazioni"
         sottotitolo="i tuoi dati vivono nel telefono"
@@ -85,7 +85,7 @@ export function Impostazioni() {
         )}
       </Card>
 
-      {msg && <p className="text-center text-sm text-lime">{msg}</p>}
+      {msg && <p className="text-center text-sm text-verde">{msg}</p>}
 
       <p className="text-center font-mono text-[0.65rem] text-fumo-2">Albero Maestri · local-first · {adessoISO().slice(0, 10)}</p>
     </div>

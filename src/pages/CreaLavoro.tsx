@@ -52,7 +52,7 @@ function NumberField({
         onChange(Number.isFinite(n) ? n : 0);
       }}
       className={cn(
-        "h-10 rounded-2xl border border-white/15 bg-white/[0.08] px-2 text-right font-mono text-sm text-bianco tabular-nums focus-visible:border-lime focus-visible:outline-none",
+        "h-10 rounded-2xl bg-superficie-bassa px-2 text-right font-mono text-sm text-bianco tabular-nums focus-visible:outline-none",
         className,
       )}
     />
@@ -64,7 +64,7 @@ function Trigger({ label, value, onClick }: { label: string; value: React.ReactN
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-3 text-left"
+      className="flex items-center justify-between gap-2 rounded-2xl bg-superficie px-3 py-3 text-left"
     >
       <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">{label}</span>
       <span className="flex items-center gap-1 text-sm text-bianco">
@@ -164,7 +164,7 @@ export function CreaLavoro() {
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
+    <div className="flex flex-col gap-4 px-5 pt-5 pb-10">
       <Intestazione
         titolo="Nuovo record"
         azione={
@@ -193,7 +193,7 @@ export function CreaLavoro() {
             type="date"
             value={b.data}
             onChange={(e) => set({ data: e.target.value || oggiISO() })}
-            className="h-11 rounded-2xl border border-white/15 bg-white/[0.08] px-3 font-sans text-bianco focus-visible:border-lime focus-visible:outline-none"
+            className="h-11 rounded-2xl bg-superficie-bassa px-3 font-sans text-bianco focus-visible:outline-none"
           />
         </div>
 
@@ -357,14 +357,14 @@ function CampiOre({
         <div className="flex flex-col gap-2">
           <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Giornate</label>
           {b.giornate.map((g) => (
-            <div key={g.id} className="flex items-center gap-2 rounded-2xl bg-white/[0.08] p-2">
+            <div key={g.id} className="flex items-center gap-2 rounded-2xl bg-superficie p-2">
               <input
                 type="date"
                 value={g.data}
                 onChange={(e) =>
                   set({ giornate: b.giornate.map((x) => (x.id === g.id ? { ...x, data: e.target.value } : x)) })
                 }
-                className="h-9 flex-1 rounded-2xl border border-white/15 bg-white/[0.08] px-2 font-mono text-xs"
+                className="h-9 flex-1 rounded-2xl bg-superficie-bassa px-2 font-mono text-xs"
               />
               {b.partecipanti.map((p) => (
                 <NumberField
@@ -406,7 +406,7 @@ function CampiOre({
         <div className="flex flex-col gap-2">
           <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Ore lavorate</label>
           {b.partecipanti.map((p) => (
-            <div key={p.collaboratoreId} className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-2">
+            <div key={p.collaboratoreId} className="flex items-center justify-between gap-2 rounded-2xl bg-superficie px-3 py-2">
               <span className="text-sm">{nome(p.collaboratoreId)}{p.collaboratoreId !== io ? ` · ${p.tariffaSnapshot} €/h` : ""}</span>
               <div className="flex items-center gap-1">
                 <NumberField key={`${b.modoCalc}-${p.collaboratoreId}`} iniziale={p.ore} placeholder="0" onChange={(n) => setOrePart(p.collaboratoreId, n)} className="h-9 w-16" />
@@ -487,9 +487,9 @@ function PeriodoFacolt({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"
   }
   return (
     <div className="flex items-center gap-2">
-      <input type="date" value={b.periodo.dal} onChange={(e) => set({ periodo: { dal: e.target.value, al: b.periodo!.al } })} className="h-9 flex-1 rounded-2xl border border-white/15 bg-white/[0.08] px-2 font-mono text-xs" />
+      <input type="date" value={b.periodo.dal} onChange={(e) => set({ periodo: { dal: e.target.value, al: b.periodo!.al } })} className="h-9 flex-1 rounded-2xl bg-superficie-bassa px-2 font-mono text-xs" />
       <span className="text-fumo-2">–</span>
-      <input type="date" value={b.periodo.al} onChange={(e) => set({ periodo: { dal: b.periodo!.dal, al: e.target.value } })} className="h-9 flex-1 rounded-2xl border border-white/15 bg-white/[0.08] px-2 font-mono text-xs" />
+      <input type="date" value={b.periodo.al} onChange={(e) => set({ periodo: { dal: b.periodo!.dal, al: e.target.value } })} className="h-9 flex-1 rounded-2xl bg-superficie-bassa px-2 font-mono text-xs" />
       <button type="button" onClick={() => set({ periodo: null })} aria-label="Rimuovi periodo">
         <X className="h-4 w-4 text-fumo-2" />
       </button>
@@ -506,7 +506,7 @@ function SezioneSpese({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"]
           <select
             value={s.categoria}
             onChange={(e) => set({ spese: b.spese.map((x) => (x.id === s.id ? { ...x, categoria: e.target.value as CategoriaSpesa } : x)) })}
-            className="h-9 rounded-2xl border border-white/15 bg-white/[0.08] px-2 text-xs"
+            className="h-9 rounded-2xl bg-superficie-bassa px-2 text-xs"
           >
             {CATEGORIE.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -516,7 +516,7 @@ function SezioneSpese({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"]
             value={s.descrizione}
             placeholder="nota"
             onChange={(e) => set({ spese: b.spese.map((x) => (x.id === s.id ? { ...x, descrizione: e.target.value } : x)) })}
-            className="h-9 min-w-0 flex-1 rounded-2xl border border-white/15 bg-white/[0.08] px-2 text-sm"
+            className="h-9 min-w-0 flex-1 rounded-2xl bg-superficie-bassa px-2 text-sm"
           />
           <NumberField iniziale={s.importo} placeholder="0" onChange={(n) => set({ spese: b.spese.map((x) => (x.id === s.id ? { ...x, importo: n } : x)) })} className="h-9 w-16" />
           <button type="button" onClick={() => set({ spese: b.spese.filter((x) => x.id !== s.id) })} aria-label="Rimuovi spesa">
@@ -586,7 +586,7 @@ function ScegliCliente({ onIndietro, onScelto }: { onIndietro: () => void; onSce
   };
 
   return (
-    <div className="flex flex-col gap-3 pb-8">
+    <div className="flex flex-col gap-3 px-5 pt-5 pb-10">
       <Intestazione
         titolo={nuovo ? "Nuovo cliente" : "Scegli cliente"}
         azione={
@@ -608,10 +608,10 @@ function ScegliCliente({ onIndietro, onScelto }: { onIndietro: () => void; onSce
         <>
           <div className="relative flex items-center">
             <Search className="absolute left-3 h-4 w-4 text-fumo-2" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca per nome o codice…" className="h-11 w-full rounded-2xl border border-white/15 bg-white/[0.08] pl-9 pr-3 text-sm focus-visible:border-lime focus-visible:outline-none" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca per nome o codice…" className="h-11 w-full rounded-2xl bg-superficie-bassa pl-9 pr-3 text-sm focus-visible:outline-none" />
           </div>
           {lista.map((c) => (
-            <button key={c.id} type="button" onClick={() => onScelto(c.id, c.tariffaOraria ?? null)} className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left">
+            <button key={c.id} type="button" onClick={() => onScelto(c.id, c.tariffaOraria ?? null)} className="flex items-center justify-between gap-2 rounded-2xl bg-superficie px-3 py-2.5 text-left">
               <span className="flex items-center gap-2">
                 <Codice value={codiceCliente(dati, c.id)} />
                 <span className="text-sm">{c.nome} {c.cognome ?? ""}</span>
@@ -645,7 +645,7 @@ function ScegliOperaio({ esistenti, onIndietro, onScelto }: { esistenti: string[
   };
 
   return (
-    <div className="flex flex-col gap-3 pb-8">
+    <div className="flex flex-col gap-3 px-5 pt-5 pb-10">
       <Intestazione
         titolo={nuovo ? "Nuovo operaio" : "Scegli operaio"}
         azione={
@@ -663,7 +663,7 @@ function ScegliOperaio({ esistenti, onIndietro, onScelto }: { esistenti: string[
       ) : (
         <>
           {disponibili.map((o) => (
-            <button key={o.id} type="button" onClick={() => onScelto(o.id, o.tariffaOraria ?? 0)} className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left">
+            <button key={o.id} type="button" onClick={() => onScelto(o.id, o.tariffaOraria ?? 0)} className="flex items-center justify-between gap-2 rounded-2xl bg-superficie px-3 py-2.5 text-left">
               <span className="text-sm">{o.nome}</span>
               <Badge stato="neutro">{o.tariffaOraria ?? 0} €/h</Badge>
             </button>
