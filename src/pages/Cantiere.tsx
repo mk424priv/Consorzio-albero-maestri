@@ -1,4 +1,4 @@
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Clock, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { Badge, Button, Codice, Conferma, Stamp } from "@/components/ui";
@@ -61,6 +61,9 @@ export function Cantiere() {
         <Stamp color={svolto ? "ottone" : "lichene"}>{etichetta(lavoro.fase)}</Stamp>
         <Badge stato="neutro">{etichetta(lavoro.modo)}</Badge>
         <span className="font-mono text-xs text-fumo-2">{formatData(lavoro.data)}</span>
+        {lavoro.oraInizio && (
+          <span className="flex items-center gap-1 font-mono text-xs text-fumo-2"><Clock className="h-3.5 w-3.5" /> {lavoro.oraInizio}{lavoro.oraFine ? `–${lavoro.oraFine}` : ""}</span>
+        )}
       </div>
 
       {lavoro.periodo && <p className="font-mono text-xs text-fumo-2">Periodo: {formatData(lavoro.periodo.dal)} – {formatData(lavoro.periodo.al)}</p>}
@@ -89,10 +92,13 @@ export function Cantiere() {
       )}
 
       <div className="flex flex-wrap gap-2 pt-1">
+        <Button onClick={() => navigate("/nuovo", { state: { lavoroId: lavoro.id } })}>
+          <Pencil size={16} /> Modifica
+        </Button>
         {svolto ? (
-          <Button variant="inchiostro" onClick={() => void riprogramma(lavoro.id)}>Riprogramma</Button>
+          <Button variant="inchiostro" onClick={async () => notificaUndo("Riprogrammato", await riprogramma(lavoro.id))}>Riprogramma</Button>
         ) : (
-          <Button onClick={() => void segnaSvolto(lavoro.id)}>Segna svolto</Button>
+          <Button variant="inchiostro" onClick={async () => notificaUndo("Segnato svolto", await segnaSvolto(lavoro.id))}>Segna svolto</Button>
         )}
         <Button variant="critico" onClick={() => setPericolo(true)}>
           <Trash2 size={16} /> Elimina

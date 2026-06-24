@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import type { CategoriaSpesa, Fase } from "@/lib/dominio";
-import { arrotonda, oggiISO } from "@/lib/format";
+import { arrotonda, oggiISO, SOGLIA } from "@/lib/format";
 import { nuovoId } from "@/lib/id";
 import { calcoloLavoro, operatoreIo } from "@/lib/lavoro-calc";
 import type { Lavoro } from "@/lib/types";
@@ -26,11 +26,13 @@ export interface BozzaSpesa {
 }
 
 export interface Bozza {
+  id: string | null; // null = nuovo record, valorizzato = modifica
   fase: Fase;
   modoCalc: ModoCalc | null;
   clienteId: string | null;
   titolo: string;
   data: string;
+  oraInizio: string; // "HH:MM" — ora d'arrivo al cantiere
   periodo: { dal: string; al: string } | null;
   prezzo: number | null;
   tariffaCliente: number | null;
@@ -47,11 +49,13 @@ export interface Bozza {
 
 function bozzaIniziale(): Bozza {
   return {
+    id: null,
     fase: "fatto",
     modoCalc: null,
     clienteId: null,
     titolo: "",
     data: oggiISO(),
+    oraInizio: "",
     periodo: null,
     prezzo: null,
     tariffaCliente: null,
@@ -69,7 +73,7 @@ function bozzaIniziale(): Bozza {
 
 interface BozzaStore {
   b: Bozza;
-  apri: (ctx?: { data?: string; clienteId?: string; operatoreId?: string; fase?: Fase }) => void;
+  apri: (ctx?: { data?: string; clienteId?: string; operatoreId?: string; fase?: Fase; lavoroId?: string }) => void;
   set: (patch: Partial<Bozza>) => void;
   reset: () => void;
 }
@@ -80,6 +84,53 @@ export const useBozza = create<BozzaStore>((set) => ({
     const { dati } = useStore.getState();
     const io = operatoreIo(dati);
     const base = bozzaIniziale();
+
+    // ── MODIFICA di un lavoro esistente: reverse-map completo ──
+    if (ctx?.lavoroId) {
+      const l = dati.lavori.find((x) => x.id === ctx.lavoroId && !x.deleted);
+      if (l) {
+        base.id = l.id;
+        base.fase = l.fase;
+        base.modoCalc = l.modo === "preventivo" ? "preventivo" : l.conteggio === "per_giorni" ? "giornate" : "ore";
+        base.clienteId = l.clienteId ?? null;
+        base.titolo = l.titolo;
+        base.data = l.data;
+        base.oraInizio = l.oraInizio ?? "";
+        base.periodo = l.periodo ?? null;
+        base.prezzo = l.prezzo ?? null;
+        base.tariffaCliente = l.tariffaClienteSnapshot ?? dati.clienti.find((c) => c.id === l.clienteId)?.tariffaOraria ?? null;
+        base.tariffaModificata = l.tariffaClienteSnapshot != null;
+        base.contaMieOreComeCosto = l.contaMieOreComeCosto ?? false;
+        const oreDi = (id: string) => arrotonda(dati.ore.filter((o) => o.lavoroId === l.id && o.operatoreId === id && !o.deleted).reduce((a, o) => a + o.ore, 0));
+        base.partecipanti = l.partecipanti.map((p) => ({ collaboratoreId: p.collaboratoreId, tariffaSnapshot: p.tariffaSnapshot, ore: oreDi(p.collaboratoreId) }));
+        if (io && !base.partecipanti.some((p) => p.collaboratoreId === io.id)) {
+          base.partecipanti.unshift({ collaboratoreId: io.id, tariffaSnapshot: io.tariffaOraria ?? 0, ore: 0 });
+        }
+        base.mostraOperai = base.partecipanti.some((p) => p.collaboratoreId !== io?.id);
+        if (base.modoCalc === "giornate") {
+          const perData = new Map<string, RigaGiornata>();
+          for (const o of dati.ore.filter((x) => x.lavoroId === l.id && !x.deleted)) {
+            const g = perData.get(o.data) ?? { id: nuovoId(), data: o.data, ore: {} };
+            if (o.operatoreId) g.ore[o.operatoreId] = (g.ore[o.operatoreId] ?? 0) + o.ore;
+            perData.set(o.data, g);
+          }
+          base.giornate = [...perData.values()].sort((a, b) => a.data.localeCompare(b.data));
+          if (base.giornate.length === 0) base.giornate = [{ id: nuovoId(), data: l.data, ore: {} }];
+        }
+        base.spese = dati.spese.filter((s) => s.lavoroId === l.id && !s.deleted).map((s) => ({ id: s.id, categoria: s.categoria, descrizione: s.descrizione ?? "", importo: s.importo }));
+        base.mostraSpese = base.spese.length > 0;
+        const pag = dati.pagamenti.find((p) => p.lavoroId === l.id && !p.deleted);
+        const inc = pag?.importoIncassato ?? 0;
+        const atteso = pag?.importoAtteso ?? 0;
+        if (inc <= SOGLIA) base.giaIncassato = "no";
+        else if (inc >= atteso - SOGLIA) base.giaIncassato = "tutto";
+        else { base.giaIncassato = "parte"; base.importoParte = inc; }
+        set({ b: base });
+        return;
+      }
+    }
+
+    // ── NUOVO record ──
     if (ctx?.fase) base.fase = ctx.fase;
     if (ctx?.data) base.data = ctx.data;
     if (ctx?.clienteId) {
@@ -118,22 +169,47 @@ export function lordoBozza(b: Bozza): number {
   return arrotonda(oreTotaliBozza(b) * (b.tariffaCliente ?? 0));
 }
 
+/** Ora di uscita = ora d'arrivo + ore (auto). "" se input incompleto. */
+export function oraUscita(oraInizio: string, ore: number): string {
+  if (!/^\d{1,2}:\d{2}$/.test(oraInizio) || !(ore > 0)) return "";
+  const [h, m] = oraInizio.split(":").map(Number);
+  const tot = h * 60 + m + Math.round(ore * 60);
+  const hh = Math.floor((tot % 1440) / 60);
+  const mm = tot % 60;
+  return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+}
+
 /** Materializza la bozza: crea Lavoro + RegistrazioneOre + Spese + Pagamento. */
 export async function salvaBozza(): Promise<string> {
   const { b } = useBozza.getState();
-  const { salva } = useStore.getState();
+  const { salva, elimina } = useStore.getState();
+  const datiPrima = useStore.getState().dati;
 
   const modo: "preventivo" | "ore" = b.modoCalc === "preventivo" ? "preventivo" : "ore";
   const conteggio: "totale" | "per_giorni" = b.modoCalc === "giornate" ? "per_giorni" : "totale";
-  const lavoroId = nuovoId();
+  const editing = b.id != null;
+  const lavoroId = b.id ?? nuovoId();
   const titolo = b.titolo.trim() || (modo === "preventivo" ? "Lavoro a preventivo" : "Lavoro a ore");
   const cId = b.clienteId ?? undefined;
+
+  const ioId = operatoreIo(datiPrima)?.id;
+  const oreIo = ioId ? orePartecipante(b, ioId) : 0;
+  const oraFineCalc = oraUscita(b.oraInizio, oreIo) || undefined;
+
+  // in modifica: pulizia di ore/spese/pagamento precedenti (poi ricreati dalla bozza)
+  if (editing) {
+    for (const o of datiPrima.ore.filter((o) => o.lavoroId === lavoroId && !o.deleted)) await elimina("ore", o.id);
+    for (const s of datiPrima.spese.filter((s) => s.lavoroId === lavoroId && !s.deleted)) await elimina("spese", s.id);
+    for (const p of datiPrima.pagamenti.filter((p) => p.lavoroId === lavoroId && !p.deleted)) await elimina("pagamenti", p.id);
+  }
 
   const lavoro: Lavoro = {
     id: lavoroId,
     clienteId: cId,
     titolo,
     data: b.data,
+    oraInizio: b.oraInizio || undefined,
+    oraFine: oraFineCalc,
     fase: b.fase,
     modo,
     conteggio,

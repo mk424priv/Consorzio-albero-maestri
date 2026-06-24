@@ -12,6 +12,8 @@ import { nuovoId } from "@/lib/id";
 import { operatoreIo } from "@/lib/lavoro-calc";
 import {
   lordoBozza,
+  oraUscita,
+  orePartecipante,
   oreTotaliBozza,
   salvaBozza,
   useBozza,
@@ -90,7 +92,7 @@ export function CreaLavoro() {
 
   // init bozza all'apertura di /nuovo (sopravvive ai sotto-pannelli interni)
   useEffect(() => {
-    const st = (location.state ?? {}) as { data?: string; clienteId?: string; operatoreId?: string; fase?: "fatto" | "da_fare" };
+    const st = (location.state ?? {}) as { data?: string; clienteId?: string; operatoreId?: string; fase?: "fatto" | "da_fare"; lavoroId?: string };
     apri(st);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -166,7 +168,7 @@ export function CreaLavoro() {
   return (
     <div className="flex flex-col gap-4 px-5 pt-5 pb-10">
       <Intestazione
-        titolo="Nuovo record"
+        titolo={b.id ? "Modifica record" : "Nuovo record"}
         azione={
           <Button size="icona" variant="tenue" onClick={() => navigate(-1)} aria-label="Chiudi">
             <X className="h-5 w-5" />
@@ -411,6 +413,19 @@ function CampiOre({
           ))}
         </div>
       )}
+
+      {/* orario cantiere — arrivo + ore => uscita automatica */}
+      <div className="flex flex-col gap-1.5">
+        <label className="font-mono text-xs uppercase tracking-label text-fumo-2">Orario cantiere</label>
+        <div className="flex items-center gap-2">
+          <input type="time" value={b.oraInizio} onChange={(e) => set({ oraInizio: e.target.value })} className="h-11 rounded-btn bg-superficie-bassa px-3 font-sans text-sm text-bianco focus:bg-superficie focus:outline-none" aria-label="Ora d'arrivo" />
+          <span className="text-fumo-2">→</span>
+          <span className="flex h-11 min-w-[5rem] items-center justify-center rounded-btn bg-superficie-bassa px-3 font-mono text-sm text-blu">
+            {oraUscita(b.oraInizio, io ? orePartecipante(b, io) : 0) || "uscita"}
+          </span>
+        </div>
+        <span className="text-[11px] text-fumo-2">arrivo + ore = uscita (automatico)</span>
+      </div>
 
       {/* collaborazione */}
       <SezioneOperai b={b} set={set} io={io} dati={dati} onAdd={onAddOperaio} />
