@@ -114,6 +114,9 @@ export function MeshGradient({ colors = DEFAULT, className, speed = 1 }: MeshGra
       disposed = true;
       cancelAnimationFrame(raf);
       ro.disconnect();
+      // libera il context su unmount reale (prod). In dev lo StrictMode rimonta lo
+      // stesso canvas: perdere il context lì lo romperebbe → si salta.
+      if (!import.meta.env.DEV) gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

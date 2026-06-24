@@ -1,30 +1,32 @@
-import { X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Intestazione } from "@/components/Intestazione";
-import { Badge, Button, Card, Codice, Segmented } from "@/components/ui";
+import { MeshStrip, type MeshTono } from "@/components/world/MeshStrip";
+import { Avatar, Codice, NumberHero, SectionHeader, Segmented, StatTile, Testata } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { libroOperatore, riepilogoCliente } from "@/lib/conti";
-import type { Tono } from "@/lib/dominio";
-import { TONO_COMPENSO } from "@/lib/dominio";
 import { arrotonda, formatEuro, formatOre } from "@/lib/format";
 import { operatoreIo } from "@/lib/lavoro-calc";
 import { useStore } from "@/store/store";
 
-function Kpi({ label, valore, accento }: { label: string; valore: string; accento?: Tono }) {
-  const colore = accento === "critico" ? "text-critico" : accento === "attenzione" ? "text-attenzione" : "text-bianco";
+function KpiHero({ etichetta, valore, sotto, mesh }: { etichetta: string; valore: number; sotto: string; mesh: MeshTono }) {
   return (
-    <div className="flex flex-col gap-0.5 rounded-2xl bg-white/[0.08] px-3 py-2">
-      <span className="font-mono text-[0.58rem] uppercase tracking-wider text-fumo-2">{label}</span>
-      <span className={`font-mono text-sm font-medium tabular-nums ${colore}`}>{valore}</span>
+    <div className="relative overflow-hidden rounded-bolla p-5">
+      <MeshStrip tono={mesh} />
+      <div className="relative">
+        <span className="font-mono text-[11px] uppercase tracking-label text-white/75">{etichetta}</span>
+        <div className="mt-1">
+          <NumberHero value={valore} euro tono="bianco" className="text-[42px]" />
+        </div>
+        <span className="text-sm text-white/75">{sotto}</span>
+      </div>
     </div>
   );
 }
 
-function Barra({ pct, tono }: { pct: number; tono: "positivo" | "ottone" }) {
+function Barra({ pct, tono = "verde" }: { pct: number; tono?: "verde" | "blu" }) {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
-      <div className={tono === "positivo" ? "h-full rounded-full bg-positivo" : "h-full rounded-full bg-lime"} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-superficie-alta">
+      <div className={tono === "verde" ? "h-full rounded-full bg-verde" : "h-full rounded-full bg-blu"} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
     </div>
   );
 }
@@ -49,116 +51,102 @@ export function Dashboard() {
     [dati],
   );
 
-  const kpiClienti = clienti.reduce(
-    (a, { r }) => ({
-      fatt: a.fatt + r.valoreFatturabile,
-      inc: a.inc + r.totaleIncassato,
-      da: a.da + r.saldoDaIncassare,
-      ritardo: a.ritardo + (r.saldoDaIncassare > 0 ? 1 : 0),
-    }),
-    { fatt: 0, inc: 0, da: 0, ritardo: 0 },
-  );
-  const kpiOperai = operai.reduce(
-    (a, { o, libro }) => ({
-      ore: a.ore + libro.ore,
-      dovuto: a.dovuto + (o.id === io?.id ? 0 : libro.dovuto),
-      pagato: a.pagato + libro.pagato,
-      saldo: a.saldo + libro.saldo,
-    }),
-    { ore: 0, dovuto: 0, pagato: 0, saldo: 0 },
-  );
+  const kc = clienti.reduce((a, { r }) => ({ fatt: a.fatt + r.valoreFatturabile, inc: a.inc + r.totaleIncassato, da: a.da + r.saldoDaIncassare, deb: a.deb + (r.saldoDaIncassare > 0 ? 1 : 0) }), { fatt: 0, inc: 0, da: 0, deb: 0 });
+  const ko = operai.reduce((a, { o, libro }) => ({ ore: a.ore + libro.ore, dovuto: a.dovuto + (o.id === io?.id ? 0 : libro.dovuto), pagato: a.pagato + libro.pagato, saldo: a.saldo + libro.saldo }), { ore: 0, dovuto: 0, pagato: 0, saldo: 0 });
 
   return (
-    <div className="flex flex-col gap-4 pb-8">
-      <Intestazione
-        titolo="Dashboard"
-        azione={
-          <Button size="icona" variant="tenue" onClick={() => navigate(-1)} aria-label="Chiudi">
-            <X className="h-5 w-5" />
-          </Button>
-        }
-      />
+    <div className="flex flex-col">
+      <Testata titolo="Dashboard">
+        <Segmented
+          value={modo}
+          onValueChange={setModo}
+          options={[
+            { value: "clienti", label: "Clienti" },
+            { value: "operai", label: "Squadra" },
+          ]}
+          layoutId="modo-dashboard"
+        />
+      </Testata>
 
-      <Segmented
-        value={modo}
-        onValueChange={setModo}
-        options={[
-          { value: "clienti", label: "Clienti" },
-          { value: "operai", label: "Operai" },
-        ]}
-        layoutId="modo-dashboard"
-      />
+      <div className="flex flex-col gap-5 px-5 pt-5">
+        {modo === "clienti" ? (
+          <>
+            <KpiHero etichetta="Fatturabile totale" valore={kc.fatt} sotto={`Incassato ${formatEuro(kc.inc)} · ${kc.deb} debitori`} mesh="brand" />
+            <div className="grid grid-cols-2 gap-2">
+              <StatTile etichetta="Incassato" tono="verde">{formatEuro(kc.inc)}</StatTile>
+              <StatTile etichetta="Da incassare" tono={kc.da > 0 ? "rosso" : "neutro"}>{formatEuro(kc.da)}</StatTile>
+            </div>
 
-      {modo === "clienti" ? (
-        <>
-          <div className="grid grid-cols-4 gap-2">
-            <Kpi label="Fatturabile" valore={formatEuro(kpiClienti.fatt)} />
-            <Kpi label="Incassato" valore={formatEuro(kpiClienti.inc)} />
-            <Kpi label="Da incassare" valore={formatEuro(kpiClienti.da)} accento={kpiClienti.da > 0 ? "attenzione" : undefined} />
-            <Kpi label="Debitori" valore={String(kpiClienti.ritardo)} />
-          </div>
-          <div className="flex flex-col gap-2">
-            {clienti.length === 0 ? (
-              <p className="py-6 text-center text-sm text-fumo-2">Nessun cliente con movimenti.</p>
-            ) : (
-              clienti.map(({ c, r }) => {
-                const pct = r.valoreFatturabile > 0 ? arrotonda((r.totaleIncassato / r.valoreFatturabile) * 100) : 100;
+            <section className="flex flex-col gap-2.5">
+              <SectionHeader titolo="Per cliente" conteggio={clienti.length} />
+              {clienti.length === 0 ? (
+                <p className="py-6 text-center text-sm text-fumo-2">Nessun cliente con movimenti.</p>
+              ) : (
+                clienti.map(({ c, r }) => {
+                  const pct = r.valoreFatturabile > 0 ? arrotonda((r.totaleIncassato / r.valoreFatturabile) * 100) : 100;
+                  return (
+                    <button key={c.id} type="button" onClick={() => navigate(`/cliente/${c.id}`)} className="flex flex-col gap-2 rounded-vetro bg-superficie p-3.5 text-left transition-transform active:scale-[0.99]">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="flex min-w-0 items-center gap-3">
+                          <Avatar iniziali={`${c.nome[0] ?? ""}${c.cognome?.[0] ?? ""}`.toUpperCase() || "?"} tono={r.saldoDaIncassare > 0 ? "rosso" : "verde"} size={36} />
+                          <span className="flex min-w-0 flex-col items-start">
+                            <span className="truncate text-sm font-medium">{c.nome} {c.cognome ?? ""}</span>
+                            <Codice value={codiceCliente(dati, c.id)} />
+                          </span>
+                        </span>
+                        <span className={`shrink-0 text-sm font-bold tracking-tight ${r.saldoDaIncassare > 0 ? "text-rosso" : "text-verde"}`}>
+                          {r.saldoDaIncassare > 0 ? formatEuro(r.saldoDaIncassare) : "saldato"}
+                        </span>
+                      </div>
+                      <Barra pct={pct} tono="verde" />
+                      <span className="font-mono text-[11px] text-fumo-2">{formatOre(r.oreTotali)} · fatt. {formatEuro(r.valoreFatturabile)} · inc. {formatEuro(r.totaleIncassato)}</span>
+                    </button>
+                  );
+                })
+              )}
+            </section>
+          </>
+        ) : (
+          <>
+            <KpiHero etichetta="Da pagare squadra" valore={ko.saldo} sotto={`${formatOre(ko.ore)} · pagato ${formatEuro(ko.pagato)}`} mesh="blu" />
+            <div className="grid grid-cols-2 gap-2">
+              <StatTile etichetta="Pagato" tono="verde">{formatEuro(ko.pagato)}</StatTile>
+              <StatTile etichetta="Ore squadra">{formatOre(ko.ore)}</StatTile>
+            </div>
+
+            <section className="flex flex-col gap-2.5">
+              <SectionHeader titolo="Squadra" conteggio={operai.length} />
+              {operai.map(({ o, libro }) => {
+                const isIo = o.id === io?.id;
+                const pct = libro.dovuto > 0 ? arrotonda((libro.pagato / libro.dovuto) * 100) : 100;
                 return (
-                  <button key={c.id} type="button" onClick={() => navigate(`/cliente/${c.id}`)} className="flex flex-col gap-1.5 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left">
+                  <button key={o.id} type="button" onClick={() => navigate(`/operaio/${o.id}`)} className="flex flex-col gap-2 rounded-vetro bg-superficie p-3.5 text-left transition-transform active:scale-[0.99]">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-2"><Codice value={codiceCliente(dati, c.id)} /><span className="text-sm font-medium">{c.nome} {c.cognome ?? ""}</span></span>
-                      {r.saldoDaIncassare > 0 ? <Badge stato="attenzione">{formatEuro(r.saldoDaIncassare)}</Badge> : <Badge stato="positivo">ok</Badge>}
+                      <span className="flex min-w-0 items-center gap-3">
+                        <Avatar iniziali={o.nome.slice(0, 2).toUpperCase()} tono={isIo ? "verde" : "blu"} size={36} />
+                        <span className="truncate text-sm font-medium">{o.nome} {isIo && <span className="font-mono text-[11px] text-fumo-2">· io</span>}</span>
+                      </span>
+                      <span className={`shrink-0 text-sm font-bold tracking-tight ${isIo ? "text-verde" : libro.saldo > 0 ? "text-rosso" : "text-verde"}`}>
+                        {isIo ? "profitto" : libro.saldo > 0 ? formatEuro(libro.saldo) : "saldato"}
+                      </span>
                     </div>
-                    <span className="font-mono text-[0.65rem] text-fumo-2">
-                      {formatOre(r.oreTotali)} · fatt. {formatEuro(r.valoreFatturabile)} · inc. {formatEuro(r.totaleIncassato)}
-                    </span>
-                    <Barra pct={pct} tono="positivo" />
+                    {isIo ? (
+                      <span className="font-mono text-[11px] text-fumo-2">{formatOre(libro.ore)} · le mie ore = profitto, non costo</span>
+                    ) : (
+                      <>
+                        <Barra pct={pct} tono="blu" />
+                        <span className="font-mono text-[11px] text-fumo-2">{formatOre(libro.ore)} · dovuto {formatEuro(libro.dovuto)} · pagato {formatEuro(libro.pagato)}</span>
+                      </>
+                    )}
                   </button>
                 );
-              })
-            )}
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="grid grid-cols-4 gap-2">
-            <Kpi label="Ore squadra" valore={formatOre(kpiOperai.ore)} />
-            <Kpi label="Dovuto" valore={formatEuro(kpiOperai.dovuto)} />
-            <Kpi label="Pagato" valore={formatEuro(kpiOperai.pagato)} />
-            <Kpi label="Da pagare" valore={formatEuro(kpiOperai.saldo)} accento={kpiOperai.saldo > 0 ? "attenzione" : undefined} />
-          </div>
-          <div className="flex flex-col gap-2">
-            {operai.map(({ o, libro }) => {
-              const isIo = o.id === io?.id;
-              const pct = libro.dovuto > 0 ? arrotonda((libro.pagato / libro.dovuto) * 100) : 100;
-              return (
-                <button key={o.id} type="button" onClick={() => navigate(`/operaio/${o.id}`)} className="flex flex-col gap-1.5 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left">
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">{o.nome} {isIo && <span className="font-mono text-xs text-fumo-2">· io</span>}</span>
-                    {isIo ? (
-                      <Badge stato="lichene">profitto</Badge>
-                    ) : (
-                      <Badge stato={TONO_COMPENSO[libro.stato]}>{formatEuro(libro.saldo)}</Badge>
-                    )}
-                  </div>
-                  {isIo ? (
-                    <span className="font-mono text-[0.65rem] text-fumo-2">{formatOre(libro.ore)} · le mie ore = profitto, non costo</span>
-                  ) : (
-                    <>
-                      <span className="font-mono text-[0.65rem] text-fumo-2">{formatOre(libro.ore)} · dovuto {formatEuro(libro.dovuto)} · pagato {formatEuro(libro.pagato)}</span>
-                      <Barra pct={pct} tono="ottone" />
-                    </>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </>
-      )}
+              })}
+            </section>
+          </>
+        )}
 
-      <Card tono="piana" className="px-3 py-2 text-center font-mono text-[0.65rem] text-fumo-2">
-        dati separati: clienti = denaro in entrata · operai = denaro in uscita
-      </Card>
+        <p className="pb-2 pt-1 text-center font-mono text-[11px] text-fumo-2">clienti = entrate · squadra = uscite</p>
+      </div>
     </div>
   );
 }
