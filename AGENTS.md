@@ -2,7 +2,9 @@
 
 > ⚠️ **Prodotto nuovo (greenfield).** L'app precedente è stata scartata. La
 > **fonte di verità** è il canone in [`canone/`](canone/): `01` (visione UX),
-> `02` (specifica), `03` (piano). Dove il codice diverge dal canone, vince il canone.
+> `02` (specifica), `03` (piano), **`08` (design canonico — palette, ierarchia toni,
+> elevazione, libreria componenti; consolida e sostituisce 05–07)**.
+> Dove il codice diverge dal canone, vince il canone.
 
 App **Vite + React 19 + TypeScript + Tailwind CSS v4**, **local-first PWA**:
 nessun backend in v1, i dati vivono in **IndexedDB (Dexie)**. Identità visiva
