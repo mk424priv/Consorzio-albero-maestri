@@ -1,6 +1,7 @@
-import { ArrowLeft, Clock, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft, Banknote, Clock, Copy, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { IncassaFoglio } from "@/components/IncassaFoglio";
 import { Badge, Button, Codice, Conferma, Stamp } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { cn } from "@/lib/cn";
@@ -8,7 +9,7 @@ import { notificaUndo } from "@/lib/undo";
 import { etichetta } from "@/lib/dominio";
 import { formatData, formatEuro, formatOre } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
-import { eliminaLavoro, riprogramma, segnaSvolto } from "@/store/azioni";
+import { duplicaLavoro, eliminaLavoro, riprogramma, segnaSvolto } from "@/store/azioni";
 import { useStore } from "@/store/store";
 
 function Riga({ label, valore, forte }: { label: string; valore: string; forte?: boolean }) {
@@ -25,6 +26,7 @@ export function Cantiere() {
   const navigate = useNavigate();
   const dati = useStore((s) => s.dati);
   const [pericolo, setPericolo] = useState(false);
+  const [incassaOpen, setIncassaOpen] = useState(false);
   const lavoro = dati.lavori.find((l) => l.id === id);
 
   if (!lavoro) {
@@ -51,7 +53,11 @@ export function Cantiere() {
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-2xl font-bold tracking-tight">{lavoro.titolo}</h1>
-          <p className="text-sm text-fumo">{cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() : "Senza cliente"}</p>
+          {cliente ? (
+            <button type="button" onClick={() => navigate(`/cliente/${cliente.id}`)} className="text-sm text-fumo underline-offset-2 hover:underline">{`${cliente.nome} ${cliente.cognome ?? ""}`.trim()}</button>
+          ) : (
+            <p className="text-sm text-fumo">Senza cliente</p>
+          )}
         </div>
         <button type="button" onClick={() => navigate(-1)} aria-label="Indietro" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-superficie text-fumo hover:text-bianco"><ArrowLeft size={18} /></button>
       </header>
@@ -83,16 +89,21 @@ export function Cantiere() {
         <section className="flex flex-col gap-2">
           <h2 className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Operai</h2>
           {calc.partecipanti.map((p) => (
-            <div key={p.collaboratoreId} className="flex items-center justify-between rounded-vetro bg-superficie px-3.5 py-2.5 text-sm">
+            <button key={p.collaboratoreId} type="button" onClick={() => navigate(`/operaio/${p.collaboratoreId}`)} className="flex items-center justify-between rounded-vetro bg-superficie px-3.5 py-2.5 text-left text-sm transition-transform active:scale-[0.99]">
               <span className="font-medium">{p.nome}</span>
               <span className="font-mono text-xs text-fumo-2">{formatOre(p.ore)} · costo {formatEuro(p.costo)}</span>
-            </div>
+            </button>
           ))}
         </section>
       )}
 
       <div className="flex flex-wrap gap-2 pt-1">
-        <Button onClick={() => navigate("/nuovo", { state: { lavoroId: lavoro.id } })}>
+        {svolto && calc.daIncassare > 0 && (
+          <Button onClick={() => setIncassaOpen(true)}>
+            <Banknote size={16} /> Incassa {formatEuro(calc.daIncassare)}
+          </Button>
+        )}
+        <Button variant="inchiostro" onClick={() => navigate("/nuovo", { state: { lavoroId: lavoro.id } })}>
           <Pencil size={16} /> Modifica
         </Button>
         {svolto ? (
@@ -100,10 +111,15 @@ export function Cantiere() {
         ) : (
           <Button variant="inchiostro" onClick={async () => notificaUndo("Segnato svolto", await segnaSvolto(lavoro.id))}>Segna svolto</Button>
         )}
+        <Button variant="tenue" onClick={async () => { const r = await duplicaLavoro(lavoro.id); if (r) { notificaUndo("Lavoro duplicato", r.annulla); navigate(`/lavoro/${r.id}`); } }}>
+          <Copy size={16} /> Duplica
+        </Button>
         <Button variant="critico" onClick={() => setPericolo(true)}>
           <Trash2 size={16} /> Elimina
         </Button>
       </div>
+
+      {svolto && <IncassaFoglio open={incassaOpen} onOpenChange={setIncassaOpen} lavoroId={lavoro.id} daIncassare={calc.daIncassare} />}
 
       <Conferma
         open={pericolo}

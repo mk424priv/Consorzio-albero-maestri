@@ -184,3 +184,28 @@ export function perCliente(dati: Dati): RigaCliente[] {
     daIncassare: arrotonda(r.daIncassare),
   }));
 }
+
+export interface OperaioCliente {
+  operatoreId: string;
+  nome: string;
+  ore: number;
+}
+
+/** Operai (incluso «io») che hanno lavorato per un cliente, con ore totali. */
+export function squadraDelCliente(dati: Dati, clienteId: string): OperaioCliente[] {
+  const lavoriIds = new Set(
+    dati.lavori.filter((l) => !l.deleted && l.clienteId === clienteId).map((l) => l.id),
+  );
+  const map = new Map<string, number>();
+  for (const o of dati.ore) {
+    if (o.deleted || !o.operatoreId || !o.lavoroId || !lavoriIds.has(o.lavoroId)) continue;
+    map.set(o.operatoreId, (map.get(o.operatoreId) ?? 0) + o.ore);
+  }
+  return [...map.entries()]
+    .map(([operatoreId, ore]) => ({
+      operatoreId,
+      nome: dati.operatori.find((op) => op.id === operatoreId)?.nome ?? "—",
+      ore: arrotonda(ore),
+    }))
+    .sort((a, b) => b.ore - a.ore);
+}

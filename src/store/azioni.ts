@@ -66,6 +66,26 @@ export async function eliminaLavoro(lavoroId: string): Promise<Annulla> {
   return async () => { await salva("lavori", { ...l, deleted: false }); };
 }
 
+/** Duplica un lavoro come nuovo PROGRAMMATO (oggi), senza ore/incassi. */
+export async function duplicaLavoro(lavoroId: string): Promise<{ id: string; annulla: Annulla } | null> {
+  const { dati, salva, elimina } = useStore.getState();
+  const l = dati.lavori.find((x) => x.id === lavoroId);
+  if (!l) return null;
+  const id = nuovoId();
+  await salva("lavori", {
+    ...l,
+    id,
+    fase: "da_fare",
+    data: oggiISO(),
+    creatoIl: oggiISO(),
+    partecipanti: l.partecipanti.map((p) => ({ ...p, oreTotale: 0 })),
+    rev: undefined,
+    deleted: false,
+    updatedAt: "",
+  });
+  return { id, annulla: async () => { await elimina("lavori", id); } };
+}
+
 /** Incasso subito: lavoro preventivo fatto + pagamento gia' incassato, zero ore. */
 export async function incassaSubito(opts: {
   clienteId?: string;

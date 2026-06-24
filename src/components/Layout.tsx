@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { Toaster } from "sonner";
+import { oggiISO } from "@/lib/format";
 import { BottomNav } from "./BottomNav";
 import { World } from "./world/World";
 
@@ -26,7 +27,7 @@ export function Layout() {
             <motion.button
               layoutId="fab-crea"
               type="button"
-              onClick={() => navigate("/nuovo")}
+              onClick={() => navigate("/nuovo", { state: { data: oggiISO() } })}
               aria-label="Crea record"
               className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-pill bg-scuro text-white shadow-flottante transition-transform active:scale-95"
             >

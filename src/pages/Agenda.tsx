@@ -171,7 +171,7 @@ export function Agenda() {
                 </div>
                 <div className="mt-2.5 flex flex-col gap-2.5">
                   {ls.length === 0 ? (
-                    <button type="button" onClick={() => navigate("/nuovo")} className="rounded-vetro border border-dashed border-black/[0.12] py-3 text-center font-mono text-xs text-fumo-2 hover:border-black/20">
+                    <button type="button" onClick={() => navigate("/nuovo", { state: { data: iso } })} className="rounded-vetro border border-dashed border-black/[0.12] py-3 text-center font-mono text-xs text-fumo-2 hover:border-black/20">
                       ＋ crea lavoro
                     </button>
                   ) : (

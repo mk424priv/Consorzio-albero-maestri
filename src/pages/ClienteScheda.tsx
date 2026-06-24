@@ -4,7 +4,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
 import { Avatar, AvatarStorico, Button, Codice, Conferma, Field, Foglio, Segmented, StatePill, StatTile } from "@/components/ui";
 import { codiceCliente, leggiCodice } from "@/lib/codice-parlante";
-import { riepilogoCliente } from "@/lib/conti";
+import { riepilogoCliente, squadraDelCliente } from "@/lib/conti";
 import { chiaveMese, formatEuro, formatMese, formatOre, oggiISO } from "@/lib/format";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
 import type { Cliente } from "@/lib/types";
@@ -59,6 +59,7 @@ export function ClienteScheda() {
   }
   const mesi = [...perMese.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 6);
   const prossimo = daFare.filter((l) => l.data >= oggiISO()).sort((a, b) => a.data.localeCompare(b.data))[0];
+  const squadra = squadraDelCliente(dati, cliente.id);
 
   return (
     <div className="flex flex-col pb-24">
@@ -119,6 +120,18 @@ export function ClienteScheda() {
               </div>
             ))}
             {prossimo && <p className="mt-1 border-t border-bordo pt-1.5 font-mono text-xs text-blu">prossimo: ◌ {prossimo.titolo}</p>}
+          </div>
+        )}
+
+        {squadra.length > 0 && (
+          <div className="flex flex-col gap-1.5 rounded-vetro bg-superficie p-4">
+            <span className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Squadra coinvolta</span>
+            {squadra.map((s) => (
+              <button key={s.operatoreId} type="button" onClick={() => navigate(`/operaio/${s.operatoreId}`)} className="flex items-center justify-between text-sm transition-transform active:scale-[0.99]">
+                <span className="font-medium">{s.nome}</span>
+                <span className="font-mono text-xs text-fumo-2">{formatOre(s.ore)}</span>
+              </button>
+            ))}
           </div>
         )}
 

@@ -14,8 +14,9 @@ export function Anagrafiche() {
   const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [modo, setModo] = useState<"clienti" | "operai">("clienti");
+  const [soloAttivi, setSoloAttivi] = useState(true);
 
-  const operatori = dati.operatori.filter((o) => o.attivo);
+  const operatori = dati.operatori.filter((o) => !o.deleted && (soloAttivi ? o.attivo : true));
 
   const clienti = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -107,9 +108,14 @@ export function Anagrafiche() {
               titolo="Squadra"
               conteggio={operaiFiltrati.length}
               azione={
-                <button type="button" onClick={() => navigate("/operaio/nuovo")} className="flex items-center gap-1 text-sm font-medium text-blu">
-                  <Plus size={16} /> Nuovo
-                </button>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => setSoloAttivi((v) => !v)} className="font-mono text-[11px] uppercase tracking-label text-fumo-2 hover:text-bianco">
+                    {soloAttivi ? "Attivi" : "Tutti"}
+                  </button>
+                  <button type="button" onClick={() => navigate("/operaio/nuovo")} className="flex items-center gap-1 text-sm font-medium text-blu">
+                    <Plus size={16} /> Nuovo
+                  </button>
+                </div>
               }
             />
             {operaiFiltrati.map((o) => {
@@ -121,7 +127,7 @@ export function Anagrafiche() {
                     <Avatar iniziali={o.nome.slice(0, 2).toUpperCase()} tono={isIo ? "verde" : "blu"} />
                     <span className="flex min-w-0 flex-col items-start">
                       <span className="truncate text-sm font-medium">{o.nome} {isIo && <span className="font-mono text-[11px] text-fumo-2">· io</span>}</span>
-                      <span className="font-mono text-[11px] text-fumo-2">{isIo ? "titolare" : `${o.tariffaOraria ?? 0} €/h`}</span>
+                      <span className="font-mono text-[11px] text-fumo-2">{isIo ? "titolare" : `${o.tariffaOraria ?? 0} €/h`}{!o.attivo ? " · inattivo" : ""}</span>
                     </span>
                   </span>
                   {dovuto && dovuto.daPagare > 0 ? (

@@ -136,8 +136,11 @@ export function CreaLavoro() {
       setTariffaOpen(true);
       return;
     }
-    await salvaBozza();
-    navigate("/");
+    const eraModifica = b.id != null;
+    const id = await salvaBozza();
+    // ritorno coerente: in modifica torno da dove venivo (Cantiere); in creazione apro il lavoro creato.
+    if (eraModifica) navigate(-1);
+    else navigate(`/lavoro/${id}`);
   };
 
   // ── sotto-viste ──

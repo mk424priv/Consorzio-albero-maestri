@@ -5,7 +5,7 @@ import { CardLavoro } from "@/components/CardLavoro";
 import { Avatar, Button, Codice, Cruscotto, Field, Foglio, NumberHero, SectionHeader, Segmented, StatTile, Swipeable } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { libroOperatore, riepilogoCliente, riepilogoSoldi } from "@/lib/conti";
-import { chiaveMese, formatEuro, formatMese, oggiISO } from "@/lib/format";
+import { chiaveMese, formatData, formatEuro, formatMese, oggiISO } from "@/lib/format";
 import { calcoloLavoro, operatoreIo } from "@/lib/lavoro-calc";
 import { notificaUndo } from "@/lib/undo";
 import type { Cliente, Lavoro } from "@/lib/types";
@@ -54,6 +54,10 @@ export function Soldi() {
   const usciteMese = dati.compensi.filter((c) => !c.deleted && chiaveMese(c.data) === mese).reduce((a, c) => a + c.importo, 0);
   const cassaMese = Math.max(0, r.incassatoMese - usciteMese);
   const totale = modo === "incassare" ? r.daIncassare : r.daPagareOperai;
+  const prelieviMese = useMemo(
+    () => dati.compensi.filter((c) => !c.deleted && c.operatoreId === io?.id && c.note === "prelievo" && chiaveMese(c.data) === mese).sort((a, b) => b.data.localeCompare(a.data)),
+    [dati.compensi, io?.id, mese],
+  );
 
   return (
     <div className="flex flex-col">
@@ -144,15 +148,28 @@ export function Soldi() {
               ))
             )}
 
-            <div className="mt-1 flex items-center justify-between rounded-vetro bg-superficie p-4">
-              <div className="flex min-w-0 flex-col">
-                <span className="flex items-center gap-2 text-sm font-medium"><Wallet size={16} className="text-verde" /> Io · cassa del mese</span>
-                <span className="font-mono text-[11px] text-fumo-2">Non è un costo, è un prelievo</span>
+            <div className="mt-1 flex flex-col gap-2.5">
+              <div className="flex items-center justify-between rounded-vetro bg-superficie p-4">
+                <button type="button" onClick={() => io && navigate(`/operaio/${io.id}`)} className="flex min-w-0 flex-col text-left">
+                  <span className="flex items-center gap-2 text-sm font-medium"><Wallet size={16} className="text-verde" /> Io · cassa del mese</span>
+                  <span className="font-mono text-[11px] text-fumo-2">Non è un costo, è un prelievo</span>
+                </button>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold tracking-tight text-verde">{formatEuro(cassaMese)}</span>
+                  <Button size="sm" onClick={() => setPrelievoOpen(true)} disabled={cassaMese <= 0}>Preleva</Button>
+                </div>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="font-bold tracking-tight text-verde">{formatEuro(cassaMese)}</span>
-                <Button size="sm" onClick={() => setPrelievoOpen(true)} disabled={cassaMese <= 0}>Preleva</Button>
-              </div>
+              {prelieviMese.length > 0 && (
+                <div className="flex flex-col gap-1 rounded-vetro bg-superficie p-3">
+                  <span className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Prelievi · {formatMese(mese)}</span>
+                  {prelieviMese.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between text-sm">
+                      <span className="font-mono text-xs text-fumo-2">{formatData(c.data)}</span>
+                      <span className="font-mono text-verde">− {formatEuro(c.importo)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </section>
         )}

@@ -34,6 +34,21 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const apri = () => navigate(`/lavoro/${lavoro.id}`);
   const nomeCliente = cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() : "Senza cliente";
 
+  // Cliente = porta verso il dossier (tap dedicato, non apre il lavoro).
+  const ClienteTag = () =>
+    cliente ? (
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); navigate(`/cliente/${cliente.id}`); }}
+        className="flex min-w-0 items-center gap-1.5"
+      >
+        <Codice value={codiceCliente(dati, cliente.id)} />
+        <span className="truncate text-[11px] text-fumo-2 underline-offset-2 hover:underline">{nomeCliente}</span>
+      </button>
+    ) : (
+      <span className="truncate text-[11px] text-fumo-2">{nomeCliente}</span>
+    );
+
   const Chips = () => (
     <span className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] text-fumo-2">
       {chips.slice(0, 2).map((p) => (
@@ -49,22 +64,19 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   if (lavoro.fase === "da_fare") {
     return (
       <motion.div whileTap={{ scale: 0.99 }} className="rounded-vetro border border-dashed border-blu/40 bg-blu/[0.06] px-3.5 py-3 text-bianco shadow-card">
-        <button type="button" onClick={apri} className="flex w-full items-center justify-between gap-3 text-left">
+        <div role="button" tabIndex={0} onClick={apri} onKeyDown={(e) => { if (e.key === "Enter") apri(); }} className="flex w-full cursor-pointer items-center justify-between gap-3 text-left">
           <span className="flex min-w-0 items-center gap-2.5">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-blu/15 text-blu"><Calendar className="h-4 w-4" /></span>
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="truncate text-[15px] font-semibold leading-tight">{lavoro.titolo}</span>
-              <span className="flex min-w-0 items-center gap-1.5">
-                {cliente && <Codice value={codiceCliente(dati, cliente.id)} />}
-                <span className="truncate text-[11px] text-fumo-2">{nomeCliente}</span>
-              </span>
+              <ClienteTag />
             </span>
           </span>
           <span className="flex shrink-0 flex-col items-end gap-1">
             <StatePill stato="programmato" />
             <span className="text-sm font-medium text-fumo">{lavoro.modo === "preventivo" && lavoro.prezzo ? formatEuro(lavoro.prezzo) : formatData(lavoro.data)}</span>
           </span>
-        </button>
+        </div>
         <div className="mt-2.5 flex items-center justify-between gap-2">
           <Chips />
           <Button size="sm" variant="inchiostro" onClick={async () => notificaUndo("Segnato come svolto", await segnaSvolto(lavoro.id))}>Svolto</Button>
@@ -85,22 +97,19 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       className={cn("statocard px-3.5 py-3 text-bianco", `statocard--${stato}`, stato === "pagato" && "opacity-90")}
     >
-      <button type="button" onClick={apri} className="flex w-full items-center justify-between gap-3 text-left">
+      <div role="button" tabIndex={0} onClick={apri} onKeyDown={(e) => { if (e.key === "Enter") apri(); }} className="flex w-full cursor-pointer items-center justify-between gap-3 text-left">
         <span className="flex min-w-0 items-center gap-2.5">
           <span className={cn("grid h-9 w-9 shrink-0 place-items-center rounded-full", s.chip)}><SI className="h-4 w-4" /></span>
           <span className="flex min-w-0 flex-col gap-0.5">
             <span className="truncate text-[15px] font-semibold leading-tight">{lavoro.titolo}</span>
-            <span className="flex min-w-0 items-center gap-1.5">
-              {cliente && <Codice value={codiceCliente(dati, cliente.id)} />}
-              <span className="truncate text-[11px] text-fumo-2">{nomeCliente}</span>
-            </span>
+            <ClienteTag />
           </span>
         </span>
         <span className="flex shrink-0 flex-col items-end gap-1">
           <StatePill stato={stato} />
           <span className={cn("text-base font-bold tracking-tight tabular-nums", s.amount)}>{formatEuro(amount)}</span>
         </span>
-      </button>
+      </div>
 
       <div className="mt-2.5 flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] text-fumo-2">

@@ -9,7 +9,7 @@ import { chiaveMese, formatData, formatEuro, formatMese, formatOre } from "@/lib
 import { calcoloLavoro } from "@/lib/lavoro-calc";
 import type { Operatore } from "@/lib/types";
 import { notificaUndo } from "@/lib/undo";
-import { eliminaOperaio, pagaOperaio } from "@/store/azioni";
+import { eliminaOperaio, pagaOperaio, prelievoTitolare } from "@/store/azioni";
 import { useStore } from "@/store/store";
 
 export function OperaioScheda() {
@@ -17,6 +17,7 @@ export function OperaioScheda() {
   const navigate = useNavigate();
   const dati = useStore((s) => s.dati);
   const [pagaOpen, setPagaOpen] = useState(false);
+  const [prelievoOpen, setPrelievoOpen] = useState(false);
   const [modifica, setModifica] = useState(false);
   const [eliminaOpen, setEliminaOpen] = useState(false);
 
@@ -92,6 +93,11 @@ export function OperaioScheda() {
             <Banknote size={16} /> Paga {operatore.nome}
           </Button>
         )}
+        {io && (
+          <Button variant="inchiostro" onClick={() => setPrelievoOpen(true)}>
+            <Banknote size={16} /> Preleva dalla cassa
+          </Button>
+        )}
 
         <section className="flex flex-col gap-2.5">
           <h2 className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Storico</h2>
@@ -105,16 +111,28 @@ export function OperaioScheda() {
                   const cliente = l.clienteId ? dati.clienti.find((c) => c.id === l.clienteId) : undefined;
                   const svolto = l.fase === "fatto";
                   return (
-                    <button key={l.id} type="button" onClick={() => navigate(`/lavoro/${l.id}`)} className={svolto ? "flex items-center justify-between gap-2 rounded-vetro bg-superficie px-3 py-2.5 text-left" : "flex items-center justify-between gap-2 rounded-vetro border border-dashed border-black/[0.12] px-3 py-2.5 text-left"}>
+                    <div
+                      key={l.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => navigate(`/lavoro/${l.id}`)}
+                      onKeyDown={(e) => { if (e.key === "Enter") navigate(`/lavoro/${l.id}`); }}
+                      className={svolto ? "flex cursor-pointer items-center justify-between gap-2 rounded-vetro bg-superficie px-3 py-2.5 text-left" : "flex cursor-pointer items-center justify-between gap-2 rounded-vetro border border-dashed border-black/[0.12] px-3 py-2.5 text-left"}
+                    >
                       <span className="flex min-w-0 flex-col items-start">
-                        <span className="truncate text-sm font-medium">{cliente?.nome ?? "—"} · {l.titolo}</span>
+                        <span className="truncate text-sm font-medium">
+                          {cliente ? (
+                            <button type="button" onClick={(e) => { e.stopPropagation(); navigate(`/cliente/${cliente.id}`); }} className="underline-offset-2 hover:underline">{cliente.nome}</button>
+                          ) : "—"}
+                          {" · "}{l.titolo}
+                        </span>
                         <span className="font-mono text-[11px] text-fumo-2">{formatData(l.data)}</span>
                       </span>
                       <span className="flex shrink-0 items-center gap-2 font-mono text-xs">
                         <span className="text-fumo-2">{svolto ? formatOre(oreDi(l.id)) : "—"}</span>
                         {svolto && <span className="text-blu">{formatEuro(costoDi(l.id))}</span>}
                       </span>
-                    </button>
+                    </div>
                   );
                 })}
               </div>
@@ -124,6 +142,7 @@ export function OperaioScheda() {
       </div>
 
       {!io && <PagaSheet open={pagaOpen} onOpenChange={setPagaOpen} operatoreId={operatore.id} nome={operatore.nome} saldo={libro.saldo} />}
+      {io && <PrelievoFoglio open={prelievoOpen} onOpenChange={setPrelievoOpen} />}
       <ModificaOperaioSheet key={operatore.id} open={modifica} onOpenChange={setModifica} operatore={operatore} />
       {!io && (
         <Conferma
@@ -195,6 +214,27 @@ function PagaSheet({ open, onOpenChange, operatoreId, nome, saldo }: { open: boo
           layoutId="metodo-paga"
         />
         <Button size="lg" onClick={() => void paga()}>Paga {formatEuro(v)}</Button>
+      </div>
+    </Foglio>
+  );
+}
+
+function PrelievoFoglio({ open, onOpenChange }: { open: boolean; onOpenChange: (o: boolean) => void }) {
+  const [importo, setImporto] = useState("");
+  const v = Number(importo.replace(",", "."));
+  const preleva = async () => {
+    if (!(v > 0)) return;
+    const a = await prelievoTitolare(v);
+    setImporto("");
+    onOpenChange(false);
+    notificaUndo(`Prelevato ${formatEuro(v)}`, a);
+  };
+  return (
+    <Foglio open={open} onOpenChange={onOpenChange} variante="azione-pagamento" titolo="Preleva">
+      <p className="mb-4 text-sm text-fumo">Prendi dei soldi dalla cassa. Non è uno stipendio, è un prelievo.</p>
+      <div className="flex flex-col gap-3">
+        <Field label="Importo" value={importo} onChange={(e) => setImporto(e.target.value.replace(/[^0-9.,]/g, ""))} suffix="€" inputMode="decimal" placeholder="0,00" />
+        <Button size="lg" onClick={() => void preleva()} disabled={!(v > 0)}>Conferma prelievo</Button>
       </div>
     </Foglio>
   );
