@@ -95,7 +95,9 @@ export function ShaderWorld({ colorA, colorB }: { colorA: string; colorB: string
     resize();
 
     let raf = 0;
+    let disposed = false;
     const loop = (ms: number) => {
+      if (disposed) return; // StrictMode: niente render dopo il cleanup (context perso)
       const k = 0.045;
       cA.x += (target.current.a[0] - cA.x) * k;
       cA.y += (target.current.a[1] - cA.y) * k;
@@ -117,10 +119,12 @@ export function ShaderWorld({ colorA, colorB }: { colorA: string; colorB: string
     document.addEventListener("visibilitychange", onVis);
 
     return () => {
+      // NB: niente loseContext — in StrictMode (dev) il secondo mount riusa lo
+      // stesso canvas/context. World resta montato per tutta la vita dell'app.
+      disposed = true;
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
       document.removeEventListener("visibilitychange", onVis);
-      gl.getExtension("WEBGL_lose_context")?.loseContext();
     };
   }, []);
 
