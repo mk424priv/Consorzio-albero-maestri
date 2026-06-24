@@ -3,7 +3,8 @@
 import type { MetodoPagamento } from "@/lib/dominio";
 import { arrotonda, dataDaISO, oggiISO } from "@/lib/format";
 import { nuovoId } from "@/lib/id";
-import { operatoreIo, pagamentoApertoLavoro } from "@/lib/lavoro-calc";
+import { dovutoOperatore } from "@/lib/conti";
+import { calcoloLavoro, operatoreIo, pagamentoApertoLavoro } from "@/lib/lavoro-calc";
 import type { Lavoro, Pagamento } from "@/lib/types";
 import { useStore } from "./store";
 
@@ -14,12 +15,16 @@ const noop: Annulla = async () => {};
 export async function incassaLavoro(lavoroId: string, importo: number): Promise<Annulla> {
   const { dati, salva, elimina } = useStore.getState();
   const lavoro = dati.lavori.find((l) => l.id === lavoroId);
-  if (!lavoro || importo <= 0) return noop;
+  if (!lavoro) return noop;
+  // VINCOLO: mai incassare più del residuo aperto del lavoro (niente over-incasso).
+  const residuo = calcoloLavoro(dati, lavoro).daIncassare;
+  const eff = Math.min(arrotonda(importo), residuo);
+  if (eff <= 0) return noop;
 
   const aperto = pagamentoApertoLavoro(dati, lavoroId);
   if (aperto) {
     const prima = { ...aperto };
-    await salva("pagamenti", { ...aperto, importoIncassato: arrotonda(aperto.importoIncassato + importo), dataIncasso: oggiISO() });
+    await salva("pagamenti", { ...aperto, importoIncassato: arrotonda(aperto.importoIncassato + eff), dataIncasso: oggiISO() });
     return async () => { await salva("pagamenti", prima); };
   }
   const nuovo: Pagamento = {
@@ -27,8 +32,8 @@ export async function incassaLavoro(lavoroId: string, importo: number): Promise<
     clienteId: lavoro.clienteId ?? "",
     lavoroId,
     origine: lavoro.modo === "preventivo" ? "preventivo" : "ore",
-    importoAtteso: arrotonda(importo),
-    importoIncassato: arrotonda(importo),
+    importoAtteso: arrotonda(eff),
+    importoIncassato: arrotonda(eff),
     dataEmissione: oggiISO(),
     dataIncasso: oggiISO(),
     creatoIl: oggiISO(),
@@ -174,10 +179,13 @@ export async function eliminaOperaio(id: string): Promise<Annulla> {
 
 /** Paga un operaio: crea un CompensoOperatore (denaro in uscita). */
 export async function pagaOperaio(operatoreId: string, importo: number, metodo?: MetodoPagamento, periodo?: string): Promise<Annulla> {
-  const { salva, elimina } = useStore.getState();
-  if (importo <= 0) return noop;
+  const { dati, salva, elimina } = useStore.getState();
+  // VINCOLO: mai pagare più del dovuto all'operaio.
+  const dovuto = dovutoOperatore(dati, operatoreId).daPagare;
+  const eff = Math.min(arrotonda(importo), dovuto);
+  if (eff <= 0) return noop;
   const id = nuovoId();
-  await salva("compensi", { id, operatoreId, importo: arrotonda(importo), data: oggiISO(), periodo, metodo, creatoIl: oggiISO(), updatedAt: "" });
+  await salva("compensi", { id, operatoreId, importo: arrotonda(eff), data: oggiISO(), periodo, metodo, creatoIl: oggiISO(), updatedAt: "" });
   return async () => { await elimina("compensi", id); };
 }
 

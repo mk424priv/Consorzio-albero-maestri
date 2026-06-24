@@ -151,9 +151,9 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
               placeholder="altro…"
               inputMode="decimal"
               value={altro}
-              onChange={(e) => setAltro(e.target.value)}
+              onChange={(e) => setAltro(e.target.value.replace(/[^0-9.,]/g, ""))}
             />
-            <Button size="sm" variant="inchiostro" onClick={async () => { const v = Number(altro.replace(",", ".")); setAltro(""); setIncassaOpen(false); if (v > 0) notificaUndo(`Incassato ${formatEuro(v)}`, await incassaLavoro(lavoro.id, v)); }}>
+            <Button size="sm" variant="inchiostro" onClick={async () => { const v = Math.min(Number(altro.replace(",", ".")) || 0, calc.daIncassare); setAltro(""); setIncassaOpen(false); if (v > 0) notificaUndo(`Incassato ${formatEuro(v)}`, await incassaLavoro(lavoro.id, v)); }}>
               Ok
             </Button>
           </div>

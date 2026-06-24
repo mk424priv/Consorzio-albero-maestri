@@ -192,7 +192,8 @@ function ModificaOperaioSheet({ open, onOpenChange, operatore }: { open: boolean
 function PagaSheet({ open, onOpenChange, operatoreId, nome, saldo }: { open: boolean; onOpenChange: (o: boolean) => void; operatoreId: string; nome: string; saldo: number }) {
   const [importo, setImporto] = useState("");
   const [metodo, setMetodo] = useState<MetodoPagamento>("contanti");
-  const v = importo ? Number(importo.replace(",", ".")) : saldo;
+  // VINCOLO: mai pagare più del dovuto (clamp coerente con l'azione pagaOperaio).
+  const v = Math.min(importo ? Number(importo.replace(",", ".")) || 0 : saldo, saldo);
   const paga = async () => {
     const a = await pagaOperaio(operatoreId, v, metodo);
     setImporto("");
