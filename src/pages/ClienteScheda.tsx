@@ -2,8 +2,7 @@ import { ArrowLeft, Mail, MapPin, Phone, Plus } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
-import { Intestazione } from "@/components/Intestazione";
-import { Button, Card, Codice } from "@/components/ui";
+import { Avatar, AvatarStorico, Button, Codice, Segmented, StatePill, StatTile } from "@/components/ui";
 import { codiceCliente, leggiCodice } from "@/lib/codice-parlante";
 import { riepilogoCliente } from "@/lib/conti";
 import { chiaveMese, formatEuro, formatMese, formatOre, oggiISO } from "@/lib/format";
@@ -11,17 +10,7 @@ import { calcoloLavoro } from "@/lib/lavoro-calc";
 import { useStore } from "@/store/store";
 
 type Filtro = "tutto" | "incassare" | "fare";
-
-function Numero({ label, valore, forte }: { label: string; valore: string; forte?: boolean }) {
-  return (
-    <div className="flex flex-col gap-0.5">
-      <span className="font-mono text-[0.6rem] uppercase tracking-wider text-fumo">{label}</span>
-      <span className={forte ? "font-mono text-base tabular-nums text-lime" : "font-mono text-sm tabular-nums text-fumo"}>
-        {valore}
-      </span>
-    </div>
-  );
-}
+const STORICO_SOGLIA = 2;
 
 export function ClienteScheda() {
   const { id = "" } = useParams();
@@ -31,7 +20,6 @@ export function ClienteScheda() {
   const [dettagli, setDettagli] = useState(false);
 
   const cliente = dati.clienti.find((c) => c.id === id);
-
   const lavori = useMemo(
     () => dati.lavori.filter((l) => !l.deleted && l.clienteId === id).sort((a, b) => b.data.localeCompare(a.data)),
     [dati.lavori, id],
@@ -39,8 +27,8 @@ export function ClienteScheda() {
 
   if (!cliente) {
     return (
-      <div className="flex flex-col gap-3">
-        <Intestazione titolo="Cliente" />
+      <div className="px-5 pt-6">
+        <button type="button" onClick={() => navigate(-1)} className="mb-4 flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo"><ArrowLeft size={18} /></button>
         <p className="text-sm text-fumo-2">Cliente non trovato.</p>
       </div>
     );
@@ -49,13 +37,13 @@ export function ClienteScheda() {
   const codice = codiceCliente(dati, cliente.id);
   const decode = leggiCodice(codice);
   const r = riepilogoCliente(dati, cliente.id);
+  const storico = r.numeroLavori >= STORICO_SOGLIA;
+  const iniz = `${cliente.nome[0] ?? ""}${cliente.cognome?.[0] ?? ""}`.toUpperCase() || "?";
 
-  const svolti = lavori.filter((l) => l.fase === "fatto");
-  const daIncassare = svolti.filter((l) => calcoloLavoro(dati, l).statoIncasso !== "pagato");
+  const daIncassare = lavori.filter((l) => l.fase === "fatto" && calcoloLavoro(dati, l).statoIncasso !== "pagato");
   const daFare = lavori.filter((l) => l.fase === "da_fare");
   const visibili = filtro === "incassare" ? daIncassare : filtro === "fare" ? daFare : lavori;
 
-  // calendario: mesi con conteggi
   const perMese = new Map<string, { fatto: number; daFare: number }>();
   for (const l of lavori) {
     const k = chiaveMese(l.data);
@@ -65,117 +53,90 @@ export function ClienteScheda() {
     perMese.set(k, v);
   }
   const mesi = [...perMese.entries()].sort((a, b) => b[0].localeCompare(a[0])).slice(0, 6);
-  const prossimo = daFare
-    .filter((l) => l.data >= oggiISO())
-    .sort((a, b) => a.data.localeCompare(b.data))[0];
+  const prossimo = daFare.filter((l) => l.data >= oggiISO()).sort((a, b) => a.data.localeCompare(b.data))[0];
 
   return (
-    <div className="flex flex-col gap-4 pb-24">
-      <Intestazione
-        titolo={`${cliente.nome} ${cliente.cognome ?? ""}`.trim()}
-        sottotitolo={cliente.luogo}
-        azione={
-          <Button size="icona" variant="tenue" onClick={() => navigate(-1)} aria-label="Indietro">
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        }
-      />
-
-      {/* contatti */}
-      {(cliente.telefono || cliente.email || cliente.luogo) && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-fumo">
-          {cliente.telefono && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" /> {cliente.telefono}</span>}
-          {cliente.email && <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" /> {cliente.email}</span>}
-          {cliente.luogo && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {cliente.luogo}</span>}
+    <div className="flex flex-col pb-24">
+      <header className="flex flex-col items-center gap-3 px-5 pt-5 text-center">
+        <div className="flex w-full items-center justify-between">
+          <button type="button" onClick={() => navigate(-1)} aria-label="Indietro" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo hover:text-bianco"><ArrowLeft size={18} /></button>
+          {storico && <StatePill stato="storico" />}
         </div>
-      )}
-
-      {/* identità: codice grande + decodifica */}
-      <div className="flex flex-col items-center gap-1.5 py-1">
+        {storico ? <AvatarStorico iniziali={iniz} size={72} /> : <Avatar iniziali={iniz} tono={r.saldoDaIncassare > 0 ? "rosso" : "neutro"} size={72} />}
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{cliente.nome} {cliente.cognome ?? ""}</h1>
+          {cliente.luogo && <p className="text-sm text-fumo">{cliente.luogo}</p>}
+        </div>
         <Codice value={codice} grande />
         {decode && r.numeroLavori > 0 && (
-          <p className="font-mono text-xs text-fumo-2">
-            paga in ~{decode.giorniMedi} gg · ~{formatEuro(decode.spesaMedia)}/lavoro · {decode.anni} anni
-          </p>
+          <p className="font-mono text-[11px] text-fumo-2">paga in ~{decode.giorniMedi} gg · ~{formatEuro(decode.spesaMedia)}/lavoro · {decode.anni} anni</p>
         )}
-      </div>
+        {(cliente.telefono || cliente.email) && (
+          <div className="flex flex-wrap items-center justify-center gap-2">
+            {cliente.telefono && <a href={`tel:${cliente.telefono}`} className="flex items-center gap-1.5 rounded-pill bg-superficie px-3 py-1.5 text-xs text-fumo"><Phone size={13} /> {cliente.telefono}</a>}
+            {cliente.email && <a href={`mailto:${cliente.email}`} className="flex items-center gap-1.5 rounded-pill bg-superficie px-3 py-1.5 text-xs text-fumo"><Mail size={13} /> email</a>}
+            {cliente.luogo && <span className="flex items-center gap-1.5 rounded-pill bg-superficie px-3 py-1.5 text-xs text-fumo"><MapPin size={13} /> {cliente.luogo}</span>}
+          </div>
+        )}
+      </header>
 
-      {/* riepilogo inciso */}
-      <Card tono="incasso" className="flex flex-col gap-3 p-4">
-        <div className="grid grid-cols-4 gap-2">
-          <Numero label="Da incassare" valore={formatEuro(r.saldoDaIncassare)} forte />
-          <Numero label="Incassato" valore={formatEuro(r.totaleIncassato)} />
-          <Numero label="Lavori" valore={String(r.numeroLavori)} />
-          <Numero label="Ore" valore={formatOre(r.oreTotali)} />
+      <div className="flex flex-col gap-5 px-5 pt-6">
+        <div className="grid grid-cols-2 gap-2">
+          <StatTile etichetta="Da incassare" tono={r.saldoDaIncassare > 0 ? "rosso" : "neutro"}>{formatEuro(r.saldoDaIncassare)}</StatTile>
+          <StatTile etichetta="Incassato" tono="verde">{formatEuro(r.totaleIncassato)}</StatTile>
+          <StatTile etichetta="Lavori">{String(r.numeroLavori)}</StatTile>
+          <StatTile etichetta="Ore">{formatOre(r.oreTotali)}</StatTile>
         </div>
-        <button type="button" onClick={() => setDettagli((v) => !v)} className="self-start font-mono text-[0.65rem] uppercase tracking-wider text-lime/80">
+
+        <button type="button" onClick={() => setDettagli((v) => !v)} className="self-start font-mono text-[11px] uppercase tracking-label text-blu">
           {dettagli ? "− dettagli" : "+ dettagli economici"}
         </button>
         {dettagli && (
-          <div className="grid grid-cols-4 gap-2 border-t border-white/10 pt-2">
-            <Numero label="Margine" valore={formatEuro(r.margine)} />
-            <Numero label="Fatturabile" valore={formatEuro(r.valoreFatturabile)} />
-            <Numero label="Manodopera" valore={formatEuro(r.costoManodopera)} />
-            <Numero label="Spese" valore={formatEuro(r.spese)} />
+          <div className="grid grid-cols-2 gap-2">
+            <StatTile etichetta="Margine">{formatEuro(r.margine)}</StatTile>
+            <StatTile etichetta="Fatturabile">{formatEuro(r.valoreFatturabile)}</StatTile>
+            <StatTile etichetta="Manodopera">{formatEuro(r.costoManodopera)}</StatTile>
+            <StatTile etichetta="Spese">{formatEuro(r.spese)}</StatTile>
           </div>
         )}
-      </Card>
 
-      {/* calendario compatto */}
-      {mesi.length > 0 && (
-        <Card tono="piana" className="flex flex-col gap-1.5 p-3">
-          <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">Lavori nel tempo</span>
-          {mesi.map(([k, v]) => (
-            <div key={k} className="flex items-center justify-between text-sm">
-              <span className="font-mono text-xs uppercase text-fumo">{formatMese(k)}</span>
-              <span className="font-mono text-xs">
-                {"●".repeat(v.fatto)}
-                <span className="text-fumo-2">{"◌".repeat(v.daFare)}</span>
-              </span>
-            </div>
-          ))}
-          {prossimo && (
-            <p className="mt-1 border-t border-white/15 pt-1.5 font-mono text-xs text-lime">
-              prossimo: ◌ {prossimo.titolo}
-            </p>
-          )}
-        </Card>
-      )}
-
-      {/* segmento 3 stati */}
-      <div className="flex rounded-2xl bg-white/[0.05] p-1">
-        {([["tutto", "Tutto"], ["incassare", "Da incassare"], ["fare", "Da fare"]] as const).map(([v, label]) => (
-          <button
-            key={v}
-            type="button"
-            onClick={() => setFiltro(v)}
-            className={filtro === v ? "flex-1 rounded-[0.5rem] bg-white/[0.08] px-2 py-1.5 text-sm font-medium text-bianco" : "flex-1 rounded-[0.5rem] px-2 py-1.5 text-sm text-fumo-2"}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* lista lavori */}
-      <div className="flex flex-col gap-2">
-        {visibili.length === 0 ? (
-          <p className="py-6 text-center text-sm text-fumo-2">
-            {filtro === "incassare" ? "Niente da incassare." : filtro === "fare" ? "Nessun lavoro in programma." : "Ancora nessun lavoro."}
-          </p>
-        ) : (
-          visibili.map((l) => <CardLavoro key={l.id} lavoro={l} />)
+        {mesi.length > 0 && (
+          <div className="flex flex-col gap-1.5 rounded-vetro bg-superficie p-4">
+            <span className="font-mono text-[11px] uppercase tracking-label text-fumo-2">Lavori nel tempo</span>
+            {mesi.map(([k, v]) => (
+              <div key={k} className="flex items-center justify-between text-sm">
+                <span className="font-mono text-xs uppercase text-fumo">{formatMese(k)}</span>
+                <span className="font-mono text-xs text-verde">{"●".repeat(v.fatto)}<span className="text-fumo-2">{"◌".repeat(v.daFare)}</span></span>
+              </div>
+            ))}
+            {prossimo && <p className="mt-1 border-t border-bordo pt-1.5 font-mono text-xs text-blu">prossimo: ◌ {prossimo.titolo}</p>}
+          </div>
         )}
+
+        <Segmented
+          value={filtro}
+          onValueChange={setFiltro}
+          options={[
+            { value: "tutto", label: "Tutto" },
+            { value: "incassare", label: "Da incassare" },
+            { value: "fare", label: "Da fare" },
+          ]}
+          layoutId="filtro-cliente"
+        />
+
+        <div className="flex flex-col gap-2.5">
+          {visibili.length === 0 ? (
+            <p className="py-6 text-center text-sm text-fumo-2">{filtro === "incassare" ? "Niente da incassare." : filtro === "fare" ? "Nessun lavoro in programma." : "Ancora nessun lavoro."}</p>
+          ) : (
+            visibili.map((l) => <CardLavoro key={l.id} lavoro={l} />)
+          )}
+        </div>
       </div>
 
-      {/* CTA sticky */}
       <div className="fixed inset-x-0 bottom-[calc(4.75rem+env(safe-area-inset-bottom))] z-30">
         <div className="mx-auto flex max-w-md px-4">
-          <Button
-            size="lg"
-            className="w-full shadow-flottante"
-            onClick={() => navigate("/nuovo", { state: { clienteId: cliente.id } })}
-          >
-            <Plus className="h-5 w-5" /> Nuovo lavoro per {cliente.nome}
+          <Button size="lg" className="w-full shadow-flottante" onClick={() => navigate("/nuovo", { state: { clienteId: cliente.id } })}>
+            <Plus size={18} /> Nuovo lavoro per {cliente.nome}
           </Button>
         </div>
       </div>
