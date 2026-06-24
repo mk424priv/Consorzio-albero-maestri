@@ -2,7 +2,8 @@ import { ArrowLeft, Download, RotateCcw, Trash2, Undo2, Upload, UserRound } from
 import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Intestazione } from "@/components/Intestazione";
-import { Button, Card, Conferma } from "@/components/ui";
+import { Button, Card, Conferma, Field } from "@/components/ui";
+import { getWorkspaceId, isSyncConfigured, setWorkspaceId } from "@/db/sync-config";
 import { esportaJSON, importaJSON } from "@/lib/backup";
 import { notificaUndo } from "@/lib/undo";
 import { adessoISO, oggiISO } from "@/lib/format";
@@ -37,6 +38,9 @@ export function Impostazioni() {
   const [msg, setMsg] = useState<string | null>(null);
   const [confermaReset, setConfermaReset] = useState(false);
   const [daEliminare, setDaEliminare] = useState<{ key: CestinoKey; id: string; nome: string } | null>(null);
+  const [linkCode, setLinkCode] = useState("");
+  const syncOn = isSyncConfigured();
+  const wsCode = getWorkspaceId();
 
   const esporta = () => {
     const blob = new Blob([esportaJSON(dati)], { type: "application/json" });
@@ -131,6 +135,22 @@ export function Impostazioni() {
           </Button>
           <input ref={fileRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => void onFile(e)} />
         </div>
+      </Card>
+
+      <Card tono="alta" className="flex flex-col gap-3 p-4">
+        <h2 className="font-display text-lg text-bianco">Sincronizzazione</h2>
+        <p className="text-sm text-fumo-2">
+          {syncOn
+            ? "Attiva. Condividi il codice per collegare un altro telefono: stesso codice = stessi dati."
+            : "Non configurata: i dati restano sul telefono. Backend opzionale (vedi supabase/schema.sql)."}
+        </p>
+        <button type="button" onClick={() => { void navigator.clipboard?.writeText(wsCode); setMsg("Codice copiato."); }} className="self-start break-all rounded-pill bg-superficie px-3 py-1.5 text-left font-mono text-xs text-lime">
+          {wsCode}
+        </button>
+        <Field label="Collega un telefono (incolla il suo codice)" value={linkCode} onChange={(e) => setLinkCode(e.target.value)} placeholder="codice…" />
+        <Button variant="tenue" className="self-start" disabled={!linkCode.trim()} onClick={() => { setWorkspaceId(linkCode); window.location.reload(); }}>
+          Collega e sincronizza
+        </Button>
       </Card>
 
       <Card tono="alta" className="flex flex-col gap-3 p-4">

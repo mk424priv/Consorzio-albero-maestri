@@ -16,6 +16,7 @@ import { NuovoCliente } from "@/pages/NuovoCliente";
 import { NuovoOperaio } from "@/pages/NuovoOperaio";
 import { OperaioScheda } from "@/pages/OperaioScheda";
 import { Soldi } from "@/pages/Soldi";
+import { avviaSync } from "@/db/sync";
 import { useStore } from "@/store/store";
 
 function Splash() {
@@ -31,7 +32,7 @@ export function App() {
   const pronto = useStore((s) => s.pronto);
 
   useEffect(() => {
-    void carica();
+    void carica().then(() => avviaSync());
   }, [carica]);
 
   return (
