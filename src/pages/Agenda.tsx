@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Banknote, ChevronLeft, ChevronRight, TreePine } from "lucide-react";
+import { Banknote, ChevronLeft, ChevronRight, PencilLine, TreePine } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
@@ -18,6 +18,7 @@ import { calcoloLavoro } from "@/lib/lavoro-calc";
 import { notificaUndo } from "@/lib/undo";
 import type { Dati, Lavoro } from "@/lib/types";
 import { incassaLavoro } from "@/store/azioni";
+import { bozzaNonVuota, useBozza } from "@/store/bozza";
 import { useStore } from "@/store/store";
 
 function meseAdiacente(chiave: string, delta: number): string {
@@ -35,6 +36,8 @@ export function Agenda() {
   const oggi = oggiISO();
   const [mese, setMese] = useState(() => chiaveMese(oggi));
   const [filtro, setFiltro] = useState<Filtro>("tutto");
+  const bozza = useBozza((s) => s.b);
+  const haBozza = bozzaNonVuota(bozza);
 
   const matchFiltro = (l: Lavoro) => {
     if (filtro === "tutto") return true;
@@ -109,6 +112,21 @@ export function Agenda() {
           </span>
         </div>
       </Cruscotto>
+
+      {haBozza && (
+        <div className="px-4 pt-3">
+          <button
+            type="button"
+            onClick={() => navigate("/nuovo", { state: { riprendi: true } })}
+            className="flex w-full items-center justify-between gap-2 rounded-vetro border border-blu/30 bg-blu/[0.07] px-4 py-3 text-left transition-transform active:scale-[0.99]"
+          >
+            <span className="flex items-center gap-2 text-sm font-medium text-bianco">
+              <PencilLine size={16} className="text-blu" /> Riprendi la registrazione
+            </span>
+            <span className="truncate font-mono text-[11px] text-fumo-2">{bozza.titolo.trim() || "bozza in sospeso"}</span>
+          </button>
+        </div>
+      )}
 
       {vuoto ? (
         <div className="px-4 pt-6">

@@ -166,7 +166,8 @@ export function ClienteScheda() {
 function ModificaClienteSheet({ open, onOpenChange, cliente }: { open: boolean; onOpenChange: (o: boolean) => void; cliente: Cliente }) {
   const salva = useStore((s) => s.salva);
   const [form, setForm] = useState(() => ({
-    nome: `${cliente.nome}${cliente.cognome ? " " + cliente.cognome : ""}`.trim(),
+    nome: cliente.nome,
+    cognome: cliente.cognome ?? "",
     tariffa: cliente.tariffaOraria != null ? String(cliente.tariffaOraria) : "",
     luogo: cliente.luogo ?? "",
     telefono: cliente.telefono ?? "",
@@ -177,7 +178,7 @@ function ModificaClienteSheet({ open, onOpenChange, cliente }: { open: boolean; 
     await salva("clienti", {
       ...cliente,
       nome: form.nome.trim() || cliente.nome,
-      cognome: undefined,
+      cognome: form.cognome.trim() || undefined,
       tariffaOraria: form.tariffa ? Number(form.tariffa.replace(",", ".")) : null,
       luogo: form.luogo.trim() || undefined,
       telefono: form.telefono.trim() || undefined,
@@ -190,6 +191,7 @@ function ModificaClienteSheet({ open, onOpenChange, cliente }: { open: boolean; 
     <Foglio open={open} onOpenChange={onOpenChange} variante="dettaglio" titolo="Modifica cliente">
       <div className="flex flex-col gap-3">
         <Field label="Nome" value={form.nome} onChange={(e) => set({ nome: e.target.value })} />
+        <Field label="Cognome" value={form.cognome} onChange={(e) => set({ cognome: e.target.value })} />
         <Field label="Tariffa oraria" value={form.tariffa} onChange={(e) => set({ tariffa: e.target.value })} suffix="€/h" inputMode="decimal" />
         <Field label="Luogo" value={form.luogo} onChange={(e) => set({ luogo: e.target.value })} />
         <Field label="Telefono" value={form.telefono} onChange={(e) => set({ telefono: e.target.value })} inputMode="tel" />

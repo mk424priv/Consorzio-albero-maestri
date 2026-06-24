@@ -41,7 +41,7 @@ export class DexieRepository implements Repository {
 
   async rimuovi(collezione: CollezioneKey, id: string): Promise<void> {
     const rec = await db.table(collezione).get(id);
-    if (rec) await db.table(collezione).put({ ...rec, deleted: true, updatedAt: adessoISO() });
+    if (rec) await db.table(collezione).put({ ...rec, deleted: true, rev: ((rec as { rev?: number }).rev ?? 0) + 1, updatedAt: adessoISO() });
   }
 
   async sostituisciTutto(dati: Dati): Promise<void> {

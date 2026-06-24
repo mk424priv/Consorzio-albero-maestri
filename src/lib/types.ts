@@ -30,6 +30,7 @@ export interface Cliente {
   note?: string;
   creatoIl: string;
   updatedAt: string;
+  rev?: number;
   deleted?: boolean;
 }
 
@@ -44,6 +45,7 @@ export interface Operatore {
   note?: string;
   creatoIl: string;
   updatedAt: string;
+  rev?: number;
   deleted?: boolean;
 }
 
@@ -81,6 +83,7 @@ export interface Lavoro {
   note?: string;
   creatoIl: string;
   updatedAt: string;
+  rev?: number;
   deleted?: boolean;
 }
 
@@ -93,7 +96,9 @@ export interface RegistrazioneOre {
   data: string;
   ore: number;
   note?: string;
+  creatoIl?: string;
   updatedAt: string;
+  rev?: number;
   deleted?: boolean;
 }
 
@@ -108,8 +113,11 @@ export interface Pagamento {
   dataEmissione: string;
   dataScadenza?: string;
   dataIncasso?: string;
+  metodo?: MetodoPagamento;
   note?: string;
+  creatoIl?: string;
   updatedAt: string;
+  rev?: number;
   deleted?: boolean;
 }
 
@@ -122,7 +130,9 @@ export interface CompensoOperatore {
   periodo?: string; // "YYYY-MM"
   metodo?: MetodoPagamento;
   note?: string;
+  creatoIl?: string;
   updatedAt: string;
+  rev?: number;
   deleted?: boolean;
 }
 
@@ -134,7 +144,10 @@ export interface Spesa {
   descrizione?: string;
   clienteId?: string;
   lavoroId?: string;
+  attrezzoId?: string;
+  creatoIl?: string;
   updatedAt: string;
+  rev?: number;
   deleted?: boolean;
 }
 
@@ -154,6 +167,7 @@ export interface Attrezzo {
   carburante?: string; // benzina · diesel · GPL · elettrico
   prezzoCarburante?: number; // €/litro
   updatedAt: string;
+  rev?: number;
   deleted?: boolean;
 }
 

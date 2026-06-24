@@ -16,7 +16,7 @@ interface StoreState {
   reset: () => Promise<void>;
 }
 
-export const useStore = create<StoreState>((set) => ({
+export const useStore = create<StoreState>((set, get) => ({
   dati: DATI_VUOTI,
   pronto: false,
 
@@ -31,7 +31,10 @@ export const useStore = create<StoreState>((set) => ({
   },
 
   async salva(collezione, record) {
-    const stamped = { ...record, updatedAt: adessoISO() } as Dati[typeof collezione][number] & { id: string };
+    const id = (record as { id: string }).id;
+    const corrente = (get().dati[collezione] as Array<{ id: string; rev?: number }>).find((r) => r.id === id);
+    const rev = (corrente?.rev ?? 0) + 1;
+    const stamped = { ...record, updatedAt: adessoISO(), rev } as Dati[typeof collezione][number] & { id: string };
     await repository.upsert(collezione, stamped);
     set((s) => {
       const arr = (s.dati[collezione] as Array<{ id: string }>).filter((r) => r.id !== stamped.id);

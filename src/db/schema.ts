@@ -35,6 +35,11 @@ export class AlberoDB extends Dexie {
     this.version(2).stores({
       attrezzi: "id, categoria, updatedAt",
     });
+    // v3: indici updatedAt su ore/spese per il delta-sync (canone 08 §P5).
+    this.version(3).stores({
+      ore: "id, lavoroId, operatoreId, clienteId, data, updatedAt",
+      spese: "id, lavoroId, clienteId, data, updatedAt",
+    });
   }
 }
 

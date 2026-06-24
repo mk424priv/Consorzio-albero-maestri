@@ -31,6 +31,7 @@ export async function incassaLavoro(lavoroId: string, importo: number): Promise<
     importoIncassato: arrotonda(importo),
     dataEmissione: oggiISO(),
     dataIncasso: oggiISO(),
+    creatoIl: oggiISO(),
     updatedAt: "",
   };
   await salva("pagamenti", nuovo);
@@ -103,7 +104,8 @@ export async function incassaSubito(opts: {
     importoIncassato: arrotonda(opts.importo),
     dataEmissione: data,
     dataIncasso: data,
-    note: opts.metodo,
+    metodo: opts.metodo,
+    creatoIl: data,
     updatedAt: "",
   });
   const annulla: Annulla = async () => {
@@ -119,7 +121,7 @@ export async function prelievoTitolare(importo: number, data?: string): Promise<
   const io = operatoreIo(dati);
   if (!io || importo <= 0) return noop;
   const id = nuovoId();
-  await salva("compensi", { id, operatoreId: io.id, importo: arrotonda(importo), data: data ?? oggiISO(), note: "prelievo", updatedAt: "" });
+  await salva("compensi", { id, operatoreId: io.id, importo: arrotonda(importo), data: data ?? oggiISO(), note: "prelievo", creatoIl: oggiISO(), updatedAt: "" });
   return async () => { await elimina("compensi", id); };
 }
 
@@ -155,6 +157,6 @@ export async function pagaOperaio(operatoreId: string, importo: number, metodo?:
   const { salva, elimina } = useStore.getState();
   if (importo <= 0) return noop;
   const id = nuovoId();
-  await salva("compensi", { id, operatoreId, importo: arrotonda(importo), data: oggiISO(), periodo, metodo, updatedAt: "" });
+  await salva("compensi", { id, operatoreId, importo: arrotonda(importo), data: oggiISO(), periodo, metodo, creatoIl: oggiISO(), updatedAt: "" });
   return async () => { await elimina("compensi", id); };
 }

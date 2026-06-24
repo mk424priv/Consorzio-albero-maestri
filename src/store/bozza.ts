@@ -71,6 +71,41 @@ function bozzaIniziale(): Bozza {
   };
 }
 
+const BOZZA_KEY = "albero:bozza";
+
+/** Una bozza «da riprendere»: nuova (id null) e con qualcosa dentro. */
+export function bozzaNonVuota(b: Bozza): boolean {
+  if (b.id !== null) return false;
+  return Boolean(
+    b.titolo.trim() ||
+      b.modoCalc ||
+      b.clienteId ||
+      b.spese.length ||
+      b.partecipanti.some((p) => p.ore > 0) ||
+      b.giornate.some((g) => Object.values(g.ore).some((n) => n > 0)),
+  );
+}
+
+function persisti(b: Bozza) {
+  try {
+    if (bozzaNonVuota(b)) localStorage.setItem(BOZZA_KEY, JSON.stringify(b));
+    else localStorage.removeItem(BOZZA_KEY);
+  } catch {
+    /* storage non disponibile: ignora */
+  }
+}
+
+function caricaPersistita(): Bozza | null {
+  try {
+    const t = localStorage.getItem(BOZZA_KEY);
+    if (!t) return null;
+    const b = JSON.parse(t) as Bozza;
+    return bozzaNonVuota(b) ? b : null;
+  } catch {
+    return null;
+  }
+}
+
 interface BozzaStore {
   b: Bozza;
   apri: (ctx?: { data?: string; clienteId?: string; operatoreId?: string; fase?: Fase; lavoroId?: string }) => void;
@@ -79,7 +114,7 @@ interface BozzaStore {
 }
 
 export const useBozza = create<BozzaStore>((set) => ({
-  b: bozzaIniziale(),
+  b: caricaPersistita() ?? bozzaIniziale(),
   apri: (ctx) => {
     const { dati } = useStore.getState();
     const io = operatoreIo(dati);
@@ -125,6 +160,7 @@ export const useBozza = create<BozzaStore>((set) => ({
         if (inc <= SOGLIA) base.giaIncassato = "no";
         else if (inc >= atteso - SOGLIA) base.giaIncassato = "tutto";
         else { base.giaIncassato = "parte"; base.importoParte = inc; }
+        persisti(base);
         set({ b: base });
         return;
       }
@@ -148,10 +184,19 @@ export const useBozza = create<BozzaStore>((set) => ({
       }
     }
     base.partecipanti = primi;
+    persisti(base);
     set({ b: base });
   },
-  set: (patch) => set((s) => ({ b: { ...s.b, ...patch } })),
-  reset: () => set({ b: bozzaIniziale() }),
+  set: (patch) =>
+    set((s) => {
+      const b = { ...s.b, ...patch };
+      persisti(b);
+      return { b };
+    }),
+  reset: () => {
+    persisti(bozzaIniziale());
+    set({ b: bozzaIniziale() });
+  },
 }));
 
 // ── Derivati della bozza (live) ──
@@ -196,11 +241,12 @@ export async function salvaBozza(): Promise<string> {
   const oreIo = ioId ? orePartecipante(b, ioId) : 0;
   const oraFineCalc = oraUscita(b.oraInizio, oreIo) || undefined;
 
-  // in modifica: pulizia di ore/spese/pagamento precedenti (poi ricreati dalla bozza)
+  // in modifica: ore ricreate; SPESE riconciliate per id (no churn); il registro
+  // PAGAMENTI è sacro e non si tocca mai per ricrearlo (canone 08 §2.1).
   if (editing) {
     for (const o of datiPrima.ore.filter((o) => o.lavoroId === lavoroId && !o.deleted)) await elimina("ore", o.id);
-    for (const s of datiPrima.spese.filter((s) => s.lavoroId === lavoroId && !s.deleted)) await elimina("spese", s.id);
-    for (const p of datiPrima.pagamenti.filter((p) => p.lavoroId === lavoroId && !p.deleted)) await elimina("pagamenti", p.id);
+    const idsSpeseBozza = new Set(b.spese.map((s) => s.id));
+    for (const s of datiPrima.spese.filter((s) => s.lavoroId === lavoroId && !s.deleted && !idsSpeseBozza.has(s.id))) await elimina("spese", s.id);
   }
 
   const lavoro: Lavoro = {
@@ -234,35 +280,43 @@ export async function salvaBozza(): Promise<string> {
         for (const p of b.partecipanti) {
           const ore = g.ore[p.collaboratoreId] || 0;
           if (ore > 0) {
-            await salva("ore", { id: nuovoId(), lavoroId, clienteId: cId, operatoreId: p.collaboratoreId, data: g.data, ore, updatedAt: "" });
+            await salva("ore", { id: nuovoId(), lavoroId, clienteId: cId, operatoreId: p.collaboratoreId, data: g.data, ore, creatoIl: oggiISO(), updatedAt: "" });
           }
         }
       }
     } else {
       for (const p of b.partecipanti) {
         if (p.ore > 0) {
-          await salva("ore", { id: nuovoId(), lavoroId, clienteId: cId, operatoreId: p.collaboratoreId, data: b.periodo?.al ?? b.data, ore: p.ore, updatedAt: "" });
+          await salva("ore", { id: nuovoId(), lavoroId, clienteId: cId, operatoreId: p.collaboratoreId, data: b.periodo?.al ?? b.data, ore: p.ore, creatoIl: oggiISO(), updatedAt: "" });
         }
       }
     }
   }
 
-  // Spese
+  // Spese — riusa l'id della bozza (upsert, no churn di ULID)
   for (const s of b.spese) {
     if (s.importo > 0) {
-      await salva("spese", { id: nuovoId(), categoria: s.categoria, importo: s.importo, data: b.data, descrizione: s.descrizione || undefined, clienteId: cId, lavoroId, updatedAt: "" });
+      await salva("spese", { id: s.id, categoria: s.categoria, importo: s.importo, data: b.data, descrizione: s.descrizione || undefined, clienteId: cId, lavoroId, creatoIl: oggiISO(), updatedAt: "" });
     }
   }
 
-  // Pagamento (solo svolto) — uso il lordo reale calcolato dal motore dopo aver salvato le ore
+  // Pagamento — registro sacro: in MODIFICA si aggiorna solo l'atteso (preserva
+  // incassi/date/metodo); alla CREAZIONE si crea secondo «già incassato?» (08 §2.1).
   if (b.fase === "fatto") {
     const datiAgg = useStore.getState().dati;
     const lavoroAgg = datiAgg.lavori.find((l) => l.id === lavoroId);
     const lordo = lavoroAgg ? calcoloLavoro(datiAgg, lavoroAgg).lordo : 0;
-    if (lordo > 0) {
+    const pagEsistente = datiAgg.pagamenti.find((p) => p.lavoroId === lavoroId && !p.deleted);
+    if (editing && pagEsistente) {
+      if (arrotonda(pagEsistente.importoAtteso) !== lordo) {
+        await salva("pagamenti", { ...pagEsistente, importoAtteso: lordo });
+      }
+    } else if (lordo > 0) {
       let incassato = 0;
-      if (b.giaIncassato === "tutto") incassato = lordo;
-      else if (b.giaIncassato === "parte") incassato = Math.min(arrotonda(b.importoParte), lordo);
+      if (!editing) {
+        if (b.giaIncassato === "tutto") incassato = lordo;
+        else if (b.giaIncassato === "parte") incassato = Math.min(arrotonda(b.importoParte), lordo);
+      }
       await salva("pagamenti", {
         id: nuovoId(),
         clienteId: b.clienteId ?? "",
@@ -272,6 +326,7 @@ export async function salvaBozza(): Promise<string> {
         importoIncassato: arrotonda(incassato),
         dataEmissione: b.data,
         dataIncasso: incassato > 0 ? oggiISO() : undefined,
+        creatoIl: oggiISO(),
         updatedAt: "",
       });
     }

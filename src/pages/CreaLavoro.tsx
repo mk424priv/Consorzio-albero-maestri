@@ -92,8 +92,8 @@ export function CreaLavoro() {
 
   // init bozza all'apertura di /nuovo (sopravvive ai sotto-pannelli interni)
   useEffect(() => {
-    const st = (location.state ?? {}) as { data?: string; clienteId?: string; operatoreId?: string; fase?: "fatto" | "da_fare"; lavoroId?: string };
-    apri(st);
+    const st = (location.state ?? {}) as { data?: string; clienteId?: string; operatoreId?: string; fase?: "fatto" | "da_fare"; lavoroId?: string; riprendi?: boolean };
+    if (!st.riprendi) apri(st); // «riprendi»: mantiene la bozza idratata da localStorage
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -267,8 +267,8 @@ export function CreaLavoro() {
         </button>
       )}
 
-      {/* già incassato (solo svolto, lordo>0) */}
-      {svolto && b.modoCalc && lordo > 0 && <SezioneIncasso b={b} set={set} lordo={lordo} />}
+      {/* già incassato (solo CREAZIONE svolto, lordo>0). In modifica gli incassi vivono nelle azioni dedicate (Incassa/Storna). */}
+      {!b.id && svolto && b.modoCalc && lordo > 0 && <SezioneIncasso b={b} set={set} lordo={lordo} />}
 
       {errore && <p className="text-sm text-critico">{errore}</p>}
 
