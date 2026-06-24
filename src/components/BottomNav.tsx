@@ -1,32 +1,33 @@
 import { motion } from "framer-motion";
-import { CalendarDays, Users, Wallet } from "lucide-react";
+import { CalendarDays, LayoutDashboard, Users, Wallet } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/cn";
 
-// Tab-bar di vetro flottante (Revolut). Solo i blocchi principali.
+// Tab-bar flottante (neo-banking): icona-only inattivo, icona+label attivo (lime).
 const items = [
   { to: "/", label: "Agenda", Icon: CalendarDays, end: true },
   { to: "/soldi", label: "Soldi", Icon: Wallet, end: false },
+  { to: "/dashboard", label: "Dati", Icon: LayoutDashboard, end: false },
   { to: "/anagrafiche", label: "Rubrica", Icon: Users, end: false },
 ];
 
 export function BottomNav() {
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center pb-[calc(0.7rem+env(safe-area-inset-bottom))]">
-      <div className="glass-alta pointer-events-auto flex items-center gap-1 rounded-pill p-1.5">
+      <div className="glass-alta pointer-events-auto flex items-center gap-1 rounded-pill p-1.5 shadow-flottante ring-1 ring-white/5">
         {items.map(({ to, label, Icon, end }) => (
-          <NavLink key={to} to={to} end={end}>
+          <NavLink key={to} to={to} end={end} aria-label={label}>
             {({ isActive }) => (
               <span
                 className={cn(
-                  "relative z-0 flex items-center gap-1.5 rounded-pill px-4 py-2.5 text-sm font-medium transition-colors",
+                  "relative z-0 flex items-center gap-1.5 rounded-pill px-3.5 py-2.5 text-sm font-medium transition-colors",
                   isActive ? "text-bianco" : "text-fumo-2",
                 )}
               >
                 {isActive && (
                   <motion.span
                     layoutId="navpill"
-                    className="absolute inset-0 -z-10 rounded-pill bg-white/12 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18)]"
+                    className="absolute inset-0 -z-10 rounded-pill bg-superficie-3"
                     transition={{ type: "spring", stiffness: 340, damping: 32 }}
                   />
                 )}
