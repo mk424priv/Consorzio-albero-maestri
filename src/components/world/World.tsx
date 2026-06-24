@@ -1,18 +1,17 @@
 import { useLocation } from "react-router-dom";
-import { ShaderWorld } from "./ShaderWorld";
 
-export type Mondo = "agenda" | "soldi" | "ambra" | "grafite" | "ossidiana";
+type Sezione = "agenda" | "soldi" | "ambra" | "grafite" | "ossidiana";
 
-// Tela quasi-nera + glow di sezione FIOCO in alto. Le card sono solide sopra.
-export const MONDI: Record<Mondo, { a: string; b: string; css: string }> = {
-  agenda: { a: "#0c1230", b: "#1b2a6b", css: "radial-gradient(120% 70% at 50% -12%, rgba(44,64,150,0.5) 0%, rgba(44,64,150,0) 60%), #08080a" },
-  soldi: { a: "#06231a", b: "#0c5a3e", css: "radial-gradient(120% 70% at 50% -12%, rgba(20,128,86,0.46) 0%, rgba(20,128,86,0) 60%), #08080a" },
-  ambra: { a: "#2a1206", b: "#7a3b0e", css: "radial-gradient(120% 70% at 50% -12%, rgba(160,86,32,0.46) 0%, rgba(160,86,32,0) 60%), #08080a" },
-  grafite: { a: "#0c0c10", b: "#1a1a20", css: "radial-gradient(120% 70% at 50% -12%, rgba(64,64,80,0.4) 0%, rgba(64,64,80,0) 60%), #08080a" },
-  ossidiana: { a: "#0a0a10", b: "#15151d", css: "radial-gradient(120% 70% at 50% -12%, rgba(44,44,66,0.36) 0%, rgba(44,44,66,0) 60%), #08080a" },
+// Glow di sezione FIOCO in alto su tela quasi-nera (neo-banking). Card solide sopra.
+const GLOW: Record<Sezione, string> = {
+  agenda: "rgba(10,88,255,0.16)",
+  soldi: "rgba(0,209,94,0.14)",
+  ambra: "rgba(255,159,10,0.14)",
+  grafite: "rgba(255,255,255,0.05)",
+  ossidiana: "rgba(10,88,255,0.10)",
 };
 
-export function mondoFromPath(path: string): Mondo {
+function sezione(path: string): Sezione {
   if (path.startsWith("/soldi")) return "soldi";
   if (path.startsWith("/dashboard")) return "grafite";
   if (path.startsWith("/anagrafiche") || path.startsWith("/cliente") || path.startsWith("/operaio")) return "ambra";
@@ -20,17 +19,13 @@ export function mondoFromPath(path: string): Mondo {
   return "agenda";
 }
 
-/** Sfondo: glow di sezione fioco e animato + shader sottilissimo sopra (ambient). */
 export function World() {
   const { pathname } = useLocation();
-  const m = MONDI[mondoFromPath(pathname)];
+  const g = GLOW[sezione(pathname)];
   return (
-    <>
-      <div
-        className="mondo-anim pointer-events-none fixed inset-0 -z-20 transition-[background-image] duration-1000 ease-out"
-        style={{ backgroundImage: m.css }}
-      />
-      <ShaderWorld colorA={m.a} colorB={m.b} />
-    </>
+    <div
+      className="pointer-events-none fixed inset-0 -z-10 transition-[background] duration-700"
+      style={{ background: `radial-gradient(120% 55% at 50% -8%, ${g} 0%, transparent 55%), #050505` }}
+    />
   );
 }

@@ -3,11 +3,8 @@ import { createRoot } from "react-dom/client";
 import { registerSW } from "virtual:pwa-register";
 
 // Font self-hosted (offline-ready, canone 02 §1.1): nessuna dipendenza da CDN.
-import "@fontsource-variable/manrope";
 import "@fontsource-variable/inter";
-import "@fontsource/ibm-plex-mono/400.css";
-import "@fontsource/ibm-plex-mono/500.css";
-import "@fontsource/ibm-plex-mono/600.css";
+import "@fontsource-variable/jetbrains-mono";
 
 import "./index.css";
 import { App } from "@/app/App";

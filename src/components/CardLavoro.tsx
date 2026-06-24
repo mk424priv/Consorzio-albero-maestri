@@ -15,9 +15,9 @@ type StatoCard = "programmato" | "incassare" | "pagato";
 
 function StatoTag({ stato }: { stato: StatoCard }) {
   const map = {
-    programmato: { c: "text-attenzione bg-attenzione/15", t: "Programmato", I: CalendarClock },
-    incassare: { c: "text-lime bg-lime/15", t: "Da incassare", I: Clock },
-    pagato: { c: "text-positivo bg-positivo/15", t: "Saldato", I: Check },
+    programmato: { c: "text-blu bg-blu/15", t: "Programmato", I: CalendarClock },
+    incassare: { c: "text-rosso bg-rosso/15", t: "Da incassare", I: Clock },
+    pagato: { c: "text-verde bg-verde/15", t: "Saldato", I: Check },
   }[stato];
   const I = map.I;
   return (
@@ -67,7 +67,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
 
       <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1">
         {programmato ? (
-          <span className="font-mono text-sm text-attenzione">
+          <span className="font-mono text-sm text-blu">
             {lavoro.modo === "preventivo" && lavoro.prezzo ? `${formatEuro(lavoro.prezzo)} previsto` : "da svolgere"}
           </span>
         ) : (
@@ -116,7 +116,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
       {stato === "incassare" && incassaOpen && (
         <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-3 overflow-hidden rounded-2xl bg-white/[0.06] p-3">
           <p className="font-mono text-xs text-fumo-2">
-            Da incassare: <span className="text-attenzione">{formatEuro(calc.daIncassare)}</span>
+            Da incassare: <span className="text-rosso">{formatEuro(calc.daIncassare)}</span>
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={() => { void incassaLavoro(lavoro.id, calc.daIncassare); setIncassaOpen(false); }}>
@@ -151,12 +151,12 @@ function RigaSoldi({ calc }: { calc: { statoIncasso: string; incassato: number; 
     return (
       <span className="inline-flex flex-wrap items-center gap-x-2 font-mono text-sm">
         <span className="inline-flex items-center gap-1 text-positivo"><Check className="h-3.5 w-3.5" /> {formatEuro(calc.incassato)}</span>
-        <span className="inline-flex items-center gap-1 text-attenzione"><Clock className="h-3.5 w-3.5" /> {formatEuro(calc.daIncassare)} da incassare</span>
+        <span className="inline-flex items-center gap-1 text-rosso"><Clock className="h-3.5 w-3.5" /> {formatEuro(calc.daIncassare)} da incassare</span>
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center gap-1 font-mono text-sm text-attenzione">
+    <span className="inline-flex items-center gap-1 font-mono text-sm text-rosso">
       <Clock className="h-3.5 w-3.5" /> {formatEuro(calc.daIncassare)} da incassare
     </span>
   );

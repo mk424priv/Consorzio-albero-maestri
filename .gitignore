@@ -30,3 +30,6 @@ node_modules/.vite
 .env
 .env.*
 !.env.example
+
+# Cartella di riferimento (brandbook esterno, non parte del prodotto)
+brand book referenc/

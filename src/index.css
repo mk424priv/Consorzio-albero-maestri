@@ -1,49 +1,53 @@
 @import "tailwindcss";
 
 /*
-  Albero Maestri — sistema "Revolut-like" (canone 04 v3).
-  Superfici SOLIDE su tela quasi-nera, alto contrasto, font geometrico (Manrope)
-  + Inter, accenti puntuali (mai sui bottoni). Niente vetro trasparente.
+  Albero Maestri — "Neo-Banking Minimalist UI" (brandbook v4).
+  Nero profondo, superfici solide #111/#1C1C1C, accenti vivi (blu/verde/rosso),
+  Inter + JetBrains Mono, raggi ampi, fill a mesh-gradient + glow.
+  Ispirato ai migliori fintech, adattato al lavoro nel verde.
 */
 @theme {
-  --color-fondo: #08080a; /* tela quasi-nera */
-  --color-superficie: #161619; /* card solida */
-  --color-superficie-alta: #1f1f25; /* elevata */
-  --color-superficie-bassa: #101012; /* incassata / track */
-  --color-bordo: #ffffff14;
-
-  /* tinte di sezione (fioche, ambient) */
-  --color-notte: #1b2a6b;
-  --color-linfa: #0c5a3e;
-  --color-ambra: #7a3b0e;
-  --color-grafite: #1a1a20;
-  --color-ossidiana: #111118;
+  /* superfici */
+  --color-nero: #000000;
+  --color-fondo: #050505;
+  --color-superficie: #111111;       /* card primarie */
+  --color-superficie-alta: #1c1c1c;  /* secondarie / hover */
+  --color-superficie-bassa: #1a1a1a; /* input / track */
+  --color-superficie-3: #2a2a2a;     /* segmented attivo */
+  --color-bordo: #1f1f1f;
 
   /* inchiostro */
   --color-bianco: #ffffff;
-  --color-fumo: #ffffffb0; /* ~69% */
-  --color-fumo-2: #ffffff70; /* ~44% */
+  --color-fumo: #a3a3a3;   /* neutral-400 */
+  --color-fumo-2: #737373; /* neutral-500 */
 
-  /* accento (highlight/icone, NON superfici dei bottoni) */
-  --color-lime: #c8ff3c;
-  --color-lime-scuro: #aee01f;
+  /* accenti (icone/testo/illustrazioni — mai superfici dei bottoni) */
+  --color-blu: #0a58ff;    /* brand · programmato · in corso */
+  --color-verde: #00d15e;  /* positivo · incassato · saldato */
+  --color-rosso: #ff3b30;  /* da incassare · scaduto · uscita */
+  --color-viola: #4b0082;  /* fine del mesh */
 
-  /* status */
-  --color-positivo: #2bf0a8;
-  --color-attenzione: #ffb03a;
-  --color-critico: #ff5f5f;
+  /* alias di compat (le pagine usano questi nomi) */
+  --color-lime: #0a58ff;
+  --color-lime-scuro: #0848cc;
+  --color-positivo: #00d15e;
+  --color-attenzione: #ff9f0a;
+  --color-critico: #ff3b30;
 
-  /* font: Manrope (display, ~Aeonik) + Inter (corpo) + mono per codici */
-  --font-display: "Manrope Variable", ui-sans-serif, system-ui, sans-serif;
+  /* font */
+  --font-display: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", monospace;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
 
-  --radius-vetro: 1.25rem; /* 20px */
-  --radius-bolla: 1.5rem;
+  /* raggi ampi */
+  --radius-chip: 0.5rem;   /* 8px */
+  --radius-btn: 1rem;      /* 16px */
+  --radius-vetro: 1.5rem;  /* 24px card */
+  --radius-bolla: 2rem;    /* 32px */
   --radius-pill: 999px;
 
-  --shadow-vetro: 0 10px 28px -12px rgba(0, 0, 0, 0.7);
-  --shadow-flottante: 0 8px 22px -8px rgba(0, 0, 0, 0.6);
+  --shadow-vetro: 0 14px 40px -16px rgba(0, 0, 0, 0.8);
+  --shadow-flottante: 0 12px 32px -10px rgba(0, 0, 0, 0.7);
 }
 
 @layer base {
@@ -52,7 +56,6 @@
   #root {
     height: 100%;
   }
-
   body {
     margin: 0;
     background-color: var(--color-fondo);
@@ -64,75 +67,52 @@
     padding: env(safe-area-inset-top) env(safe-area-inset-right)
       env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
-
-  h1,
-  h2,
-  h3 {
+  h1, h2, h3 {
     font-family: var(--font-display);
     font-weight: 700;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.03em;
   }
 }
 
 @layer utilities {
-  /* Superfici SOLIDE — leggibili sempre (niente trasparenza/blur). */
-  .glass {
-    background-color: var(--color-superficie);
-    box-shadow: inset 0 0 0 1px var(--color-bordo), var(--shadow-vetro);
-  }
-  .glass-alta {
-    background-color: var(--color-superficie-alta);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), var(--shadow-vetro);
-  }
-  .glass-bassa {
-    background-color: var(--color-superficie-bassa);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-  }
-  .glass-scura {
-    background-color: #121216;
-    box-shadow: inset 0 0 0 1px var(--color-bordo), var(--shadow-vetro);
-  }
-  .tabular-nums {
-    font-variant-numeric: tabular-nums;
-  }
-  .tracking-label {
-    letter-spacing: 0.05em;
-  }
+  /* superfici solide (compat: i vecchi nomi .glass* restano, ma sono solide) */
+  .glass { background-color: var(--color-superficie); }
+  .glass-alta { background-color: var(--color-superficie-alta); }
+  .glass-bassa { background-color: var(--color-superficie-bassa); }
+  .glass-scura { background-color: var(--color-superficie); box-shadow: var(--shadow-vetro); }
+  .superficie { background-color: var(--color-superficie); }
+
+  .tabular-nums { font-variant-numeric: tabular-nums; }
+  .tracking-label { letter-spacing: 0.04em; }
+
+  /* fill: mesh-gradient premium + varianti */
+  .mesh-blu { background-image: linear-gradient(135deg, #0a58ff 0%, rgba(10,88,255,0.85) 55%, #4b0082 100%); }
+  .mesh-verde { background-image: linear-gradient(135deg, #00d15e 0%, rgba(0,209,94,0.8) 50%, #0a58ff 100%); }
+  .mesh-rosso { background-image: linear-gradient(135deg, #ff3b30 0%, rgba(255,59,48,0.8) 55%, #4b0082 100%); }
+  .mesh-notte { background-image: linear-gradient(150deg, #0a58ff 0%, #1a1147 55%, #050505 100%); }
 }
 
-/* Card per stato: solide + tinta sottile + barra-accento a sinistra. */
+/* card per stato — solide + barra-accento (programmato=blu, incassare=rosso, pagato=verde) */
 @layer utilities {
-  .statocard {
-    position: relative;
-    overflow: hidden;
-    border-radius: var(--radius-vetro);
-  }
+  .statocard { position: relative; overflow: hidden; border-radius: var(--radius-vetro); }
   .statocard--programmato {
-    background: linear-gradient(118deg, rgba(255, 176, 58, 0.14), rgba(255, 176, 58, 0) 52%), var(--color-superficie);
-    box-shadow: inset 0 0 0 1px rgba(255, 176, 58, 0.22), inset 4px 0 0 0 var(--color-attenzione), var(--shadow-vetro);
+    background: linear-gradient(118deg, rgba(10,88,255,0.10), rgba(10,88,255,0) 55%), var(--color-superficie);
+    box-shadow: inset 4px 0 0 0 var(--color-blu);
   }
   .statocard--incassare {
-    background: linear-gradient(118deg, rgba(200, 255, 60, 0.12), rgba(200, 255, 60, 0) 52%), var(--color-superficie);
-    box-shadow: inset 0 0 0 1px rgba(200, 255, 60, 0.18), inset 4px 0 0 0 var(--color-lime), var(--shadow-vetro);
+    background: linear-gradient(118deg, rgba(255,59,48,0.10), rgba(255,59,48,0) 55%), var(--color-superficie);
+    box-shadow: inset 4px 0 0 0 var(--color-rosso);
   }
   .statocard--pagato {
-    background: linear-gradient(118deg, rgba(43, 240, 168, 0.1), rgba(43, 240, 168, 0) 52%), var(--color-superficie);
-    box-shadow: inset 0 0 0 1px rgba(43, 240, 168, 0.14), inset 4px 0 0 0 rgba(43, 240, 168, 0.65), var(--shadow-vetro);
+    background: linear-gradient(118deg, rgba(0,209,94,0.08), rgba(0,209,94,0) 55%), var(--color-superficie);
+    box-shadow: inset 4px 0 0 0 rgba(0,209,94,0.7);
   }
 }
 
-/* Sfondo ambient (fioco) che respira — sotto card solide. */
 @keyframes mondoDeriva {
   0% { background-position: 0% 0%; }
   50% { background-position: 100% 50%; }
   100% { background-position: 0% 0%; }
 }
-.mondo-anim {
-  background-size: 160% 160%;
-  animation: mondoDeriva 28s ease-in-out infinite;
-}
-@media (prefers-reduced-motion: reduce) {
-  .mondo-anim {
-    animation: none;
-  }
-}
+.mondo-anim { background-size: 160% 160%; animation: mondoDeriva 30s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .mondo-anim { animation: none; } }

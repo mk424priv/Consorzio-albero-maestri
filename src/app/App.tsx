@@ -4,6 +4,7 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Layout } from "@/components/Layout";
 import { Agenda } from "@/pages/Agenda";
 import { Anagrafiche } from "@/pages/Anagrafiche";
+import { Brandbook } from "@/pages/Brandbook";
 import { Cantiere } from "@/pages/Cantiere";
 import { ClienteScheda } from "@/pages/ClienteScheda";
 import { CreaLavoro } from "@/pages/CreaLavoro";
@@ -40,6 +41,7 @@ export function App() {
         <BrowserRouter>
           <Routes>
             <Route path="/_kitchen" element={<Kitchen />} />
+            <Route path="/brandbook" element={<Brandbook />} />
             <Route element={<Layout />}>
               <Route path="/" element={<Agenda />} />
               <Route path="/soldi" element={<Soldi />} />
