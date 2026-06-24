@@ -1,27 +1,11 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { MeshStrip, type MeshTono } from "@/components/world/MeshStrip";
-import { Avatar, Codice, NumberHero, SectionHeader, Segmented, StatTile, Testata } from "@/components/ui";
+import { Avatar, Codice, Cruscotto, NumberHero, SectionHeader, Segmented, StatTile } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { libroOperatore, riepilogoCliente } from "@/lib/conti";
 import { arrotonda, formatEuro, formatOre } from "@/lib/format";
 import { operatoreIo } from "@/lib/lavoro-calc";
 import { useStore } from "@/store/store";
-
-function KpiHero({ etichetta, valore, sotto, mesh }: { etichetta: string; valore: number; sotto: string; mesh: MeshTono }) {
-  return (
-    <div className="relative overflow-hidden rounded-bolla p-5">
-      <MeshStrip tono={mesh} />
-      <div className="relative">
-        <span className="font-mono text-[11px] uppercase tracking-label text-white/75">{etichetta}</span>
-        <div className="mt-1">
-          <NumberHero value={valore} euro tono="bianco" className="text-[42px]" />
-        </div>
-        <span className="text-sm text-white/75">{sotto}</span>
-      </div>
-    </div>
-  );
-}
 
 function Barra({ pct, tono = "verde" }: { pct: number; tono?: "verde" | "blu" }) {
   return (
@@ -56,27 +40,34 @@ export function Dashboard() {
 
   return (
     <div className="flex flex-col">
-      <Testata titolo="Dashboard">
-        <Segmented
-          value={modo}
-          onValueChange={setModo}
-          options={[
-            { value: "clienti", label: "Clienti" },
-            { value: "operai", label: "Squadra" },
-          ]}
-          layoutId="modo-dashboard"
-        />
-      </Testata>
+      <Cruscotto titolo="Dashboard" mesh={modo === "clienti" ? "brand" : "blu"}>
+        <div className="rounded-pill bg-black/25 p-1">
+          <Segmented
+            value={modo}
+            onValueChange={setModo}
+            options={[
+              { value: "clienti", label: "Clienti" },
+              { value: "operai", label: "Squadra" },
+            ]}
+            layoutId="modo-dashboard"
+          />
+        </div>
+        <div className="mt-5 flex flex-col items-center text-center">
+          <span className="font-mono text-[11px] uppercase tracking-label text-white/70">{modo === "clienti" ? "Fatturabile totale" : "Da pagare squadra"}</span>
+          <NumberHero value={modo === "clienti" ? kc.fatt : ko.saldo} euro tono="bianco" className="text-[44px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]" />
+          <span className="mt-1 font-mono text-xs text-white/70">
+            {modo === "clienti" ? `Incassato ${formatEuro(kc.inc)} · ${kc.deb} debitori` : `${formatOre(ko.ore)} · pagato ${formatEuro(ko.pagato)}`}
+          </span>
+        </div>
+      </Cruscotto>
 
-      <div className="flex flex-col gap-5 px-5 pt-5">
+      <div className="flex flex-col gap-5 px-4 pt-5">
         {modo === "clienti" ? (
           <>
-            <KpiHero etichetta="Fatturabile totale" valore={kc.fatt} sotto={`Incassato ${formatEuro(kc.inc)} · ${kc.deb} debitori`} mesh="brand" />
             <div className="grid grid-cols-2 gap-2">
               <StatTile etichetta="Incassato" tono="verde">{formatEuro(kc.inc)}</StatTile>
               <StatTile etichetta="Da incassare" tono={kc.da > 0 ? "rosso" : "neutro"}>{formatEuro(kc.da)}</StatTile>
             </div>
-
             <section className="flex flex-col gap-2.5">
               <SectionHeader titolo="Per cliente" conteggio={clienti.length} />
               {clienti.length === 0 ? (
@@ -94,9 +85,7 @@ export function Dashboard() {
                             <Codice value={codiceCliente(dati, c.id)} />
                           </span>
                         </span>
-                        <span className={`shrink-0 text-sm font-bold tracking-tight ${r.saldoDaIncassare > 0 ? "text-rosso" : "text-verde"}`}>
-                          {r.saldoDaIncassare > 0 ? formatEuro(r.saldoDaIncassare) : "saldato"}
-                        </span>
+                        <span className={`shrink-0 text-sm font-bold tracking-tight ${r.saldoDaIncassare > 0 ? "text-rosso" : "text-verde"}`}>{r.saldoDaIncassare > 0 ? formatEuro(r.saldoDaIncassare) : "saldato"}</span>
                       </div>
                       <Barra pct={pct} tono="verde" />
                       <span className="font-mono text-[11px] text-fumo-2">{formatOre(r.oreTotali)} · fatt. {formatEuro(r.valoreFatturabile)} · inc. {formatEuro(r.totaleIncassato)}</span>
@@ -108,12 +97,10 @@ export function Dashboard() {
           </>
         ) : (
           <>
-            <KpiHero etichetta="Da pagare squadra" valore={ko.saldo} sotto={`${formatOre(ko.ore)} · pagato ${formatEuro(ko.pagato)}`} mesh="blu" />
             <div className="grid grid-cols-2 gap-2">
               <StatTile etichetta="Pagato" tono="verde">{formatEuro(ko.pagato)}</StatTile>
               <StatTile etichetta="Ore squadra">{formatOre(ko.ore)}</StatTile>
             </div>
-
             <section className="flex flex-col gap-2.5">
               <SectionHeader titolo="Squadra" conteggio={operai.length} />
               {operai.map(({ o, libro }) => {
@@ -126,9 +113,7 @@ export function Dashboard() {
                         <Avatar iniziali={o.nome.slice(0, 2).toUpperCase()} tono={isIo ? "verde" : "blu"} size={36} />
                         <span className="truncate text-sm font-medium">{o.nome} {isIo && <span className="font-mono text-[11px] text-fumo-2">· io</span>}</span>
                       </span>
-                      <span className={`shrink-0 text-sm font-bold tracking-tight ${isIo ? "text-verde" : libro.saldo > 0 ? "text-rosso" : "text-verde"}`}>
-                        {isIo ? "profitto" : libro.saldo > 0 ? formatEuro(libro.saldo) : "saldato"}
-                      </span>
+                      <span className={`shrink-0 text-sm font-bold tracking-tight ${isIo ? "text-verde" : libro.saldo > 0 ? "text-rosso" : "text-verde"}`}>{isIo ? "profitto" : libro.saldo > 0 ? formatEuro(libro.saldo) : "saldato"}</span>
                     </div>
                     {isIo ? (
                       <span className="font-mono text-[11px] text-fumo-2">{formatOre(libro.ore)} · le mie ore = profitto, non costo</span>
@@ -144,7 +129,6 @@ export function Dashboard() {
             </section>
           </>
         )}
-
         <p className="pb-2 pt-1 text-center font-mono text-[11px] text-fumo-2">clienti = entrate · squadra = uscite</p>
       </div>
     </div>

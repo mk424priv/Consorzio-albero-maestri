@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CardLavoro } from "@/components/CardLavoro";
-import { Button, EmptyState, NumberHero, SectionHeader, Swipeable, Testata } from "@/components/ui";
+import { Button, Cruscotto, EmptyState, NumberHero, SectionHeader, Swipeable } from "@/components/ui";
 import {
   chiaveMese,
   formatEuro,
@@ -70,8 +70,9 @@ export function Agenda() {
 
   return (
     <div className="flex flex-col">
-      <Testata
+      <Cruscotto
         titolo="Agenda"
+        mesh="cielo"
         controllo={
           <div className="flex items-center gap-1">
             <button type="button" onClick={() => setMese((m) => meseAdiacente(m, -1))} aria-label="Mese precedente" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo hover:text-bianco">
@@ -84,20 +85,18 @@ export function Agenda() {
           </div>
         }
       >
-        <p className="text-sm text-fumo">Fatturato del mese</p>
-        <div className="mt-0.5 flex items-end gap-3">
-          <NumberHero value={meseLordo} euro className="text-[40px]" />
-          <span className="pb-1.5 font-mono text-sm text-fumo-2">{meseConta} lavori</span>
-          {cambioMese && (
-            <Button size="sm" variant="inchiostro" className="ml-auto" onClick={() => setMese(chiaveMese(oggi))}>
-              oggi
-            </Button>
-          )}
+        <div className="flex flex-col items-center text-center">
+          <span className="font-mono text-[11px] uppercase tracking-label text-white/70">Fatturato del mese</span>
+          <NumberHero value={meseLordo} euro tono="bianco" className="text-[40px] drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]" />
+          <span className="mt-1 font-mono text-xs text-white/70">
+            {meseConta} lavori
+            {cambioMese && <button type="button" className="ml-2 underline" onClick={() => setMese(chiaveMese(oggi))}>· oggi</button>}
+          </span>
         </div>
-      </Testata>
+      </Cruscotto>
 
       {vuoto ? (
-        <div className="px-5 pt-6">
+        <div className="px-4 pt-6">
           <EmptyState
             icon={TreePine}
             titolo={`Nessun lavoro in ${formatMese(mese)}`}
@@ -106,14 +105,14 @@ export function Agenda() {
           />
         </div>
       ) : (
-        <div className="flex flex-col gap-5 px-5 pt-4">
+        <div className="flex flex-col gap-5 px-4 pt-4">
           {giorni.map((iso) => {
             const ls = perGiorno.get(iso) ?? [];
             const s = sommaGiorno(iso);
             const isOggi = iso === oggi;
             return (
               <motion.section key={iso} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-8% 0px" }} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
-                <div className="sticky top-0 z-10 -mx-5 bg-fondo/85 px-5 py-2 backdrop-blur-md">
+                <div className="sticky top-0 z-10 -mx-4 bg-fondo/85 px-4 py-2 backdrop-blur-md">
                   <SectionHeader
                     titolo={`${nomeGiorno(iso)} ${giornoDelMese(iso)}${isOggi ? " · oggi" : ""}`}
                     tono={isOggi ? "blu" : "neutro"}

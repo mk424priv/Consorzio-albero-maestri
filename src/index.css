@@ -33,6 +33,7 @@
   --color-positivo: #00d15e;
   --color-attenzione: #ff9f0a;
   --color-critico: #ff3b30;
+  --color-arancio: #ff8c1a; /* parziale */
 
   /* font */
   --font-display: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
@@ -94,28 +95,28 @@
 
 /* card per stato — solide + barra-accento (programmato=blu, incassare=rosso, pagato=verde) */
 @layer utilities {
-  /* riempimento "vetro": luce di colore dall'angolo + filo di luce in alto, niente barra */
+  /* card SVOLTE: riempimento "vetro" sobrio (luce dall'angolo) per stato di incasso.
+     'programmato' NON usa questo: ha forma diversa (tratteggio) gestita nel componente. */
   .statocard { position: relative; overflow: hidden; border-radius: var(--radius-vetro); }
-  .statocard--programmato {
-    background:
-      radial-gradient(140% 120% at 100% -15%, rgba(10, 88, 255, 0.30), rgba(10, 88, 255, 0) 52%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 36%),
-      var(--color-superficie);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(10, 88, 255, 0.12);
-  }
   .statocard--incassare {
     background:
-      radial-gradient(140% 120% at 100% -15%, rgba(255, 59, 48, 0.30), rgba(255, 59, 48, 0) 52%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0) 36%),
+      radial-gradient(150% 130% at 100% -20%, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0) 50%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 34%),
       var(--color-superficie);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.08), inset 0 0 0 1px rgba(255, 59, 48, 0.12);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+  }
+  .statocard--parziale {
+    background:
+      radial-gradient(150% 130% at 100% -20%, rgba(255, 140, 26, 0.16), rgba(255, 140, 26, 0) 50%),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 34%),
+      var(--color-superficie);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
   }
   .statocard--pagato {
     background:
-      radial-gradient(140% 120% at 100% -15%, rgba(0, 209, 94, 0.16), rgba(0, 209, 94, 0) 50%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 36%),
+      radial-gradient(150% 130% at 100% -20%, rgba(0, 209, 94, 0.10), rgba(0, 209, 94, 0) 48%),
       var(--color-superficie);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
   }
 }
 

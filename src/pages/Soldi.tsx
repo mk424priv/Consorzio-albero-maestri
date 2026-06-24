@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { CardLavoro } from "@/components/CardLavoro";
-import { Avatar, Button, Codice, Field, Foglio, NumberHero, SectionHeader, Segmented, StatTile, Swipeable, Testata } from "@/components/ui";
+import { Avatar, Button, Codice, Cruscotto, Field, Foglio, NumberHero, SectionHeader, Segmented, StatTile, Swipeable } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { libroOperatore, riepilogoCliente, riepilogoSoldi } from "@/lib/conti";
 import { chiaveMese, formatEuro, formatMese, oggiISO } from "@/lib/format";
@@ -57,8 +57,9 @@ export function Soldi() {
 
   return (
     <div className="flex flex-col">
-      <Testata
+      <Cruscotto
         titolo="Soldi"
+        mesh="linfa"
         controllo={
           <div className="flex items-center gap-1">
             <button type="button" onClick={() => setMese((m) => meseAdiacente(m, -1))} aria-label="Mese precedente" className="flex h-9 w-9 items-center justify-center rounded-full bg-superficie text-fumo hover:text-bianco">
@@ -71,27 +72,29 @@ export function Soldi() {
           </div>
         }
       >
-        <Segmented
-          value={modo}
-          onValueChange={setModo}
-          options={[
-            { value: "incassare", label: "Entrate" },
-            { value: "pagare", label: "Uscite" },
-          ]}
-          layoutId="modo-soldi"
-        />
-        <div className="mt-6 flex flex-col items-center">
-          <span className="text-sm font-medium text-white/70">{modo === "incassare" ? "Totale da incassare" : "Totale da pagare"}</span>
-          <NumberHero value={totale} euro tono={modo === "incassare" ? "verde" : "rosso"} className="text-[54px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]" />
+        <div className="rounded-pill bg-black/25 p-1">
+          <Segmented
+            value={modo}
+            onValueChange={setModo}
+            options={[
+              { value: "incassare", label: "Entrate" },
+              { value: "pagare", label: "Uscite" },
+            ]}
+            layoutId="modo-soldi"
+          />
         </div>
-        <button type="button" onClick={() => navigate("/dashboard")} className="mt-6 grid grid-cols-3 gap-2 text-left transition-transform active:scale-[0.99]" aria-label="Apri la Dashboard">
+        <div className="mt-5 flex flex-col items-center">
+          <span className="font-mono text-[11px] uppercase tracking-label text-white/70">{modo === "incassare" ? "Totale da incassare" : "Totale da pagare"}</span>
+          <NumberHero value={totale} euro tono="bianco" className="text-[52px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]" />
+        </div>
+      </Cruscotto>
+
+      <div className="flex flex-col gap-6 px-4 pt-5">
+        <button type="button" onClick={() => navigate("/dashboard")} className="grid grid-cols-3 gap-2 text-left transition-transform active:scale-[0.99]" aria-label="Apri la Dashboard">
           <StatTile etichetta="Guadagnato">{formatEuro(r.guadagnatoMese)}</StatTile>
           <StatTile etichetta="Incassato" tono="verde">{formatEuro(r.incassatoMese)}</StatTile>
           <StatTile etichetta="Da incassare" tono={r.daIncassare > 0 ? "rosso" : "neutro"}>{formatEuro(r.daIncassare)}</StatTile>
         </button>
-      </Testata>
-
-      <div className="flex flex-col gap-6 px-5 pt-6">
 
         {modo === "incassare" ? (
           <section className="flex flex-col gap-3">

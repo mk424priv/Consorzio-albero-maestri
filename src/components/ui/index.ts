@@ -20,3 +20,4 @@ export { StatTile } from "./StatTile";
 export { Foglio, type FoglioVariante, type FoglioProps } from "./Foglio";
 export { Swipeable } from "./Swipeable";
 export { Testata } from "./Testata";
+export { Cruscotto } from "./Cruscotto";

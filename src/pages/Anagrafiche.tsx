@@ -60,7 +60,7 @@ export function Anagrafiche() {
         />
       </Testata>
 
-      <div className="flex flex-col gap-2.5 px-5 pt-5">
+      <div className="flex flex-col gap-2.5 px-4 pt-5">
         {modo === "clienti" ? (
           <>
             <SectionHeader
