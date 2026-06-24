@@ -13,7 +13,7 @@ const COLLEZIONI: CollezioneKey[] = ["clienti", "operatori", "lavori", "ore", "p
 let avviato = false;
 
 function datiVuoti(): Dati {
-  return { clienti: [], operatori: [], lavori: [], ore: [], pagamenti: [], compensi: [], spese: [], attrezzi: [] };
+  return { clienti: [], operatori: [], lavori: [], ore: [], pagamenti: [], compensi: [], spese: [], attrezzi: [], appuntamenti: [] };
 }
 
 function righeDaPushare(dati: Dati, since: string): { righe: Omit<RigaRemota, "workspace_id">[]; maxUpdated: string } {

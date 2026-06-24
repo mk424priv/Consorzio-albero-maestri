@@ -25,7 +25,7 @@ describe("codice parlante", () => {
   });
 
   it("formato II-GG-SS-AA, tutto zero senza dati", () => {
-    const dati: Dati = { clienti: [cliente({ id: "c", inizialiCodice: "MR" })], operatori: [], lavori: [], ore: [], pagamenti: [], compensi: [], spese: [], attrezzi: [] };
+    const dati: Dati = { clienti: [cliente({ id: "c", inizialiCodice: "MR" })], operatori: [], lavori: [], ore: [], pagamenti: [], compensi: [], spese: [], attrezzi: [], appuntamenti: [] };
     const cod = codiceCliente(dati, "c", Date.parse("2026-06-24"));
     expect(cod).toMatch(/^MR-\d{2}-\d{2}-\d{2}$/);
     expect(cod).toBe("MR-00-00-00");
@@ -41,6 +41,7 @@ describe("codice parlante", () => {
       compensi: [],
       spese: [],
       attrezzi: [],
+      appuntamenti: [],
     };
     const parti = calcolaParti(dati, "c", Date.parse("2026-06-24"));
     expect(parti.gg).toBeCloseTo(5);

@@ -25,6 +25,12 @@ export interface BozzaSpesa {
   importo: number;
 }
 
+export interface BozzaIntervento {
+  id: string;
+  descrizione: string;
+  prezzo: number;
+}
+
 export interface Bozza {
   id: string | null; // null = nuovo record, valorizzato = modifica
   fase: Fase;
@@ -35,6 +41,8 @@ export interface Bozza {
   oraInizio: string; // "HH:MM" — ora d'arrivo al cantiere
   periodo: { dal: string; al: string } | null;
   prezzo: number | null;
+  interventi: BozzaIntervento[]; // voci del preventivo (se usate)
+  mostraInterventi: boolean;
   tariffaCliente: number | null;
   tariffaModificata: boolean;
   partecipanti: BozzaPartecipante[]; // include "io"
@@ -63,6 +71,8 @@ function bozzaIniziale(): Bozza {
     oraInizio: "",
     periodo: null,
     prezzo: null,
+    interventi: [],
+    mostraInterventi: false,
     tariffaCliente: null,
     tariffaModificata: false,
     partecipanti: [],
@@ -167,6 +177,8 @@ export const useBozza = create<BozzaStore>((set) => ({
         }
         base.spese = dati.spese.filter((s) => s.lavoroId === l.id && !s.deleted).map((s) => ({ id: s.id, categoria: s.categoria, descrizione: s.descrizione ?? "", importo: s.importo }));
         base.mostraSpese = base.spese.length > 0;
+        base.interventi = (l.interventi ?? []).map((i) => ({ id: i.id, descrizione: i.descrizione, prezzo: i.prezzo }));
+        base.mostraInterventi = base.interventi.length > 0;
         const pag = dati.pagamenti.find((p) => p.lavoroId === l.id && !p.deleted);
         const inc = pag?.importoIncassato ?? 0;
         const atteso = pag?.importoAtteso ?? 0;
@@ -226,7 +238,11 @@ export function oreTotaliBozza(b: Bozza): number {
   return arrotonda(b.partecipanti.reduce((a, p) => a + orePartecipante(b, p.collaboratoreId), 0));
 }
 export function lordoBozza(b: Bozza): number {
-  if (b.modoCalc === "preventivo") return arrotonda(b.prezzo ?? 0);
+  if (b.modoCalc === "preventivo") {
+    if (b.mostraInterventi && b.interventi.length > 0)
+      return arrotonda(b.interventi.reduce((a, i) => a + i.prezzo, 0));
+    return arrotonda(b.prezzo ?? 0);
+  }
   return arrotonda(oreTotaliBozza(b) * (b.tariffaCliente ?? 0));
 }
 
@@ -265,6 +281,11 @@ export async function salvaBozza(): Promise<string> {
     for (const s of datiPrima.spese.filter((s) => s.lavoroId === lavoroId && !s.deleted && !idsSpeseBozza.has(s.id))) await elimina("spese", s.id);
   }
 
+  const interventiSalvati =
+    modo === "preventivo" && b.mostraInterventi && b.interventi.length > 0
+      ? b.interventi.filter((i) => i.prezzo > 0 || i.descrizione.trim())
+      : undefined;
+
   const lavoro: Lavoro = {
     id: lavoroId,
     clienteId: cId,
@@ -279,7 +300,12 @@ export async function salvaBozza(): Promise<string> {
     fascia: b.fascia ?? undefined,
     periodo: b.periodo,
     statoPreventivo: modo === "preventivo" ? b.statoPreventivo ?? undefined : undefined,
-    prezzo: modo === "preventivo" ? b.prezzo ?? 0 : null,
+    prezzo: modo === "preventivo"
+      ? (interventiSalvati && interventiSalvati.length > 0
+          ? arrotonda(interventiSalvati.reduce((a, i) => a + i.prezzo, 0))
+          : b.prezzo ?? 0)
+      : null,
+    interventi: interventiSalvati,
     tariffaClienteSnapshot: modo === "ore" ? b.tariffaCliente : null,
     partecipanti: b.partecipanti.map((p) => ({
       collaboratoreId: p.collaboratoreId,

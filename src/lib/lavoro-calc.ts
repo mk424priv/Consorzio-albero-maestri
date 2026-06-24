@@ -69,7 +69,13 @@ export function calcoloLavoro(dati: Dati, l: Lavoro): CalcoloLavoro {
     l.tariffaClienteSnapshot ?? dati.clienti.find((c) => c.id === l.clienteId)?.tariffaOraria ?? 0;
 
   const lordo =
-    modo === "preventivo" ? arrotonda(l.prezzo ?? 0) : arrotonda(oreCliente * (tariffaCli ?? 0));
+    modo === "preventivo"
+      ? arrotonda(
+          l.interventi && l.interventi.length > 0
+            ? l.interventi.reduce((a, i) => a + i.prezzo, 0)
+            : (l.prezzo ?? 0),
+        )
+      : arrotonda(oreCliente * (tariffaCli ?? 0));
 
   const partecipanti = base.map((p) => {
     const escludi = p.collaboratoreId === ioId && !l.contaMieOreComeCosto;

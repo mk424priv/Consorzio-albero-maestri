@@ -59,6 +59,13 @@ export interface PartecipanteLavoro {
   oreTotale?: number;
 }
 
+/** Voce singola di un preventivo (linea di intervento con descrizione e prezzo). */
+export interface Intervento {
+  id: string;
+  descrizione: string;
+  prezzo: number;
+}
+
 export interface Lavoro {
   id: string;
   clienteId?: string;
@@ -74,6 +81,8 @@ export interface Lavoro {
   // preventivo
   periodo?: { dal: string; al: string } | null;
   prezzo?: number | null;
+  /** Voci di intervento (se presenti, il lordo è la loro somma invece di `prezzo`). */
+  interventi?: Intervento[];
   /** Ciclo di vita del preventivo (rilevante solo se modo = "preventivo"). */
   statoPreventivo?: StatoPreventivo;
   /** Collocazione nel giorno: "orario" usa oraInizio/oraFine; le altre sono fasce grossolane. */
@@ -87,6 +96,24 @@ export interface Lavoro {
   /** Default false: le mie ore entrano nel lordo ma non nel costo. */
   contaMieOreComeCosto?: boolean;
   note?: string;
+  creatoIl: string;
+  updatedAt: string;
+  rev?: number;
+  deleted?: boolean;
+}
+
+/** Appuntamento o promemoria in agenda (non collegato a un lavoro). */
+export interface Appuntamento {
+  id: string;
+  tipo: "appuntamento" | "promemoria";
+  titolo: string;
+  descrizione?: string;
+  clienteId?: string;
+  data: string; // ISO yyyy-mm-dd (giorno di inizio)
+  oraInizio?: string;
+  oraFine?: string;
+  periodo?: { dal: string; al: string } | null; // per appuntamenti multi-giorno
+  completato: boolean;
   creatoIl: string;
   updatedAt: string;
   rev?: number;
@@ -189,6 +216,7 @@ export interface Dati {
   compensi: CompensoOperatore[];
   spese: Spesa[];
   attrezzi: Attrezzo[];
+  appuntamenti: Appuntamento[];
 }
 
 export const DATI_VUOTI: Dati = {
@@ -200,6 +228,7 @@ export const DATI_VUOTI: Dati = {
   compensi: [],
   spese: [],
   attrezzi: [],
+  appuntamenti: [],
 };
 
 export type CollezioneKey = keyof Dati;

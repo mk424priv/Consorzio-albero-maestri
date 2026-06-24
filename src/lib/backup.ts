@@ -35,6 +35,7 @@ export function importaJSON(testo: string): Dati {
     compensi: [],
     spese: [],
     attrezzi: [],
+    appuntamenti: [],
   };
   for (const k of CHIAVI) {
     const arr = src[k];
@@ -58,6 +59,7 @@ export function fondi(locale: Dati, importato: Dati): Dati {
     compensi: [],
     spese: [],
     attrezzi: [],
+    appuntamenti: [],
   };
   for (const k of CHIAVI) {
     const map = new Map<string, { rev: number; ua: string; rec: unknown }>();
