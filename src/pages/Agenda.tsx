@@ -70,12 +70,12 @@ export function Agenda() {
   return (
     <div className="flex flex-col">
       <header className="flex items-center justify-between pb-1">
-        <h1 className="font-display text-3xl font-semibold text-inchiostro">Agenda</h1>
+        <h1 className="font-display text-3xl font-semibold text-bianco">Agenda</h1>
         <div className="flex items-center gap-1">
           <Button size="icona" variant="tenue" className="h-9 w-9" onClick={() => setMese((m) => meseAdiacente(m, -1))} aria-label="Mese precedente">
             <ChevronLeft className="h-5 w-5" />
           </Button>
-          <span className="w-24 text-center font-mono text-xs text-inchiostro-medio">{formatMese(mese)}</span>
+          <span className="w-24 text-center font-mono text-xs text-fumo">{formatMese(mese)}</span>
           <Button size="icona" variant="tenue" className="h-9 w-9" onClick={() => setMese((m) => meseAdiacente(m, 1))} aria-label="Mese successivo">
             <ChevronRight className="h-5 w-5" />
           </Button>
@@ -83,7 +83,7 @@ export function Agenda() {
       </header>
 
       {/* targhetta sticky, cambia con il giorno che si avvicina */}
-      <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-2 bg-carta/85 px-4 py-2 backdrop-blur">
+      <div className="sticky top-0 z-20 -mx-4 flex items-center justify-between gap-2 glass-bassa px-4 py-2 backdrop-blur">
         <AnimatePresence mode="popLayout" initial={false}>
           <motion.div
             key={attivo || "vuoto"}
@@ -114,13 +114,13 @@ export function Agenda() {
             const isOggi = iso === oggi;
             return (
               <section key={iso} ref={(el) => setRef(iso, el)}>
-                <div className="sticky top-[4.25rem] z-10 -mx-4 flex items-baseline justify-between bg-carta/85 px-4 py-1 backdrop-blur">
-                  <h2 className={cn("font-display text-sm", isOggi ? "text-ottone-scuro" : "text-inchiostro-medio")}>
+                <div className="sticky top-[4.25rem] z-10 -mx-4 flex items-baseline justify-between glass-bassa px-4 py-1 backdrop-blur">
+                  <h2 className={cn("font-display text-sm", isOggi ? "text-lime" : "text-fumo")}>
                     {nomeGiorno(iso)} {giornoDelMese(iso)}{" "}
-                    {isOggi && <span className="font-mono text-[0.6rem] uppercase tracking-wider text-ottone">oggi</span>}
+                    {isOggi && <span className="font-mono text-[0.6rem] uppercase tracking-wider text-lime">oggi</span>}
                   </h2>
                   {s.lordo > 0 && (
-                    <span className="font-mono text-xs text-inchiostro-debole">
+                    <span className="font-mono text-xs text-fumo-2">
                       {formatEuro(s.lordo)} · {formatOre(s.ore)}
                     </span>
                   )}
@@ -130,7 +130,7 @@ export function Agenda() {
                     <button
                       type="button"
                       onClick={() => navigate("/nuovo")}
-                      className="rounded-targhetta border border-dashed border-inchiostro-debole/30 py-3 text-center font-mono text-xs text-inchiostro-debole"
+                      className="rounded-2xl border border-dashed border-white/10 py-3 text-center font-mono text-xs text-fumo-2"
                     >
                       ···· nessun lavoro · + crea ····
                     </button>
@@ -175,9 +175,9 @@ function useGiornoAttivo(giorni: string[]) {
 function MeseVuoto({ mese, onCrea }: { mese: string; onCrea: () => void }) {
   return (
     <div className="flex flex-col items-center gap-3 py-16 text-center">
-      <TreePine className="h-10 w-10 text-lichene" />
-      <p className="font-display text-lg text-inchiostro-medio">Nessun lavoro in {formatMese(mese)}</p>
-      <p className="text-sm text-inchiostro-debole">Tocca ＋ per creare la prima registrazione.</p>
+      <TreePine className="h-10 w-10 text-lime" />
+      <p className="font-display text-lg text-fumo">Nessun lavoro in {formatMese(mese)}</p>
+      <p className="text-sm text-fumo-2">Tocca ＋ per creare la prima registrazione.</p>
       <Button onClick={onCrea}>＋ Crea registrazione</Button>
     </div>
   );

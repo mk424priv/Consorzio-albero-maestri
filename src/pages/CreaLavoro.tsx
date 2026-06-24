@@ -52,7 +52,7 @@ function NumberField({
         onChange(Number.isFinite(n) ? n : 0);
       }}
       className={cn(
-        "h-10 rounded-targhetta border border-carta-ombra bg-carta-alta px-2 text-right font-mono text-sm text-inchiostro tabular-nums focus-visible:border-ottone focus-visible:outline-none",
+        "h-10 rounded-2xl border border-white/15 bg-white/[0.08] px-2 text-right font-mono text-sm text-bianco tabular-nums focus-visible:border-lime focus-visible:outline-none",
         className,
       )}
     />
@@ -64,12 +64,12 @@ function Trigger({ label, value, onClick }: { label: string; value: React.ReactN
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-between gap-2 rounded-targhetta bg-carta-alta px-3 py-3 text-left shadow-svolto"
+      className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-3 text-left"
     >
-      <span className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">{label}</span>
-      <span className="flex items-center gap-1 text-sm text-inchiostro">
+      <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">{label}</span>
+      <span className="flex items-center gap-1 text-sm text-bianco">
         {value}
-        <ChevronRight className="h-4 w-4 text-inchiostro-debole" />
+        <ChevronRight className="h-4 w-4 text-fumo-2" />
       </span>
     </button>
   );
@@ -188,12 +188,12 @@ export function CreaLavoro() {
       {/* spina */}
       <div className="flex flex-col gap-2">
         <div className="flex flex-col gap-1.5">
-          <label className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Data</label>
+          <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Data</label>
           <input
             type="date"
             value={b.data}
             onChange={(e) => set({ data: e.target.value || oggiISO() })}
-            className="h-11 rounded-targhetta border border-carta-ombra bg-carta-alta px-3 font-sans text-inchiostro focus-visible:border-ottone focus-visible:outline-none"
+            className="h-11 rounded-2xl border border-white/15 bg-white/[0.08] px-3 font-sans text-bianco focus-visible:border-lime focus-visible:outline-none"
           />
         </div>
 
@@ -206,7 +206,7 @@ export function CreaLavoro() {
                 {cliente.nome}
               </span>
             ) : (
-              <span className="text-inchiostro-debole">scegli o nuovo</span>
+              <span className="text-fumo-2">scegli o nuovo</span>
             )
           }
           onClick={() => setVista("cliente")}
@@ -222,7 +222,7 @@ export function CreaLavoro() {
 
       {/* modalità — unica biforcazione */}
       <div className="flex flex-col gap-2">
-        <label className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Modalità di calcolo</label>
+        <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Modalità di calcolo</label>
         <Segmented value={(b.modoCalc ?? "") as ModoCalc} onValueChange={(v) => setModo(v as ModoCalc)} options={MODI} layoutId="modo" />
       </div>
 
@@ -248,10 +248,10 @@ export function CreaLavoro() {
       {/* stima */}
       {b.modoCalc && (
         <Card tono="piana" className="flex items-center justify-between px-3 py-2">
-          <span className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">
+          <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">
             {svolto ? "Lordo" : "Stima"}
           </span>
-          <span className="font-mono text-base tabular-nums text-ottone-scuro">
+          <span className="font-mono text-base tabular-nums text-lime">
             {svolto ? formatEuro(lordo) : `≈ ${formatEuro(lordo)}`}
           </span>
         </Card>
@@ -264,7 +264,7 @@ export function CreaLavoro() {
         <button
           type="button"
           onClick={() => set({ mostraSpese: true, spese: [{ id: nuovoId(), categoria: "materiali", descrizione: "", importo: 0 }] })}
-          className="flex items-center gap-2 px-1 text-sm text-inchiostro-medio"
+          className="flex items-center gap-2 px-1 text-sm text-fumo"
         >
           <Plus className="h-4 w-4" /> Ho speso qualcosa
         </button>
@@ -321,10 +321,10 @@ function CampiPreventivo({ b, set }: { b: ReturnType<typeof useBozza.getState>["
   return (
     <>
       <div className="flex flex-col gap-1.5">
-        <label className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Importo concordato</label>
+        <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Importo concordato</label>
         <div className="flex items-center gap-2">
           <NumberField key="prezzo" iniziale={b.prezzo} placeholder="0,00" onChange={(n) => set({ prezzo: n })} className="h-11 flex-1" />
-          <span className="font-mono text-sm text-inchiostro-debole">€</span>
+          <span className="font-mono text-sm text-fumo-2">€</span>
         </div>
       </div>
       <PeriodoFacolt b={b} set={set} />
@@ -355,16 +355,16 @@ function CampiOre({
     <>
       {b.modoCalc === "giornate" ? (
         <div className="flex flex-col gap-2">
-          <label className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Giornate</label>
+          <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Giornate</label>
           {b.giornate.map((g) => (
-            <div key={g.id} className="flex items-center gap-2 rounded-targhetta bg-carta-alta p-2 shadow-svolto">
+            <div key={g.id} className="flex items-center gap-2 rounded-2xl bg-white/[0.08] p-2">
               <input
                 type="date"
                 value={g.data}
                 onChange={(e) =>
                   set({ giornate: b.giornate.map((x) => (x.id === g.id ? { ...x, data: e.target.value } : x)) })
                 }
-                className="h-9 flex-1 rounded-targhetta border border-carta-ombra bg-carta-alta px-2 font-mono text-xs"
+                className="h-9 flex-1 rounded-2xl border border-white/15 bg-white/[0.08] px-2 font-mono text-xs"
               />
               {b.partecipanti.map((p) => (
                 <NumberField
@@ -383,7 +383,7 @@ function CampiOre({
               ))}
               {b.giornate.length > 1 && (
                 <button type="button" onClick={() => set({ giornate: b.giornate.filter((x) => x.id !== g.id) })} aria-label="Rimuovi giornata">
-                  <Trash2 className="h-4 w-4 text-inchiostro-debole" />
+                  <Trash2 className="h-4 w-4 text-fumo-2" />
                 </button>
               )}
             </div>
@@ -397,20 +397,20 @@ function CampiOre({
               const next = d.toISOString().slice(0, 10);
               set({ giornate: [...b.giornate, { id: nuovoId(), data: next, ore: {} }] });
             }}
-            className="flex items-center gap-2 px-1 text-sm text-inchiostro-medio"
+            className="flex items-center gap-2 px-1 text-sm text-fumo"
           >
             <Plus className="h-4 w-4" /> Aggiungi giornata
           </button>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
-          <label className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Ore lavorate</label>
+          <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Ore lavorate</label>
           {b.partecipanti.map((p) => (
-            <div key={p.collaboratoreId} className="flex items-center justify-between gap-2 rounded-targhetta bg-carta-alta px-3 py-2 shadow-svolto">
+            <div key={p.collaboratoreId} className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-2">
               <span className="text-sm">{nome(p.collaboratoreId)}{p.collaboratoreId !== io ? ` · ${p.tariffaSnapshot} €/h` : ""}</span>
               <div className="flex items-center gap-1">
                 <NumberField key={`${b.modoCalc}-${p.collaboratoreId}`} iniziale={p.ore} placeholder="0" onChange={(n) => setOrePart(p.collaboratoreId, n)} className="h-9 w-16" />
-                <span className="font-mono text-xs text-inchiostro-debole">h</span>
+                <span className="font-mono text-xs text-fumo-2">h</span>
               </div>
             </div>
           ))}
@@ -422,10 +422,10 @@ function CampiOre({
 
       {/* tariffa cliente */}
       <div className="flex items-center justify-between gap-2">
-        <label className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Tariffa cliente</label>
+        <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Tariffa cliente</label>
         <div className="flex items-center gap-1">
           <NumberField key="tariffa" iniziale={b.tariffaCliente} placeholder="0,00" onChange={(n) => set({ tariffaCliente: n, tariffaModificata: true })} className="h-9 w-20" />
-          <span className="font-mono text-xs text-inchiostro-debole">€/h</span>
+          <span className="font-mono text-xs text-fumo-2">€/h</span>
         </div>
       </div>
 
@@ -450,26 +450,26 @@ function SezioneOperai({
   const altri = b.partecipanti.filter((p) => p.collaboratoreId !== io);
   if (!b.mostraOperai && altri.length === 0) {
     return (
-      <button type="button" onClick={() => set({ mostraOperai: true })} className="flex items-center gap-2 px-1 text-sm text-inchiostro-medio">
+      <button type="button" onClick={() => set({ mostraOperai: true })} className="flex items-center gap-2 px-1 text-sm text-fumo">
         <Plus className="h-4 w-4" /> Ho lavorato con qualcuno
       </button>
     );
   }
   return (
     <Card tono="piana" className="flex flex-col gap-2 p-3">
-      <span className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Chi ha lavorato</span>
+      <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">Chi ha lavorato</span>
       {altri.map((p) => (
         <div key={p.collaboratoreId} className="flex items-center justify-between text-sm">
           <span>{dati.operatori.find((o) => o.id === p.collaboratoreId)?.nome ?? "—"} · {p.tariffaSnapshot} €/h</span>
           <button type="button" onClick={() => set({ partecipanti: b.partecipanti.filter((x) => x.collaboratoreId !== p.collaboratoreId) })} aria-label="Rimuovi operaio">
-            <X className="h-4 w-4 text-inchiostro-debole" />
+            <X className="h-4 w-4 text-fumo-2" />
           </button>
         </div>
       ))}
-      <button type="button" onClick={onAdd} className="flex items-center gap-2 px-1 text-sm text-ottone-scuro">
+      <button type="button" onClick={onAdd} className="flex items-center gap-2 px-1 text-sm text-lime">
         <Plus className="h-4 w-4" /> Aggiungi operaio
       </button>
-      <label className="mt-1 flex items-center gap-2 text-sm text-inchiostro-medio">
+      <label className="mt-1 flex items-center gap-2 text-sm text-fumo">
         <input type="checkbox" checked={b.contaMieOreComeCosto} onChange={(e) => set({ contaMieOreComeCosto: e.target.checked })} />
         Conta le mie ore come costo
       </label>
@@ -480,18 +480,18 @@ function SezioneOperai({
 function PeriodoFacolt({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"]; set: (p: Partial<ReturnType<typeof useBozza.getState>["b"]>) => void }) {
   if (!b.periodo) {
     return (
-      <button type="button" onClick={() => set({ periodo: { dal: b.data, al: b.data } })} className="flex items-center gap-2 px-1 text-sm text-inchiostro-medio">
+      <button type="button" onClick={() => set({ periodo: { dal: b.data, al: b.data } })} className="flex items-center gap-2 px-1 text-sm text-fumo">
         <Plus className="h-4 w-4" /> Periodo (facoltativo)
       </button>
     );
   }
   return (
     <div className="flex items-center gap-2">
-      <input type="date" value={b.periodo.dal} onChange={(e) => set({ periodo: { dal: e.target.value, al: b.periodo!.al } })} className="h-9 flex-1 rounded-targhetta border border-carta-ombra bg-carta-alta px-2 font-mono text-xs" />
-      <span className="text-inchiostro-debole">–</span>
-      <input type="date" value={b.periodo.al} onChange={(e) => set({ periodo: { dal: b.periodo!.dal, al: e.target.value } })} className="h-9 flex-1 rounded-targhetta border border-carta-ombra bg-carta-alta px-2 font-mono text-xs" />
+      <input type="date" value={b.periodo.dal} onChange={(e) => set({ periodo: { dal: e.target.value, al: b.periodo!.al } })} className="h-9 flex-1 rounded-2xl border border-white/15 bg-white/[0.08] px-2 font-mono text-xs" />
+      <span className="text-fumo-2">–</span>
+      <input type="date" value={b.periodo.al} onChange={(e) => set({ periodo: { dal: b.periodo!.dal, al: e.target.value } })} className="h-9 flex-1 rounded-2xl border border-white/15 bg-white/[0.08] px-2 font-mono text-xs" />
       <button type="button" onClick={() => set({ periodo: null })} aria-label="Rimuovi periodo">
-        <X className="h-4 w-4 text-inchiostro-debole" />
+        <X className="h-4 w-4 text-fumo-2" />
       </button>
     </div>
   );
@@ -500,13 +500,13 @@ function PeriodoFacolt({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"
 function SezioneSpese({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"]; set: (p: Partial<ReturnType<typeof useBozza.getState>["b"]>) => void }) {
   return (
     <Card tono="piana" className="flex flex-col gap-2 p-3">
-      <span className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Spese</span>
+      <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">Spese</span>
       {b.spese.map((s) => (
         <div key={s.id} className="flex items-center gap-2">
           <select
             value={s.categoria}
             onChange={(e) => set({ spese: b.spese.map((x) => (x.id === s.id ? { ...x, categoria: e.target.value as CategoriaSpesa } : x)) })}
-            className="h-9 rounded-targhetta border border-carta-ombra bg-carta-alta px-2 text-xs"
+            className="h-9 rounded-2xl border border-white/15 bg-white/[0.08] px-2 text-xs"
           >
             {CATEGORIE.map((c) => (
               <option key={c} value={c}>{c}</option>
@@ -516,15 +516,15 @@ function SezioneSpese({ b, set }: { b: ReturnType<typeof useBozza.getState>["b"]
             value={s.descrizione}
             placeholder="nota"
             onChange={(e) => set({ spese: b.spese.map((x) => (x.id === s.id ? { ...x, descrizione: e.target.value } : x)) })}
-            className="h-9 min-w-0 flex-1 rounded-targhetta border border-carta-ombra bg-carta-alta px-2 text-sm"
+            className="h-9 min-w-0 flex-1 rounded-2xl border border-white/15 bg-white/[0.08] px-2 text-sm"
           />
           <NumberField iniziale={s.importo} placeholder="0" onChange={(n) => set({ spese: b.spese.map((x) => (x.id === s.id ? { ...x, importo: n } : x)) })} className="h-9 w-16" />
           <button type="button" onClick={() => set({ spese: b.spese.filter((x) => x.id !== s.id) })} aria-label="Rimuovi spesa">
-            <Trash2 className="h-4 w-4 text-inchiostro-debole" />
+            <Trash2 className="h-4 w-4 text-fumo-2" />
           </button>
         </div>
       ))}
-      <button type="button" onClick={() => set({ spese: [...b.spese, { id: nuovoId(), categoria: "materiali", descrizione: "", importo: 0 }] })} className="flex items-center gap-2 px-1 text-sm text-inchiostro-medio">
+      <button type="button" onClick={() => set({ spese: [...b.spese, { id: nuovoId(), categoria: "materiali", descrizione: "", importo: 0 }] })} className="flex items-center gap-2 px-1 text-sm text-fumo">
         <Plus className="h-4 w-4" /> Aggiungi spesa
       </button>
     </Card>
@@ -540,7 +540,7 @@ function SezioneIncasso({ b, set, lordo }: { b: ReturnType<typeof useBozza.getSt
   );
   return (
     <Card tono="piana" className="flex flex-col gap-2 p-3">
-      <span className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Già incassato?</span>
+      <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">Già incassato?</span>
       {opt("no", "No, da incassare")}
       {opt("tutto", `Sì, tutto incassato oggi (${formatEuro(lordo)})`)}
       {opt("parte", "In parte:")}
@@ -607,19 +607,19 @@ function ScegliCliente({ onIndietro, onScelto }: { onIndietro: () => void; onSce
       ) : (
         <>
           <div className="relative flex items-center">
-            <Search className="absolute left-3 h-4 w-4 text-inchiostro-debole" />
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca per nome o codice…" className="h-11 w-full rounded-targhetta border border-carta-ombra bg-carta-alta pl-9 pr-3 text-sm focus-visible:border-ottone focus-visible:outline-none" />
+            <Search className="absolute left-3 h-4 w-4 text-fumo-2" />
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Cerca per nome o codice…" className="h-11 w-full rounded-2xl border border-white/15 bg-white/[0.08] pl-9 pr-3 text-sm focus-visible:border-lime focus-visible:outline-none" />
           </div>
           {lista.map((c) => (
-            <button key={c.id} type="button" onClick={() => onScelto(c.id, c.tariffaOraria ?? null)} className="flex items-center justify-between gap-2 rounded-targhetta bg-carta-alta px-3 py-2.5 text-left shadow-svolto">
+            <button key={c.id} type="button" onClick={() => onScelto(c.id, c.tariffaOraria ?? null)} className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left">
               <span className="flex items-center gap-2">
                 <Codice value={codiceCliente(dati, c.id)} />
                 <span className="text-sm">{c.nome} {c.cognome ?? ""}</span>
               </span>
-              {c.luogo && <span className="font-mono text-xs text-inchiostro-debole">{c.luogo}</span>}
+              {c.luogo && <span className="font-mono text-xs text-fumo-2">{c.luogo}</span>}
             </button>
           ))}
-          <button type="button" onClick={() => setNuovo(true)} className="flex items-center gap-2 rounded-targhetta border border-dashed border-ottone/50 px-3 py-3 text-sm text-ottone-scuro">
+          <button type="button" onClick={() => setNuovo(true)} className="flex items-center gap-2 rounded-2xl border border-dashed border-lime/50 px-3 py-3 text-sm text-lime">
             <Plus className="h-4 w-4" /> Nuovo cliente
           </button>
         </>
@@ -663,12 +663,12 @@ function ScegliOperaio({ esistenti, onIndietro, onScelto }: { esistenti: string[
       ) : (
         <>
           {disponibili.map((o) => (
-            <button key={o.id} type="button" onClick={() => onScelto(o.id, o.tariffaOraria ?? 0)} className="flex items-center justify-between gap-2 rounded-targhetta bg-carta-alta px-3 py-2.5 text-left shadow-svolto">
+            <button key={o.id} type="button" onClick={() => onScelto(o.id, o.tariffaOraria ?? 0)} className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left">
               <span className="text-sm">{o.nome}</span>
               <Badge stato="neutro">{o.tariffaOraria ?? 0} €/h</Badge>
             </button>
           ))}
-          <button type="button" onClick={() => setNuovo(true)} className="flex items-center gap-2 rounded-targhetta border border-dashed border-ottone/50 px-3 py-3 text-sm text-ottone-scuro">
+          <button type="button" onClick={() => setNuovo(true)} className="flex items-center gap-2 rounded-2xl border border-dashed border-lime/50 px-3 py-3 text-sm text-lime">
             <Plus className="h-4 w-4" /> Nuovo operaio
           </button>
         </>

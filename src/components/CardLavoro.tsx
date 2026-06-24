@@ -36,11 +36,11 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
         <div className="flex min-w-0 flex-col gap-0.5">
           <div className="flex items-center gap-2">
             {cliente && <Codice value={codiceCliente(dati, cliente.id)} />}
-            <span className="truncate text-sm font-medium text-inchiostro">
+            <span className="truncate text-sm font-medium text-bianco">
               {cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() : "Senza cliente"}
             </span>
           </div>
-          <span className="truncate font-display text-base text-inchiostro">{lavoro.titolo}</span>
+          <span className="truncate font-display text-base text-bianco">{lavoro.titolo}</span>
         </div>
         <div className="flex shrink-0 flex-col items-end gap-1">
           {svolto ? (
@@ -49,7 +49,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
             <Stamp color="lichene">programmato</Stamp>
           )}
           {(lavoro.oraInizio || lavoro.oraFine) && (
-            <span className="font-mono text-[0.65rem] text-inchiostro-debole">
+            <span className="font-mono text-[0.65rem] text-fumo-2">
               {lavoro.oraInizio}{lavoro.oraFine ? `–${lavoro.oraFine}` : ""}
             </span>
           )}
@@ -57,15 +57,15 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
       </button>
 
       {/* perforazione */}
-      <div className="my-2.5 border-t border-dashed border-inchiostro-debole/30" />
+      <div className="my-2.5 border-t border-dashed border-white/10" />
 
       {/* riga 2: tre ancore — ore, incassato, da incassare */}
       <button type="button" onClick={apri} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-left">
-        <span className="font-mono text-sm tabular-nums text-inchiostro-medio">{formatOre(calc.oreTotali)}</span>
+        <span className="font-mono text-sm tabular-nums text-fumo">{formatOre(calc.oreTotali)}</span>
         {svolto ? (
           <RigaSoldi calc={calc} />
         ) : (
-          <span className="font-mono text-sm text-inchiostro-debole">
+          <span className="font-mono text-sm text-fumo-2">
             {lavoro.modo === "preventivo" && lavoro.prezzo
               ? `${formatEuro(lavoro.prezzo)} previsto`
               : "da svolgere"}
@@ -81,13 +81,13 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
               key={p.collaboratoreId}
               type="button"
               onClick={() => navigate(`/operaio/${p.collaboratoreId}`)}
-              className="rounded-full bg-carta-ombra/70 px-2 py-0.5 font-mono text-[0.65rem] text-inchiostro-medio"
+              className="rounded-full bg-white/10 px-2 py-0.5 font-mono text-[0.65rem] text-fumo"
             >
               ⬡ {chipLabel(p.collaboratoreId, p.nome)}
             </button>
           ))}
           {chips.length > 3 && (
-            <span className="font-mono text-[0.65rem] text-inchiostro-debole">+{chips.length - 3}</span>
+            <span className="font-mono text-[0.65rem] text-fumo-2">+{chips.length - 3}</span>
           )}
         </div>
       )}
@@ -119,9 +119,9 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
         <motion.div
           initial={{ opacity: 0, height: 0 }}
           animate={{ opacity: 1, height: "auto" }}
-          className="mt-3 overflow-hidden rounded-targhetta bg-carta-alta/70 p-3"
+          className="mt-3 overflow-hidden rounded-2xl bg-white/[0.08] p-3"
         >
-          <p className="font-mono text-xs text-inchiostro-debole">
+          <p className="font-mono text-xs text-fumo-2">
             Da incassare: <span className="text-attenzione">{formatEuro(calc.daIncassare)}</span>
           </p>
           <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -135,7 +135,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
               Tutto {formatEuro(calc.daIncassare)}
             </Button>
             <input
-              className="h-9 w-24 rounded-targhetta border border-carta-ombra bg-carta-alta px-2 font-sans text-sm text-inchiostro placeholder:text-inchiostro-debole/70 focus-visible:border-ottone focus-visible:outline-none"
+              className="h-9 w-24 rounded-2xl border border-white/15 bg-white/[0.08] px-2 font-sans text-sm text-bianco placeholder:text-fumo-2 focus-visible:border-lime focus-visible:outline-none"
               placeholder="altro…"
               inputMode="decimal"
               value={altro}

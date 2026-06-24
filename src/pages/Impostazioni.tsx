@@ -53,8 +53,8 @@ export function Impostazioni() {
       />
 
       <Card tono="alta" className="flex flex-col gap-3 p-4">
-        <h2 className="font-display text-lg text-inchiostro">Backup</h2>
-        <p className="text-sm text-inchiostro-debole">
+        <h2 className="font-display text-lg text-bianco">Backup</h2>
+        <p className="text-sm text-fumo-2">
           Un file = tutti i tuoi dati. Esporta per salvarli o spostarli su un altro telefono.
         </p>
         <div className="flex flex-wrap gap-2">
@@ -69,8 +69,8 @@ export function Impostazioni() {
       </Card>
 
       <Card tono="alta" className="flex flex-col gap-3 p-4">
-        <h2 className="font-display text-lg text-inchiostro">Dati d'esempio</h2>
-        <p className="text-sm text-inchiostro-debole">Ricarica i dati d'esempio. Sostituisce tutto quello che c'è ora.</p>
+        <h2 className="font-display text-lg text-bianco">Dati d'esempio</h2>
+        <p className="text-sm text-fumo-2">Ricarica i dati d'esempio. Sostituisce tutto quello che c'è ora.</p>
         {confermaReset ? (
           <div className="flex gap-2">
             <Button variant="critico" onClick={() => { void reset(); setConfermaReset(false); setMsg("Dati d'esempio ricaricati."); }}>
@@ -85,9 +85,9 @@ export function Impostazioni() {
         )}
       </Card>
 
-      {msg && <p className="text-center text-sm text-ottone-scuro">{msg}</p>}
+      {msg && <p className="text-center text-sm text-lime">{msg}</p>}
 
-      <p className="text-center font-mono text-[0.65rem] text-inchiostro-debole">Albero Maestri · local-first · {adessoISO().slice(0, 10)}</p>
+      <p className="text-center font-mono text-[0.65rem] text-fumo-2">Albero Maestri · local-first · {adessoISO().slice(0, 10)}</p>
     </div>
   );
 }

@@ -15,8 +15,8 @@ type Filtro = "tutto" | "incassare" | "fare";
 function Numero({ label, valore, forte }: { label: string; valore: string; forte?: boolean }) {
   return (
     <div className="flex flex-col gap-0.5">
-      <span className="font-mono text-[0.6rem] uppercase tracking-wider text-inchiostro-chiaro/60">{label}</span>
-      <span className={forte ? "font-mono text-base tabular-nums text-ottone-chiaro" : "font-mono text-sm tabular-nums text-inchiostro-chiaro"}>
+      <span className="font-mono text-[0.6rem] uppercase tracking-wider text-fumo">{label}</span>
+      <span className={forte ? "font-mono text-base tabular-nums text-lime" : "font-mono text-sm tabular-nums text-fumo"}>
         {valore}
       </span>
     </div>
@@ -41,7 +41,7 @@ export function ClienteScheda() {
     return (
       <div className="flex flex-col gap-3">
         <Intestazione titolo="Cliente" />
-        <p className="text-sm text-inchiostro-debole">Cliente non trovato.</p>
+        <p className="text-sm text-fumo-2">Cliente non trovato.</p>
       </div>
     );
   }
@@ -83,7 +83,7 @@ export function ClienteScheda() {
 
       {/* contatti */}
       {(cliente.telefono || cliente.email || cliente.luogo) && (
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-inchiostro-medio">
+        <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-fumo">
           {cliente.telefono && <span className="flex items-center gap-1"><Phone className="h-3.5 w-3.5" /> {cliente.telefono}</span>}
           {cliente.email && <span className="flex items-center gap-1"><Mail className="h-3.5 w-3.5" /> {cliente.email}</span>}
           {cliente.luogo && <span className="flex items-center gap-1"><MapPin className="h-3.5 w-3.5" /> {cliente.luogo}</span>}
@@ -94,7 +94,7 @@ export function ClienteScheda() {
       <div className="flex flex-col items-center gap-1.5 py-1">
         <Codice value={codice} grande />
         {decode && r.numeroLavori > 0 && (
-          <p className="font-mono text-xs text-inchiostro-debole">
+          <p className="font-mono text-xs text-fumo-2">
             paga in ~{decode.giorniMedi} gg · ~{formatEuro(decode.spesaMedia)}/lavoro · {decode.anni} anni
           </p>
         )}
@@ -108,11 +108,11 @@ export function ClienteScheda() {
           <Numero label="Lavori" valore={String(r.numeroLavori)} />
           <Numero label="Ore" valore={formatOre(r.oreTotali)} />
         </div>
-        <button type="button" onClick={() => setDettagli((v) => !v)} className="self-start font-mono text-[0.65rem] uppercase tracking-wider text-ottone-chiaro/80">
+        <button type="button" onClick={() => setDettagli((v) => !v)} className="self-start font-mono text-[0.65rem] uppercase tracking-wider text-lime/80">
           {dettagli ? "− dettagli" : "+ dettagli economici"}
         </button>
         {dettagli && (
-          <div className="grid grid-cols-4 gap-2 border-t border-inchiostro-chiaro/15 pt-2">
+          <div className="grid grid-cols-4 gap-2 border-t border-white/10 pt-2">
             <Numero label="Margine" valore={formatEuro(r.margine)} />
             <Numero label="Fatturabile" valore={formatEuro(r.valoreFatturabile)} />
             <Numero label="Manodopera" valore={formatEuro(r.costoManodopera)} />
@@ -124,18 +124,18 @@ export function ClienteScheda() {
       {/* calendario compatto */}
       {mesi.length > 0 && (
         <Card tono="piana" className="flex flex-col gap-1.5 p-3">
-          <span className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Lavori nel tempo</span>
+          <span className="font-mono text-xs uppercase tracking-wider text-fumo-2">Lavori nel tempo</span>
           {mesi.map(([k, v]) => (
             <div key={k} className="flex items-center justify-between text-sm">
-              <span className="font-mono text-xs uppercase text-inchiostro-medio">{formatMese(k)}</span>
+              <span className="font-mono text-xs uppercase text-fumo">{formatMese(k)}</span>
               <span className="font-mono text-xs">
                 {"●".repeat(v.fatto)}
-                <span className="text-inchiostro-debole">{"◌".repeat(v.daFare)}</span>
+                <span className="text-fumo-2">{"◌".repeat(v.daFare)}</span>
               </span>
             </div>
           ))}
           {prossimo && (
-            <p className="mt-1 border-t border-carta-ombra pt-1.5 font-mono text-xs text-lichene">
+            <p className="mt-1 border-t border-white/15 pt-1.5 font-mono text-xs text-lime">
               prossimo: ◌ {prossimo.titolo}
             </p>
           )}
@@ -143,13 +143,13 @@ export function ClienteScheda() {
       )}
 
       {/* segmento 3 stati */}
-      <div className="flex rounded-targhetta bg-carta-bassa p-1">
+      <div className="flex rounded-2xl bg-white/[0.05] p-1">
         {([["tutto", "Tutto"], ["incassare", "Da incassare"], ["fare", "Da fare"]] as const).map(([v, label]) => (
           <button
             key={v}
             type="button"
             onClick={() => setFiltro(v)}
-            className={filtro === v ? "flex-1 rounded-[0.5rem] bg-carta-alta px-2 py-1.5 text-sm font-medium text-inchiostro shadow-svolto" : "flex-1 rounded-[0.5rem] px-2 py-1.5 text-sm text-inchiostro-debole"}
+            className={filtro === v ? "flex-1 rounded-[0.5rem] bg-white/[0.08] px-2 py-1.5 text-sm font-medium text-bianco" : "flex-1 rounded-[0.5rem] px-2 py-1.5 text-sm text-fumo-2"}
           >
             {label}
           </button>
@@ -159,7 +159,7 @@ export function ClienteScheda() {
       {/* lista lavori */}
       <div className="flex flex-col gap-2">
         {visibili.length === 0 ? (
-          <p className="py-6 text-center text-sm text-inchiostro-debole">
+          <p className="py-6 text-center text-sm text-fumo-2">
             {filtro === "incassare" ? "Niente da incassare." : filtro === "fare" ? "Nessun lavoro in programma." : "Ancora nessun lavoro."}
           </p>
         ) : (
@@ -172,7 +172,7 @@ export function ClienteScheda() {
         <div className="mx-auto flex max-w-md px-4">
           <Button
             size="lg"
-            className="w-full shadow-targhetta"
+            className="w-full shadow-flottante"
             onClick={() => navigate("/nuovo", { state: { clienteId: cliente.id } })}
           >
             <Plus className="h-5 w-5" /> Nuovo lavoro per {cliente.nome}

@@ -26,7 +26,7 @@ export function OperaioScheda() {
     return (
       <div className="flex flex-col gap-3">
         <Intestazione titolo="Operaio" />
-        <p className="text-sm text-inchiostro-debole">Operaio non trovato.</p>
+        <p className="text-sm text-fumo-2">Operaio non trovato.</p>
       </div>
     );
   }
@@ -69,12 +69,12 @@ export function OperaioScheda() {
 
       {/* identità */}
       <div className="flex items-center gap-3">
-        <div className="flex h-12 w-12 items-center justify-center rounded-targhetta bg-ottone font-display text-xl text-carta-alta shadow-targhetta">
+        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-lime font-display text-xl text-fondo shadow-flottante">
           {operatore.nome[0]?.toUpperCase()}
         </div>
         <div className="flex flex-col">
           <Badge stato={io ? "ottone" : "neutro"}>{etichetta(operatore.ruolo)}</Badge>
-          <span className="font-mono text-sm text-inchiostro-medio">
+          <span className="font-mono text-sm text-fumo">
             {io ? "io" : `${operatore.tariffaOraria ?? 0} €/h · costo`}
           </span>
         </div>
@@ -82,9 +82,9 @@ export function OperaioScheda() {
 
       {/* statistica minima (NON tutto lo schermo) */}
       <Card tono="piana" className="flex flex-wrap items-center justify-between gap-3 px-3 py-2.5 font-mono text-sm">
-        <span className="flex items-center gap-1 text-inchiostro-medio"><Clock className="h-4 w-4" /> {formatOre(libro.ore)}</span>
+        <span className="flex items-center gap-1 text-fumo"><Clock className="h-4 w-4" /> {formatOre(libro.ore)}</span>
         {io ? (
-          <span className="flex items-center gap-1 text-lichene"><Leaf className="h-4 w-4" /> il mio tempo · non è un costo</span>
+          <span className="flex items-center gap-1 text-lime"><Leaf className="h-4 w-4" /> il mio tempo · non è un costo</span>
         ) : (
           <>
             <span className="flex items-center gap-1 text-positivo"><Banknote className="h-4 w-4" /> {formatEuro(libro.pagato)}</span>
@@ -115,8 +115,8 @@ export function OperaioScheda() {
           {pagaOpen && (
             <Card tono="incasso" className="flex flex-col gap-3 p-4">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs uppercase tracking-wider text-inchiostro-chiaro/60">Da pagare</span>
-                <span className="font-mono text-base tabular-nums text-ottone-chiaro">{formatEuro(libro.saldo)}</span>
+                <span className="font-mono text-xs uppercase tracking-wider text-fumo">Da pagare</span>
+                <span className="font-mono text-base tabular-nums text-lime">{formatEuro(libro.saldo)}</span>
               </div>
               <div className="flex items-center gap-2">
                 <input
@@ -124,9 +124,9 @@ export function OperaioScheda() {
                   inputMode="decimal"
                   placeholder={String(libro.saldo)}
                   onChange={(e) => setImporto(e.target.value.replace(/[^0-9.,]/g, ""))}
-                  className="h-10 flex-1 rounded-targhetta bg-carta-alta px-3 text-right font-mono text-sm text-inchiostro tabular-nums focus-visible:outline-none"
+                  className="h-10 flex-1 rounded-2xl bg-white/[0.08] px-3 text-right font-mono text-sm text-bianco tabular-nums focus-visible:outline-none"
                 />
-                <span className="font-mono text-sm text-inchiostro-chiaro">€</span>
+                <span className="font-mono text-sm text-fumo">€</span>
               </div>
               <Segmented
                 value={metodo}
@@ -148,13 +148,13 @@ export function OperaioScheda() {
 
       {/* storico */}
       <section className="flex flex-col gap-2">
-        <h2 className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Storico</h2>
+        <h2 className="font-mono text-xs uppercase tracking-wider text-fumo-2">Storico</h2>
         {libro.lavori.length === 0 ? (
-          <p className="py-4 text-center text-sm text-inchiostro-debole">Ancora nessun lavoro.</p>
+          <p className="py-4 text-center text-sm text-fumo-2">Ancora nessun lavoro.</p>
         ) : (
           [...perMese.entries()].sort((a, b) => b[0].localeCompare(a[0])).map(([mese, lavori]) => (
             <div key={mese} className="flex flex-col gap-1.5">
-              <span className="font-mono text-[0.65rem] uppercase tracking-wider text-inchiostro-debole">{formatMese(mese)}</span>
+              <span className="font-mono text-[0.65rem] uppercase tracking-wider text-fumo-2">{formatMese(mese)}</span>
               {lavori.map((l) => {
                 const cliente = l.clienteId ? dati.clienti.find((c) => c.id === l.clienteId) : undefined;
                 const svolto = l.fase === "fatto";
@@ -163,15 +163,15 @@ export function OperaioScheda() {
                     key={l.id}
                     type="button"
                     onClick={() => navigate(`/lavoro/${l.id}`)}
-                    className={svolto ? "flex items-center justify-between gap-2 rounded-quietanza bg-carta-svolto px-3 py-2 text-left shadow-svolto" : "flex items-center justify-between gap-2 rounded-carta border border-dashed border-inchiostro-debole/40 bg-carta-programmato px-3 py-2 text-left"}
+                    className={svolto ? "flex items-center justify-between gap-2 rounded-xl bg-white/[0.08] px-3 py-2 text-left" : "flex items-center justify-between gap-2 rounded-vetro border border-dashed border-white/15 bg-white/[0.05] px-3 py-2 text-left"}
                   >
                     <span className="flex min-w-0 flex-col">
                       <span className="truncate text-sm">{cliente?.nome ?? "—"} · {l.titolo}</span>
-                      <span className="font-mono text-[0.65rem] text-inchiostro-debole">{formatData(l.data)}</span>
+                      <span className="font-mono text-[0.65rem] text-fumo-2">{formatData(l.data)}</span>
                     </span>
                     <span className="flex shrink-0 items-center gap-2 font-mono text-xs">
-                      <span className="text-inchiostro-medio">{svolto ? formatOre(oreDi(l.id)) : "—"}</span>
-                      {svolto && <span className="text-ottone-scuro">{formatEuro(costoDi(l.id))}</span>}
+                      <span className="text-fumo">{svolto ? formatOre(oreDi(l.id)) : "—"}</span>
+                      {svolto && <span className="text-lime">{formatEuro(costoDi(l.id))}</span>}
                     </span>
                   </button>
                 );

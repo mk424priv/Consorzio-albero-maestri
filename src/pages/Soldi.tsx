@@ -19,9 +19,9 @@ function meseAdiacente(chiave: string, delta: number): string {
 
 function Dash({ label, valore, accento }: { label: string; valore: number; accento?: boolean }) {
   return (
-    <div className="flex flex-col gap-1 rounded-carta bg-carta-incasso p-3 shadow-cassa">
-      <span className="font-mono text-[0.58rem] uppercase tracking-wider text-inchiostro-chiaro/60">{label}</span>
-      <span className={accento ? "font-mono text-sm font-medium tabular-nums text-attenzione" : "font-mono text-sm font-medium tabular-nums text-ottone-chiaro"}>
+    <div className="flex flex-col gap-1 rounded-vetro glass-scura p-3">
+      <span className="font-mono text-[0.58rem] uppercase tracking-wider text-fumo">{label}</span>
+      <span className={accento ? "font-mono text-sm font-medium tabular-nums text-attenzione" : "font-mono text-sm font-medium tabular-nums text-lime"}>
         {formatEuro(valore)}
       </span>
     </div>
@@ -73,7 +73,7 @@ export function Soldi() {
             <Button size="icona" variant="tenue" className="h-9 w-9" onClick={() => setMese((m) => meseAdiacente(m, -1))} aria-label="Mese precedente">
               <ChevronLeft className="h-5 w-5" />
             </Button>
-            <span className="w-20 text-center font-mono text-[0.65rem] text-inchiostro-medio">{formatMese(mese)}</span>
+            <span className="w-20 text-center font-mono text-[0.65rem] text-fumo">{formatMese(mese)}</span>
             <Button size="icona" variant="tenue" className="h-9 w-9" onClick={() => setMese((m) => meseAdiacente(m, 1))} aria-label="Mese successivo">
               <ChevronRight className="h-5 w-5" />
             </Button>
@@ -102,14 +102,14 @@ export function Soldi() {
       {modo === "incassare" ? (
         <div className="flex flex-col gap-4">
           <Card tono="piana" className="flex items-center justify-between px-3 py-2">
-            <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-inchiostro-debole">
+            <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-fumo-2">
               <ArrowDownToLine className="h-4 w-4 text-positivo" /> Totale da incassare
             </span>
-            <span className="font-mono text-base tabular-nums text-ottone-scuro">{formatEuro(r.daIncassare)}</span>
+            <span className="font-mono text-base tabular-nums text-lime">{formatEuro(r.daIncassare)}</span>
           </Card>
 
           {debitori.length === 0 ? (
-            <p className="py-6 text-center text-sm text-inchiostro-debole">Tutto incassato. Niente in sospeso.</p>
+            <p className="py-6 text-center text-sm text-fumo-2">Tutto incassato. Niente in sospeso.</p>
           ) : (
             debitori.map(({ c, saldo }) => {
               const aperti = dati.lavori.filter((l) => !l.deleted && l.clienteId === c.id && l.fase === "fatto" && calcoloLavoro(dati, l).statoIncasso !== "pagato");
@@ -135,20 +135,20 @@ export function Soldi() {
       ) : (
         <div className="flex flex-col gap-4">
           <Card tono="piana" className="flex items-center justify-between px-3 py-2">
-            <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-inchiostro-debole">
+            <span className="flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-fumo-2">
               <ArrowUpFromLine className="h-4 w-4 text-attenzione" /> Totale da pagare squadra
             </span>
             <span className="font-mono text-base tabular-nums text-attenzione">{formatEuro(r.daPagareOperai)}</span>
           </Card>
 
           {debitoriOperai.length === 0 ? (
-            <p className="py-4 text-center text-sm text-inchiostro-debole">Nessun compenso in sospeso.</p>
+            <p className="py-4 text-center text-sm text-fumo-2">Nessun compenso in sospeso.</p>
           ) : (
             debitoriOperai.map(({ o, libro }) => (
-              <button key={o.id} type="button" onClick={() => navigate(`/operaio/${o.id}`)} className="flex items-center justify-between gap-2 rounded-targhetta bg-carta-alta px-3 py-2.5 text-left shadow-svolto">
+              <button key={o.id} type="button" onClick={() => navigate(`/operaio/${o.id}`)} className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left">
                 <span className="flex min-w-0 flex-col">
                   <span className="text-sm font-medium">{o.nome}</span>
-                  <span className="font-mono text-[0.65rem] text-inchiostro-debole">dovuto {formatEuro(libro.dovuto)} · pagato {formatEuro(libro.pagato)}</span>
+                  <span className="font-mono text-[0.65rem] text-fumo-2">dovuto {formatEuro(libro.dovuto)} · pagato {formatEuro(libro.pagato)}</span>
                 </span>
                 <Badge stato="attenzione">{formatEuro(libro.saldo)}</Badge>
               </button>
@@ -158,10 +158,10 @@ export function Soldi() {
           {/* prelievo io */}
           <Card tono="incasso" className="flex flex-col gap-2 p-3">
             <div className="flex items-center justify-between">
-              <span className="font-mono text-xs uppercase tracking-wider text-inchiostro-chiaro/60">Io · cassa del mese</span>
-              <span className="font-mono text-base tabular-nums text-ottone-chiaro">{formatEuro(cassaMese)}</span>
+              <span className="font-mono text-xs uppercase tracking-wider text-fumo">Io · cassa del mese</span>
+              <span className="font-mono text-base tabular-nums text-lime">{formatEuro(cassaMese)}</span>
             </div>
-            <p className="text-xs text-inchiostro-chiaro/60">Non è un costo, è un prelievo.</p>
+            <p className="text-xs text-fumo">Non è un costo, è un prelievo.</p>
             <Button variant="ottone" size="sm" className="self-start" onClick={() => setPrelievoOpen(true)} disabled={cassaMese <= 0}>
               Preleva
             </Button>
@@ -196,8 +196,8 @@ function IncassoSubitoSheet({ open, onOpenChange, onFatto }: { open: boolean; on
     <Sheet open={open} onOpenChange={onOpenChange} title="Incasso Subito" description="A preventivo, tutto subito, senza ore.">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-1.5">
-          <label className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Cliente</label>
-          <select value={clienteId} onChange={(e) => setClienteId(e.target.value)} className="h-11 rounded-targhetta border border-carta-ombra bg-carta-alta px-3 text-sm">
+          <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Cliente</label>
+          <select value={clienteId} onChange={(e) => setClienteId(e.target.value)} className="h-11 rounded-2xl border border-white/15 bg-white/[0.08] px-3 text-sm">
             <option value="">Senza cliente</option>
             {dati.clienti.filter((c) => !c.deleted).map((c) => (
               <option key={c.id} value={c.id}>{c.nome} {c.cognome ?? ""}</option>
@@ -225,7 +225,7 @@ function PrelievoSheet({ open, onOpenChange, cassa }: { open: boolean; onOpenCha
   return (
     <Sheet open={open} onOpenChange={onOpenChange} title="Preleva" description="Vai a prendere dei soldi dalla cassa.">
       <div className="flex flex-col gap-3">
-        <p className="font-mono text-sm text-inchiostro-debole">Cassa del mese: <span className="text-ottone-scuro">{formatEuro(cassa)}</span></p>
+        <p className="font-mono text-sm text-fumo-2">Cassa del mese: <span className="text-lime">{formatEuro(cassa)}</span></p>
         <Field label="Importo" value={importo} onChange={(e) => setImporto(e.target.value)} suffix="€" inputMode="decimal" placeholder={String(cassa)} />
         <Button size="lg" variant="ottone" onClick={() => void conferma()}>Conferma prelievo</Button>
       </div>

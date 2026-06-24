@@ -72,11 +72,11 @@ export function NuovoCliente() {
       {/* preview codice */}
       <div className="flex flex-col items-center gap-1 py-1">
         <Codice value={`${iniziali}-00-00-00`} grande />
-        <p className="font-mono text-xs text-inchiostro-debole">il codice cresce con i lavori</p>
+        <p className="font-mono text-xs text-fumo-2">il codice cresce con i lavori</p>
       </div>
 
       <div className="flex flex-col gap-2">
-        <label className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Come lavori di solito</label>
+        <label className="font-mono text-xs uppercase tracking-wider text-fumo-2">Come lavori di solito</label>
         <Segmented
           value={modo}
           onValueChange={setModo}

@@ -36,19 +36,19 @@ export function Anagrafiche() {
       />
 
       <div className="relative flex items-center">
-        <Search className="absolute left-3 h-4 w-4 text-inchiostro-debole" />
+        <Search className="absolute left-3 h-4 w-4 text-fumo-2" />
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
           placeholder="Cerca cliente per nome o codice…"
-          className="h-11 w-full rounded-targhetta border border-carta-ombra bg-carta-alta pl-9 pr-3 text-sm focus-visible:border-ottone focus-visible:outline-none"
+          className="h-11 w-full rounded-2xl border border-white/15 bg-white/[0.08] pl-9 pr-3 text-sm focus-visible:border-lime focus-visible:outline-none"
         />
       </div>
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h2 className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Clienti</h2>
-          <button type="button" onClick={() => navigate("/cliente/nuovo")} className="flex items-center gap-1 font-mono text-xs text-ottone-scuro">
+          <h2 className="font-mono text-xs uppercase tracking-wider text-fumo-2">Clienti</h2>
+          <button type="button" onClick={() => navigate("/cliente/nuovo")} className="flex items-center gap-1 font-mono text-xs text-lime">
             <Plus className="h-3.5 w-3.5" /> Nuovo
           </button>
         </div>
@@ -57,14 +57,14 @@ export function Anagrafiche() {
             key={c.id}
             type="button"
             onClick={() => navigate(`/cliente/${c.id}`)}
-            className="flex items-center justify-between gap-2 rounded-targhetta bg-carta-alta px-3 py-2.5 text-left shadow-svolto"
+            className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left"
           >
             <span className="flex min-w-0 flex-col gap-0.5">
               <span className="flex items-center gap-2">
                 <Codice value={codiceCliente(dati, c.id)} />
                 <span className="truncate text-sm">{c.nome} {c.cognome ?? ""}</span>
               </span>
-              <span className="font-mono text-[0.65rem] text-inchiostro-debole">
+              <span className="font-mono text-[0.65rem] text-fumo-2">
                 {c.tariffaOraria ? `${c.tariffaOraria} €/h · ` : ""}
                 {r.numeroLavori} {r.numeroLavori === 1 ? "lavoro" : "lavori"}
               </span>
@@ -80,8 +80,8 @@ export function Anagrafiche() {
 
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
-          <h2 className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Operai</h2>
-          <button type="button" onClick={() => navigate("/operaio/nuovo")} className="flex items-center gap-1 font-mono text-xs text-ottone-scuro">
+          <h2 className="font-mono text-xs uppercase tracking-wider text-fumo-2">Operai</h2>
+          <button type="button" onClick={() => navigate("/operaio/nuovo")} className="flex items-center gap-1 font-mono text-xs text-lime">
             <Plus className="h-3.5 w-3.5" /> Nuovo
           </button>
         </div>
@@ -92,13 +92,13 @@ export function Anagrafiche() {
               key={o.id}
               type="button"
               onClick={() => navigate(`/operaio/${o.id}`)}
-              className="flex items-center justify-between gap-2 rounded-targhetta bg-carta-alta px-3 py-2.5 text-left shadow-svolto"
+              className="flex items-center justify-between gap-2 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left"
             >
-              <span className="text-sm">{o.nome} {o.ruolo === "titolare" && <span className="font-mono text-xs text-inchiostro-debole">· io</span>}</span>
+              <span className="text-sm">{o.nome} {o.ruolo === "titolare" && <span className="font-mono text-xs text-fumo-2">· io</span>}</span>
               {dovuto && dovuto.daPagare > 0 ? (
                 <Badge stato="critico">{formatEuro(dovuto.daPagare)}</Badge>
               ) : (
-                <span className="font-mono text-xs text-inchiostro-debole">{o.ruolo === "titolare" ? "io" : `${o.tariffaOraria ?? 0} €/h`}</span>
+                <span className="font-mono text-xs text-fumo-2">{o.ruolo === "titolare" ? "io" : `${o.tariffaOraria ?? 0} €/h`}</span>
               )}
             </button>
           );

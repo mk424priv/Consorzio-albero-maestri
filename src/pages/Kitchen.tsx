@@ -20,12 +20,12 @@ import {
 
 const carte = [
   ["carta", "bg-carta"],
-  ["carta-alta", "bg-carta-alta"],
-  ["carta-bassa", "bg-carta-bassa"],
-  ["carta-ombra", "bg-carta-ombra"],
-  ["carta-svolto", "bg-carta-svolto"],
-  ["carta-programmato", "bg-carta-programmato"],
-  ["carta-incasso", "bg-carta-incasso"],
+  ["carta-alta", "bg-white/[0.08]"],
+  ["carta-bassa", "bg-white/[0.05]"],
+  ["carta-ombra", "bg-white/10"],
+  ["carta-svolto", "bg-white/[0.08]"],
+  ["carta-programmato", "bg-white/[0.05]"],
+  ["carta-incasso", "glass-scura"],
 ] as const;
 
 const inchiostri = [
@@ -35,9 +35,9 @@ const inchiostri = [
 ] as const;
 
 const accenti = [
-  ["ottone", "bg-ottone"],
-  ["ottone-scuro", "bg-ottone-scuro"],
-  ["lichene", "bg-lichene"],
+  ["ottone", "bg-lime"],
+  ["ottone-scuro", "bg-lime-scuro"],
+  ["lichene", "bg-lime"],
   ["positivo", "bg-positivo"],
   ["attenzione", "bg-attenzione"],
   ["critico", "bg-critico"],
@@ -46,7 +46,7 @@ const accenti = [
 function Sezione({ titolo, children }: { titolo: string; children: React.ReactNode }) {
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-inchiostro-debole">
+      <h2 className="font-mono text-xs uppercase tracking-[0.2em] text-fumo-2">
         {titolo}
       </h2>
       {children}
@@ -63,13 +63,13 @@ export function Kitchen() {
     <div className="grana min-h-dvh">
       <div className="mx-auto flex max-w-md flex-col gap-9 px-5 py-10">
         <header className="flex flex-col gap-1">
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-inchiostro-debole">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-fumo-2">
             design system · vetrina
           </p>
-          <h1 className="font-display text-4xl font-semibold text-inchiostro">
+          <h1 className="font-display text-4xl font-semibold text-bianco">
             Quaderno di bottega
           </h1>
-          <p className="text-sm text-inchiostro-medio">
+          <p className="text-sm text-fumo">
             Carta, inchiostro, ottone. Materiale, non colore.
           </p>
         </header>
@@ -78,8 +78,8 @@ export function Kitchen() {
           <div className="grid grid-cols-4 gap-2">
             {[...carte, ...inchiostri, ...accenti].map(([name, bg]) => (
               <div key={name} className="flex flex-col gap-1">
-                <div className={`h-12 rounded-targhetta border border-carta-ombra ${bg}`} />
-                <span className="font-mono text-[0.6rem] text-inchiostro-debole">{name}</span>
+                <div className={`h-12 rounded-2xl border border-white/15 ${bg}`} />
+                <span className="font-mono text-[0.6rem] text-fumo-2">{name}</span>
               </div>
             ))}
           </div>
@@ -87,11 +87,11 @@ export function Kitchen() {
 
         <Sezione titolo="Tipografia">
           <Card className="flex flex-col gap-2 p-4">
-            <p className="font-display text-3xl text-inchiostro">Fraunces · titoli e date</p>
-            <p className="font-sans text-base text-inchiostro-medio">
+            <p className="font-display text-3xl text-bianco">Fraunces · titoli e date</p>
+            <p className="font-sans text-base text-fumo">
               Inter · corpo del testo, leggibile al sole in campo.
             </p>
-            <p className="font-mono text-lg tabular-nums text-ottone-scuro">
+            <p className="font-mono text-lg tabular-nums text-lime">
               IBM Plex Mono · € 1.240,00 · IS-12-04-03
             </p>
           </Card>
@@ -141,7 +141,7 @@ export function Kitchen() {
               <span className="font-display text-lg">Svolto</span>
               <Stamp>fatto</Stamp>
             </div>
-            <p className="mt-1 text-sm text-inchiostro-medio">
+            <p className="mt-1 text-sm text-fumo">
               Caldo, posato, "ricevuta". Non trema piu'.
             </p>
           </Card>
@@ -150,14 +150,14 @@ export function Kitchen() {
               <span className="font-display text-lg">Programmato</span>
               <Stamp color="lichene">da fare</Stamp>
             </div>
-            <p className="mt-1 text-sm text-inchiostro-medio">
+            <p className="mt-1 text-sm text-fumo">
               Freddo, leggero, "copia a matita". Galleggia.
             </p>
           </Card>
           <Card tono="incasso" className="p-4">
-            <span className="font-display text-lg text-inchiostro-chiaro">Cassa</span>
-            <p className="mt-1 font-mono text-2xl tabular-nums text-ottone-chiaro">€ 3.480,00</p>
-            <p className="text-sm text-inchiostro-chiaro/70">Scuro, ottone, inciso come metallo.</p>
+            <span className="font-display text-lg text-fumo">Cassa</span>
+            <p className="mt-1 font-mono text-2xl tabular-nums text-lime">€ 3.480,00</p>
+            <p className="text-sm text-fumo">Scuro, ottone, inciso come metallo.</p>
           </Card>
         </Sezione>
 
@@ -172,8 +172,8 @@ export function Kitchen() {
               { value: "programmato", label: "Programmato" },
             ]}
           />
-          <p className="text-sm text-inchiostro-debole">
-            Selezionato: <span className="font-mono text-inchiostro-medio">{carattere}</span>
+          <p className="text-sm text-fumo-2">
+            Selezionato: <span className="font-mono text-fumo">{carattere}</span>
           </p>
         </Sezione>
 

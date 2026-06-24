@@ -13,8 +13,8 @@ import { useStore } from "@/store/store";
 function Riga({ label, valore, forte }: { label: string; valore: string; forte?: boolean }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm text-inchiostro-chiaro/70">{label}</span>
-      <span className={cn("font-mono tabular-nums", forte ? "text-base text-ottone-chiaro" : "text-sm text-inchiostro-chiaro")}>
+      <span className="text-sm text-fumo">{label}</span>
+      <span className={cn("font-mono tabular-nums", forte ? "text-base text-lime" : "text-sm text-fumo")}>
         {valore}
       </span>
     </div>
@@ -31,7 +31,7 @@ export function Cantiere() {
     return (
       <div className="flex flex-col gap-3">
         <Intestazione titolo="Lavoro" />
-        <p className="text-sm text-inchiostro-debole">Lavoro non trovato.</p>
+        <p className="text-sm text-fumo-2">Lavoro non trovato.</p>
       </div>
     );
   }
@@ -61,11 +61,11 @@ export function Cantiere() {
         {cliente && <Codice value={codiceCliente(dati, cliente.id)} />}
         <Stamp color={svolto ? "ottone" : "lichene"}>{etichetta(lavoro.fase)}</Stamp>
         <Badge stato="neutro">{etichetta(lavoro.modo)}</Badge>
-        <span className="font-mono text-xs text-inchiostro-debole">{formatData(lavoro.data)}</span>
+        <span className="font-mono text-xs text-fumo-2">{formatData(lavoro.data)}</span>
       </div>
 
       {lavoro.periodo && (
-        <p className="font-mono text-xs text-inchiostro-debole">
+        <p className="font-mono text-xs text-fumo-2">
           Periodo: {formatData(lavoro.periodo.dal)} – {formatData(lavoro.periodo.al)}
         </p>
       )}
@@ -75,18 +75,18 @@ export function Cantiere() {
         <Riga label="Ore totali" valore={formatOre(calc.oreTotali)} />
         <Riga label="Costo collaboratori" valore={formatEuro(calc.costoCollaboratori)} />
         <Riga label="Spese" valore={formatEuro(calc.speseTotali)} />
-        <div className="my-1 border-t border-inchiostro-chiaro/20" />
+        <div className="my-1 border-t border-white/10" />
         <Riga label="Netto" valore={formatEuro(calc.netto)} forte />
         {svolto && <Riga label="Incassato" valore={formatEuro(calc.incassato)} />}
         {svolto && <Riga label="Da incassare" valore={formatEuro(calc.daIncassare)} />}
       </Card>
 
       <section className="flex flex-col gap-1.5">
-        <h2 className="font-mono text-xs uppercase tracking-wider text-inchiostro-debole">Operai</h2>
+        <h2 className="font-mono text-xs uppercase tracking-wider text-fumo-2">Operai</h2>
         {calc.partecipanti.map((p) => (
-          <div key={p.collaboratoreId} className="flex items-center justify-between rounded-targhetta bg-carta-alta px-3 py-2 text-sm shadow-svolto">
+          <div key={p.collaboratoreId} className="flex items-center justify-between rounded-2xl bg-white/[0.08] px-3 py-2 text-sm">
             <span>{p.nome}</span>
-            <span className="font-mono text-xs text-inchiostro-debole">
+            <span className="font-mono text-xs text-fumo-2">
               {formatOre(p.ore)} · costo {formatEuro(p.costo)}
             </span>
           </div>

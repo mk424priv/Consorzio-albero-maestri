@@ -12,10 +12,10 @@ import { operatoreIo } from "@/lib/lavoro-calc";
 import { useStore } from "@/store/store";
 
 function Kpi({ label, valore, accento }: { label: string; valore: string; accento?: Tono }) {
-  const colore = accento === "critico" ? "text-critico" : accento === "attenzione" ? "text-attenzione" : "text-inchiostro";
+  const colore = accento === "critico" ? "text-critico" : accento === "attenzione" ? "text-attenzione" : "text-bianco";
   return (
-    <div className="flex flex-col gap-0.5 rounded-targhetta bg-carta-alta px-3 py-2 shadow-svolto">
-      <span className="font-mono text-[0.58rem] uppercase tracking-wider text-inchiostro-debole">{label}</span>
+    <div className="flex flex-col gap-0.5 rounded-2xl bg-white/[0.08] px-3 py-2">
+      <span className="font-mono text-[0.58rem] uppercase tracking-wider text-fumo-2">{label}</span>
       <span className={`font-mono text-sm font-medium tabular-nums ${colore}`}>{valore}</span>
     </div>
   );
@@ -23,8 +23,8 @@ function Kpi({ label, valore, accento }: { label: string; valore: string; accent
 
 function Barra({ pct, tono }: { pct: number; tono: "positivo" | "ottone" }) {
   return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-carta-ombra">
-      <div className={tono === "positivo" ? "h-full rounded-full bg-positivo" : "h-full rounded-full bg-ottone"} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
+    <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+      <div className={tono === "positivo" ? "h-full rounded-full bg-positivo" : "h-full rounded-full bg-lime"} style={{ width: `${Math.min(100, Math.max(0, pct))}%` }} />
     </div>
   );
 }
@@ -99,17 +99,17 @@ export function Dashboard() {
           </div>
           <div className="flex flex-col gap-2">
             {clienti.length === 0 ? (
-              <p className="py-6 text-center text-sm text-inchiostro-debole">Nessun cliente con movimenti.</p>
+              <p className="py-6 text-center text-sm text-fumo-2">Nessun cliente con movimenti.</p>
             ) : (
               clienti.map(({ c, r }) => {
                 const pct = r.valoreFatturabile > 0 ? arrotonda((r.totaleIncassato / r.valoreFatturabile) * 100) : 100;
                 return (
-                  <button key={c.id} type="button" onClick={() => navigate(`/cliente/${c.id}`)} className="flex flex-col gap-1.5 rounded-targhetta bg-carta-alta px-3 py-2.5 text-left shadow-svolto">
+                  <button key={c.id} type="button" onClick={() => navigate(`/cliente/${c.id}`)} className="flex flex-col gap-1.5 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left">
                     <div className="flex items-center justify-between gap-2">
                       <span className="flex items-center gap-2"><Codice value={codiceCliente(dati, c.id)} /><span className="text-sm font-medium">{c.nome} {c.cognome ?? ""}</span></span>
                       {r.saldoDaIncassare > 0 ? <Badge stato="attenzione">{formatEuro(r.saldoDaIncassare)}</Badge> : <Badge stato="positivo">ok</Badge>}
                     </div>
-                    <span className="font-mono text-[0.65rem] text-inchiostro-debole">
+                    <span className="font-mono text-[0.65rem] text-fumo-2">
                       {formatOre(r.oreTotali)} · fatt. {formatEuro(r.valoreFatturabile)} · inc. {formatEuro(r.totaleIncassato)}
                     </span>
                     <Barra pct={pct} tono="positivo" />
@@ -132,9 +132,9 @@ export function Dashboard() {
               const isIo = o.id === io?.id;
               const pct = libro.dovuto > 0 ? arrotonda((libro.pagato / libro.dovuto) * 100) : 100;
               return (
-                <button key={o.id} type="button" onClick={() => navigate(`/operaio/${o.id}`)} className="flex flex-col gap-1.5 rounded-targhetta bg-carta-alta px-3 py-2.5 text-left shadow-svolto">
+                <button key={o.id} type="button" onClick={() => navigate(`/operaio/${o.id}`)} className="flex flex-col gap-1.5 rounded-2xl bg-white/[0.08] px-3 py-2.5 text-left">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-sm font-medium">{o.nome} {isIo && <span className="font-mono text-xs text-inchiostro-debole">· io</span>}</span>
+                    <span className="text-sm font-medium">{o.nome} {isIo && <span className="font-mono text-xs text-fumo-2">· io</span>}</span>
                     {isIo ? (
                       <Badge stato="lichene">profitto</Badge>
                     ) : (
@@ -142,10 +142,10 @@ export function Dashboard() {
                     )}
                   </div>
                   {isIo ? (
-                    <span className="font-mono text-[0.65rem] text-inchiostro-debole">{formatOre(libro.ore)} · le mie ore = profitto, non costo</span>
+                    <span className="font-mono text-[0.65rem] text-fumo-2">{formatOre(libro.ore)} · le mie ore = profitto, non costo</span>
                   ) : (
                     <>
-                      <span className="font-mono text-[0.65rem] text-inchiostro-debole">{formatOre(libro.ore)} · dovuto {formatEuro(libro.dovuto)} · pagato {formatEuro(libro.pagato)}</span>
+                      <span className="font-mono text-[0.65rem] text-fumo-2">{formatOre(libro.ore)} · dovuto {formatEuro(libro.dovuto)} · pagato {formatEuro(libro.pagato)}</span>
                       <Barra pct={pct} tono="ottone" />
                     </>
                   )}
@@ -156,7 +156,7 @@ export function Dashboard() {
         </>
       )}
 
-      <Card tono="piana" className="px-3 py-2 text-center font-mono text-[0.65rem] text-inchiostro-debole">
+      <Card tono="piana" className="px-3 py-2 text-center font-mono text-[0.65rem] text-fumo-2">
         dati separati: clienti = denaro in entrata · operai = denaro in uscita
       </Card>
     </div>

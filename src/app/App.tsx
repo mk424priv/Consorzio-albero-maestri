@@ -19,7 +19,7 @@ import { useStore } from "@/store/store";
 function Splash() {
   return (
     <div className="grana flex min-h-dvh items-center justify-center">
-      <p className="font-display text-2xl text-inchiostro-debole">Albero Maestri…</p>
+      <p className="font-display text-2xl text-fumo-2">Albero Maestri…</p>
     </div>
   );
 }
