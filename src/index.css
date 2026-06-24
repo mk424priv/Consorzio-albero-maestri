@@ -85,6 +85,8 @@
 
   .tabular-nums { font-variant-numeric: tabular-nums; }
   .tracking-label { letter-spacing: 0.04em; }
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
 
   /* fill: mesh-gradient premium + varianti */
   .mesh-blu { background-image: linear-gradient(135deg, #0a58ff 0%, rgba(10,88,255,0.85) 55%, #4b0082 100%); }

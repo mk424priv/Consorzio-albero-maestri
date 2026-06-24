@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Avatar, Codice, Cruscotto, NumberHero, SectionHeader, Segmented, StatTile } from "@/components/ui";
 import { codiceCliente } from "@/lib/codice-parlante";
+import { cn } from "@/lib/cn";
 import { libroOperatore, riepilogoCliente } from "@/lib/conti";
 import { arrotonda, formatEuro, formatOre } from "@/lib/format";
 import { operatoreIo } from "@/lib/lavoro-calc";
@@ -19,6 +20,7 @@ export function Dashboard() {
   const dati = useStore((s) => s.dati);
   const navigate = useNavigate();
   const [modo, setModo] = useState<"clienti" | "operai">("clienti");
+  const [filtroL, setFiltroL] = useState<"tutti" | "aperti" | "chiusi">("tutti");
   const io = operatoreIo(dati);
 
   const clienti = useMemo(
@@ -37,6 +39,19 @@ export function Dashboard() {
 
   const kc = clienti.reduce((a, { r }) => ({ fatt: a.fatt + r.valoreFatturabile, inc: a.inc + r.totaleIncassato, da: a.da + r.saldoDaIncassare, deb: a.deb + (r.saldoDaIncassare > 0 ? 1 : 0) }), { fatt: 0, inc: 0, da: 0, deb: 0 });
   const ko = operai.reduce((a, { o, libro }) => ({ ore: a.ore + libro.ore, dovuto: a.dovuto + (o.id === io?.id ? 0 : libro.dovuto), pagato: a.pagato + libro.pagato, saldo: a.saldo + libro.saldo }), { ore: 0, dovuto: 0, pagato: 0, saldo: 0 });
+
+  const clientiVis = clienti.filter(({ r }) => filtroL === "tutti" || (filtroL === "aperti" ? r.saldoDaIncassare > 0 : r.saldoDaIncassare <= 0));
+  const operaiVis = operai.filter(({ libro }) => filtroL === "tutti" || (filtroL === "aperti" ? libro.saldo > 0 : libro.saldo <= 0));
+  const etichetteFiltro: [string, string, string] = modo === "clienti" ? ["Tutti", "Debitori", "Saldati"] : ["Tutti", "Da pagare", "Saldati"];
+  const ChipFiltri = () => (
+    <div className="no-scrollbar flex gap-2 overflow-x-auto">
+      {(["tutti", "aperti", "chiusi"] as const).map((v, i) => (
+        <button key={v} type="button" onClick={() => setFiltroL(v)} className={cn("shrink-0 rounded-pill px-3.5 py-1.5 text-sm font-medium transition-colors", filtroL === v ? "bg-white text-black" : "bg-superficie text-fumo")}>
+          {etichetteFiltro[i]}
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     <div className="flex flex-col">
@@ -68,12 +83,13 @@ export function Dashboard() {
               <StatTile etichetta="Incassato" tono="verde">{formatEuro(kc.inc)}</StatTile>
               <StatTile etichetta="Da incassare" tono={kc.da > 0 ? "rosso" : "neutro"}>{formatEuro(kc.da)}</StatTile>
             </div>
+            <ChipFiltri />
             <section className="flex flex-col gap-2.5">
-              <SectionHeader titolo="Per cliente" conteggio={clienti.length} />
-              {clienti.length === 0 ? (
-                <p className="py-6 text-center text-sm text-fumo-2">Nessun cliente con movimenti.</p>
+              <SectionHeader titolo="Per cliente" conteggio={clientiVis.length} />
+              {clientiVis.length === 0 ? (
+                <p className="py-6 text-center text-sm text-fumo-2">Nessun cliente in questa vista.</p>
               ) : (
-                clienti.map(({ c, r }) => {
+                clientiVis.map(({ c, r }) => {
                   const pct = r.valoreFatturabile > 0 ? arrotonda((r.totaleIncassato / r.valoreFatturabile) * 100) : 100;
                   return (
                     <button key={c.id} type="button" onClick={() => navigate(`/cliente/${c.id}`)} className="flex flex-col gap-2 rounded-vetro bg-superficie p-3.5 text-left transition-transform active:scale-[0.99]">
@@ -101,9 +117,12 @@ export function Dashboard() {
               <StatTile etichetta="Pagato" tono="verde">{formatEuro(ko.pagato)}</StatTile>
               <StatTile etichetta="Ore squadra">{formatOre(ko.ore)}</StatTile>
             </div>
+            <ChipFiltri />
             <section className="flex flex-col gap-2.5">
-              <SectionHeader titolo="Squadra" conteggio={operai.length} />
-              {operai.map(({ o, libro }) => {
+              <SectionHeader titolo="Squadra" conteggio={operaiVis.length} />
+              {operaiVis.length === 0 ? (
+                <p className="py-6 text-center text-sm text-fumo-2">Nessuno in questa vista.</p>
+              ) : operaiVis.map(({ o, libro }) => {
                 const isIo = o.id === io?.id;
                 const pct = libro.dovuto > 0 ? arrotonda((libro.pagato / libro.dovuto) * 100) : 100;
                 return (

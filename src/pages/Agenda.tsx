@@ -3,7 +3,7 @@ import { Banknote, ChevronLeft, ChevronRight, TreePine } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CardLavoro } from "@/components/CardLavoro";
-import { Button, Cruscotto, EmptyState, NumberHero, SectionHeader, Swipeable } from "@/components/ui";
+import { Button, Cruscotto, EmptyState, NumberHero, Swipeable } from "@/components/ui";
 import {
   chiaveMese,
   formatEuro,
@@ -13,6 +13,7 @@ import {
   nomeGiorno,
   oggiISO,
 } from "@/lib/format";
+import { cn } from "@/lib/cn";
 import { calcoloLavoro } from "@/lib/lavoro-calc";
 import { notificaUndo } from "@/lib/undo";
 import type { Dati, Lavoro } from "@/lib/types";
@@ -25,11 +26,23 @@ function meseAdiacente(chiave: string, delta: number): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+type Filtro = "tutto" | "fare" | "incassare" | "pagati";
+const FILTRI: [Filtro, string][] = [["tutto", "Tutto"], ["fare", "Da fare"], ["incassare", "Da incassare"], ["pagati", "Pagati"]];
+
 export function Agenda() {
   const dati = useStore((s) => s.dati);
   const navigate = useNavigate();
   const oggi = oggiISO();
   const [mese, setMese] = useState(() => chiaveMese(oggi));
+  const [filtro, setFiltro] = useState<Filtro>("tutto");
+
+  const matchFiltro = (l: Lavoro) => {
+    if (filtro === "tutto") return true;
+    if (filtro === "fare") return l.fase === "da_fare";
+    if (l.fase !== "fatto") return false;
+    const pagato = calcoloLavoro(dati, l).statoIncasso === "pagato";
+    return filtro === "pagati" ? pagato : !pagato;
+  };
 
   const { giorni, perGiorno, meseLordo, meseConta } = useMemo(() => {
     const lavori = dati.lavori
@@ -105,19 +118,36 @@ export function Agenda() {
           />
         </div>
       ) : (
-        <div className="flex flex-col gap-5 px-4 pt-4">
+        <div className="flex flex-col gap-4 px-4 pt-4">
+          <div className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5">
+            {FILTRI.map(([v, l]) => (
+              <button key={v} type="button" onClick={() => setFiltro(v)} className={cn("shrink-0 rounded-pill px-3.5 py-1.5 text-sm font-medium transition-colors", filtro === v ? "bg-white text-black" : "bg-superficie text-fumo")}>
+                {l}
+              </button>
+            ))}
+          </div>
+          {filtro !== "tutto" && !giorni.some((iso) => (perGiorno.get(iso) ?? []).some(matchFiltro)) && (
+            <p className="py-8 text-center text-sm text-fumo-2">Niente in «{FILTRI.find(([v]) => v === filtro)?.[1]}» questo mese.</p>
+          )}
           {giorni.map((iso) => {
-            const ls = perGiorno.get(iso) ?? [];
+            const ls = (perGiorno.get(iso) ?? []).filter(matchFiltro);
+            if (filtro !== "tutto" && ls.length === 0) return null;
             const s = sommaGiorno(iso);
             const isOggi = iso === oggi;
             return (
               <motion.section key={iso} initial={{ opacity: 0, y: 12 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: "-8% 0px" }} transition={{ type: "spring", stiffness: 300, damping: 30 }}>
-                <div className="sticky top-0 z-10 -mx-4 bg-fondo/85 px-4 py-2 backdrop-blur-md">
-                  <SectionHeader
-                    titolo={`${nomeGiorno(iso)} ${giornoDelMese(iso)}${isOggi ? " · oggi" : ""}`}
-                    tono={isOggi ? "blu" : "neutro"}
-                    azione={s.lordo > 0 ? <span className="font-mono text-xs text-fumo-2">{formatEuro(s.lordo)} · {formatOre(s.ore)}</span> : undefined}
-                  />
+                <div className="sticky top-0 z-10 -mx-4 flex items-center justify-between gap-2 bg-fondo/85 px-4 py-2 backdrop-blur-md">
+                  <span className="flex items-center gap-2.5">
+                    <span className={cn("flex h-11 w-11 flex-col items-center justify-center rounded-2xl leading-none", isOggi ? "bg-blu text-white shadow-flottante" : "bg-superficie text-bianco")}>
+                      <span className="font-display text-base font-bold">{giornoDelMese(iso)}</span>
+                      <span className="font-mono text-[8px] uppercase tracking-wider opacity-70">{nomeGiorno(iso, true)}</span>
+                    </span>
+                    <span className="flex flex-col leading-tight">
+                      <span className="text-sm font-semibold capitalize">{nomeGiorno(iso)}</span>
+                      {isOggi && <span className="font-mono text-[10px] uppercase tracking-label text-blu">oggi</span>}
+                    </span>
+                  </span>
+                  {s.lordo > 0 && <span className="font-mono text-xs text-fumo-2">{formatEuro(s.lordo)} · {formatOre(s.ore)}</span>}
                 </div>
                 <div className="mt-2.5 flex flex-col gap-2.5">
                   {ls.length === 0 ? (
