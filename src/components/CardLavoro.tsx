@@ -37,7 +37,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const Chips = () => (
     <span className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] text-fumo-2">
       {chips.slice(0, 2).map((p) => (
-        <button key={p.collaboratoreId} type="button" onClick={() => navigate(`/operaio/${p.collaboratoreId}`)} className="shrink-0 rounded-pill bg-white/10 px-2 py-0.5 text-fumo">
+        <button key={p.collaboratoreId} type="button" onClick={() => navigate(`/operaio/${p.collaboratoreId}`)} className="shrink-0 rounded-pill bg-black/[0.05] px-2 py-0.5 text-fumo">
           {chipLabel(p.collaboratoreId, p.nome)}
         </button>
       ))}
@@ -48,7 +48,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   // ── PROGRAMMATO: forma diversa (tratteggio / fantasma, blu) ──
   if (lavoro.fase === "da_fare") {
     return (
-      <motion.div whileTap={{ scale: 0.99 }} className="rounded-vetro border border-dashed border-blu/35 bg-blu/[0.05] px-3.5 py-3 text-bianco">
+      <motion.div whileTap={{ scale: 0.99 }} className="rounded-vetro border border-dashed border-blu/40 bg-blu/[0.06] px-3.5 py-3 text-bianco shadow-card">
         <button type="button" onClick={apri} className="flex w-full items-center justify-between gap-3 text-left">
           <span className="flex min-w-0 items-center gap-2.5">
             <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-blu/15 text-blu"><Calendar className="h-4 w-4" /></span>
@@ -113,7 +113,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
       </div>
 
       {stato !== "pagato" && incassaOpen && (
-        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-2.5 overflow-hidden rounded-2xl bg-black/20 p-2.5">
+        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="mt-2.5 overflow-hidden rounded-2xl bg-black/[0.05] p-2.5">
           <div className="flex flex-wrap items-center gap-2">
             <Button size="sm" onClick={async () => { const a = await incassaLavoro(lavoro.id, calc.daIncassare); setIncassaOpen(false); notificaUndo(`Incassato ${formatEuro(calc.daIncassare)}`, a); }}>
               Tutto {formatEuro(calc.daIncassare)}

@@ -1,62 +1,59 @@
 @import "tailwindcss";
 
 /*
-  Albero Maestri — "Neo-Banking Minimalist UI" (brandbook v4).
-  Nero profondo, superfici solide #111/#1C1C1C, accenti vivi (blu/verde/rosso),
-  Inter + JetBrains Mono, raggi ampi, fill a mesh-gradient + glow.
-  Ispirato ai migliori fintech, adattato al lavoro nel verde.
+  Albero Maestri — sistema "Luce" (brandbook v5).
+  Luce di giornata: canvas chiara e ariosa, CARD BIANCHE che si sollevano (elevazione
+  via ombra morbida), inchiostro scuro, accenti MORBIDI (non neon). Lo stato è una
+  velatura "ad acquerello" chiara, non un colore gridato. Niente buio: le card volano.
+  NB: il token --color-bianco è il TESTO PRIMARIO (scuro) — nome tenuto per compat.
 */
 @theme {
-  /* superfici */
   --color-nero: #000000;
-  --color-fondo: #050505;
-  --color-superficie: #111111;       /* card primarie */
-  --color-superficie-alta: #1c1c1c;  /* secondarie / hover */
-  --color-superficie-bassa: #1a1a1a; /* input / track */
-  --color-superficie-3: #2a2a2a;     /* segmented attivo */
-  --color-bordo: #1f1f1f;
+  --color-fondo: #eef1f5; /* canvas chiara */
+  --color-superficie: #ffffff; /* card bianche */
+  --color-superficie-alta: #ffffff;
+  --color-superficie-bassa: #eceff4; /* input / track */
+  --color-superficie-3: #e1e6ee; /* segmented track / hover */
+  --color-bordo: #e6e9f0;
+  --color-scuro: #1c1e26; /* ink scuro: bottoni primari, FAB */
 
-  /* inchiostro */
-  --color-bianco: #ffffff;
-  --color-fumo: #a3a3a3;   /* neutral-400 */
-  --color-fumo-2: #737373; /* neutral-500 */
+  /* inchiostro su chiaro */
+  --color-bianco: #1c1e26; /* TESTO PRIMARIO (scuro) — compat */
+  --color-fumo: #636b78; /* secondario */
+  --color-fumo-2: #98a0ad; /* terziario */
 
-  /* accenti (icone/testo/illustrazioni — mai superfici dei bottoni) */
-  --color-blu: #0a58ff;    /* brand · programmato · in corso */
-  --color-verde: #00d15e;  /* positivo · incassato · saldato */
-  --color-rosso: #ff3b30;  /* da incassare · scaduto · uscita */
-  --color-viola: #4b0082;  /* fine del mesh */
+  /* accenti morbidi */
+  --color-blu: #3b6ef5;
+  --color-verde: #1bb574;
+  --color-rosso: #ef5b52;
+  --color-arancio: #f5933a;
+  --color-viola: #6a5bd8;
 
-  /* alias di compat (le pagine usano questi nomi) */
-  --color-lime: #0a58ff;
-  --color-lime-scuro: #0848cc;
-  --color-positivo: #00d15e;
-  --color-attenzione: #ff9f0a;
-  --color-critico: #ff3b30;
-  --color-arancio: #ff8c1a; /* parziale */
+  /* alias di compat */
+  --color-lime: #3b6ef5;
+  --color-lime-scuro: #2f57cc;
+  --color-positivo: #1bb574;
+  --color-attenzione: #f5933a;
+  --color-critico: #ef5b52;
 
-  /* font */
   --font-display: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
 
-  /* raggi ampi */
-  --radius-chip: 0.5rem;   /* 8px */
-  --radius-btn: 1rem;      /* 16px */
-  --radius-vetro: 1.5rem;  /* 24px card */
-  --radius-bolla: 2rem;    /* 32px */
+  --radius-chip: 0.5rem;
+  --radius-btn: 1rem;
+  --radius-vetro: 1.5rem;
+  --radius-bolla: 2rem;
   --radius-pill: 999px;
 
-  --shadow-vetro: 0 14px 40px -16px rgba(0, 0, 0, 0.8);
-  --shadow-flottante: 0 12px 32px -10px rgba(0, 0, 0, 0.7);
+  /* ombre = elevazione (le card volano sopra la canvas) */
+  --shadow-card: 0 1px 2px rgba(20, 28, 46, 0.05), 0 8px 20px -8px rgba(20, 28, 46, 0.14);
+  --shadow-flottante: 0 12px 30px -8px rgba(20, 28, 46, 0.24);
+  --shadow-vetro: var(--shadow-card);
 }
 
 @layer base {
-  html,
-  body,
-  #root {
-    height: 100%;
-  }
+  html, body, #root { height: 100%; }
   body {
     margin: 0;
     background-color: var(--color-fondo);
@@ -65,22 +62,17 @@
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
     overflow-x: hidden;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right)
-      env(safe-area-inset-bottom) env(safe-area-inset-left);
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
   }
-  h1, h2, h3 {
-    font-family: var(--font-display);
-    font-weight: 700;
-    letter-spacing: -0.03em;
-  }
+  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; }
 }
 
 @layer utilities {
-  /* superfici solide (compat: i vecchi nomi .glass* restano, ma sono solide) */
-  .glass { background-color: var(--color-superficie); }
-  .glass-alta { background-color: var(--color-superficie-alta); }
+  /* card bianche elevate */
+  .glass { background-color: var(--color-superficie); box-shadow: var(--shadow-card); }
+  .glass-alta { background-color: var(--color-superficie); box-shadow: var(--shadow-card), inset 0 0 0 1px var(--color-bordo); }
   .glass-bassa { background-color: var(--color-superficie-bassa); }
-  .glass-scura { background-color: var(--color-superficie); box-shadow: var(--shadow-vetro); }
+  .glass-scura { background-color: var(--color-superficie); box-shadow: var(--shadow-flottante); }
   .superficie { background-color: var(--color-superficie); }
 
   .tabular-nums { font-variant-numeric: tabular-nums; }
@@ -88,37 +80,27 @@
   .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
 
-  /* fill: mesh-gradient premium + varianti */
-  .mesh-blu { background-image: linear-gradient(135deg, #0a58ff 0%, rgba(10,88,255,0.85) 55%, #4b0082 100%); }
-  .mesh-verde { background-image: linear-gradient(135deg, #00d15e 0%, rgba(0,209,94,0.8) 50%, #0a58ff 100%); }
-  .mesh-rosso { background-image: linear-gradient(135deg, #ff3b30 0%, rgba(255,59,48,0.8) 55%, #4b0082 100%); }
-  .mesh-notte { background-image: linear-gradient(150deg, #0a58ff 0%, #1a1147 55%, #050505 100%); }
+  /* fill mesh (per Cruscotto/MeshStrip — restano vividi) */
+  .mesh-blu { background-image: linear-gradient(135deg, #3b6ef5 0%, rgba(59,110,245,0.85) 55%, #6a5bd8 100%); }
+  .mesh-verde { background-image: linear-gradient(135deg, #1bb574 0%, rgba(27,181,116,0.8) 50%, #3b6ef5 100%); }
+  .mesh-rosso { background-image: linear-gradient(135deg, #ef5b52 0%, rgba(239,91,82,0.8) 55%, #6a5bd8 100%); }
+  .mesh-notte { background-image: linear-gradient(150deg, #3b6ef5 0%, #2a2660 55%, #1c1e26 100%); }
 }
 
-/* card per stato — solide + barra-accento (programmato=blu, incassare=rosso, pagato=verde) */
+/* card per stato: bianca + velatura chiara (acquerello) + ombra. Niente buio. */
 @layer utilities {
-  /* card SVOLTE: riempimento "vetro" sobrio (luce dall'angolo) per stato di incasso.
-     'programmato' NON usa questo: ha forma diversa (tratteggio) gestita nel componente. */
   .statocard { position: relative; overflow: hidden; border-radius: var(--radius-vetro); }
   .statocard--incassare {
-    background:
-      radial-gradient(150% 130% at 100% -20%, rgba(255, 59, 48, 0.15), rgba(255, 59, 48, 0) 50%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 34%),
-      var(--color-superficie);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+    background: radial-gradient(150% 130% at 100% -25%, rgba(239, 91, 82, 0.09), rgba(239, 91, 82, 0) 52%), var(--color-superficie);
+    box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(239, 91, 82, 0.12);
   }
   .statocard--parziale {
-    background:
-      radial-gradient(150% 130% at 100% -20%, rgba(255, 140, 26, 0.16), rgba(255, 140, 26, 0) 50%),
-      linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0) 34%),
-      var(--color-superficie);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.06);
+    background: radial-gradient(150% 130% at 100% -25%, rgba(245, 147, 58, 0.1), rgba(245, 147, 58, 0) 52%), var(--color-superficie);
+    box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(245, 147, 58, 0.14);
   }
   .statocard--pagato {
-    background:
-      radial-gradient(150% 130% at 100% -20%, rgba(0, 209, 94, 0.10), rgba(0, 209, 94, 0) 48%),
-      var(--color-superficie);
-    box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, 0.05);
+    background: radial-gradient(150% 130% at 100% -25%, rgba(27, 181, 116, 0.07), rgba(27, 181, 116, 0) 50%), var(--color-superficie);
+    box-shadow: var(--shadow-card), inset 0 0 0 1px rgba(27, 181, 116, 0.1);
   }
 }
 

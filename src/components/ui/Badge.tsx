@@ -9,7 +9,7 @@ const stati: Record<Stato, string> = {
   critico: "bg-critico/15 text-critico",
   lichene: "bg-lime/15 text-lime",
   ottone: "bg-lime/15 text-lime",
-  neutro: "bg-white/10 text-fumo",
+  neutro: "bg-black/[0.06] text-fumo",
 };
 
 export interface BadgeProps extends HTMLAttributes<HTMLSpanElement> {

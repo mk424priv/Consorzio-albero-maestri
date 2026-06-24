@@ -13,7 +13,7 @@ const fill: Record<Tono, string> = {
 export function Progress({ pct, tono = "lime", className }: { pct: number; tono?: Tono; className?: string }) {
   const v = Math.min(100, Math.max(0, pct));
   return (
-    <div className={cn("h-2 w-full overflow-hidden rounded-pill bg-white/10", className)}>
+    <div className={cn("h-2 w-full overflow-hidden rounded-pill bg-black/[0.06]", className)}>
       <motion.div
         className={cn("h-full rounded-pill", fill[tono])}
         initial={{ width: 0 }}

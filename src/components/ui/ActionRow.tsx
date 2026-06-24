@@ -16,7 +16,7 @@ export function ActionRow({ azioni }: { azioni: Azione[] }) {
           <button key={i} type="button" onClick={a.onClick} className="flex flex-col items-center gap-2">
             <span
               className={`flex h-14 w-14 items-center justify-center rounded-full transition-colors active:scale-95 ${
-                a.tono === "bianco" ? "bg-white text-black" : "bg-superficie text-bianco hover:bg-superficie-alta"
+                a.tono === "bianco" ? "bg-scuro text-white" : "bg-superficie text-bianco shadow-card hover:bg-superficie-bassa"
               }`}
             >
               <I size={22} />

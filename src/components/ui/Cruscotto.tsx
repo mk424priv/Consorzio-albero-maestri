@@ -3,8 +3,8 @@ import { MeshStrip, type MeshTono } from "@/components/world/MeshStrip";
 
 /*
   Cruscotto: blocco-testata "dashboard" riusabile (Agenda/Soldi/Dashboard).
-  Titolo + card a mesh WebGL VIVIDA (contenuta) con dentro il numero-eroe / controlli.
-  Lo sfondo schermo resta sobrio: il vivido sta qui. NON usarlo dove non serve (Rubrica).
+  Tema Luce: card BIANCA elevata + un velo di mesh WebGL pastello (vivido ma soffuso) →
+  contenuto a inchiostro scuro. Non usarlo dove non serve (Rubrica).
 */
 export function Cruscotto({ titolo, controllo, mesh = "brand", children }: { titolo: string; controllo?: ReactNode; mesh?: MeshTono; children: ReactNode }) {
   return (
@@ -13,9 +13,11 @@ export function Cruscotto({ titolo, controllo, mesh = "brand", children }: { tit
         <h1 className="text-2xl font-bold tracking-tight">{titolo}</h1>
         {controllo}
       </div>
-      <div className="relative overflow-hidden rounded-bolla shadow-flottante">
-        <MeshStrip tono={mesh} overlay={false} />
-        <div className="absolute inset-0 bg-black/30" />
+      <div className="relative overflow-hidden rounded-bolla bg-superficie shadow-card">
+        <div className="absolute inset-0 opacity-55">
+          <MeshStrip tono={mesh} overlay={false} />
+        </div>
+        <div className="absolute inset-0 bg-white/45" />
         <div className="relative p-5">{children}</div>
       </div>
     </header>

@@ -14,7 +14,7 @@ const items = [
 export function BottomNav() {
   return (
     <nav className="pointer-events-none fixed inset-x-0 bottom-0 z-30 flex justify-center pb-[calc(0.7rem+env(safe-area-inset-bottom))]">
-      <div className="glass-alta pointer-events-auto flex items-center gap-1 rounded-pill p-1.5 shadow-flottante ring-1 ring-white/5">
+      <div className="glass-alta pointer-events-auto flex items-center gap-1 rounded-pill p-1.5 shadow-flottante ring-1 ring-black/5">
         {items.map(({ to, label, Icon, end }) => (
           <NavLink key={to} to={to} end={end} aria-label={label}>
             {({ isActive }) => (

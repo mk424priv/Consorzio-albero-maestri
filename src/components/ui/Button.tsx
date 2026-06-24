@@ -10,14 +10,12 @@ const base =
   "transition-transform active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none " +
   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-lime/60";
 
-// I nomi delle variant restano stabili (compat con le pagine); cambia solo lo stile.
-// Bottoni NEUTRI (Revolut): l'accento non sta mai sulla superficie del bottone.
-// primaria = bianco pieno · secondaria = grigio solido · utility/ghost
+// Tema "Luce": primaria = ink scuro su chiaro (alto contrasto); secondaria = grigio chiaro.
 const variants: Record<Variant, string> = {
-  ottone: "bg-white text-fondo font-semibold shadow-flottante hover:bg-white/90", // primaria
-  inchiostro: "bg-superficie-alta text-bianco hover:bg-[#2a2a31]", // secondaria
-  fantasma: "text-fumo hover:bg-white/8 hover:text-bianco", // terziaria
-  tenue: "bg-superficie text-fumo hover:bg-superficie-alta", // utility (es. icona)
+  ottone: "bg-scuro text-white font-semibold shadow-card hover:bg-[#2a2d38]", // primaria scura
+  inchiostro: "bg-superficie-bassa text-bianco hover:bg-superficie-3", // secondaria chiara
+  fantasma: "text-fumo hover:bg-black/[0.04] hover:text-bianco", // terziaria
+  tenue: "bg-superficie-bassa text-fumo hover:bg-superficie-3", // utility (es. icona)
   critico: "bg-critico/12 text-critico hover:bg-critico/20",
 };
 
@@ -68,7 +66,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
               animate={{ opacity: 0, scale: 4 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.55, ease: "easeOut" }}
-              className={cn("pointer-events-none absolute h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full", scuro ? "bg-fondo/30" : "bg-white/40")}
+              className={cn("pointer-events-none absolute h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full", scuro ? "bg-white/30" : "bg-black/10")}
               style={{ left: r.x, top: r.y }}
             />
           ))}

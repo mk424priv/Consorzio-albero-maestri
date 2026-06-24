@@ -34,7 +34,7 @@ export function Sheet({ open, onOpenChange, title, description, children, classN
                   className,
                 )}
               >
-                <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-pill bg-white/20" />
+                <div aria-hidden className="mx-auto mt-2.5 h-1.5 w-10 shrink-0 rounded-pill bg-superficie-3" />
                 <div className="overflow-y-auto px-5 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-3">
                   <DialogPrimitive.Title className={cn("font-display text-xl text-bianco", !title && "sr-only")}>
                     {title ?? "Foglio"}

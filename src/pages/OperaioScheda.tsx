@@ -98,7 +98,7 @@ export function OperaioScheda() {
                   const cliente = l.clienteId ? dati.clienti.find((c) => c.id === l.clienteId) : undefined;
                   const svolto = l.fase === "fatto";
                   return (
-                    <button key={l.id} type="button" onClick={() => navigate(`/lavoro/${l.id}`)} className={svolto ? "flex items-center justify-between gap-2 rounded-vetro bg-superficie px-3 py-2.5 text-left" : "flex items-center justify-between gap-2 rounded-vetro border border-dashed border-white/10 px-3 py-2.5 text-left"}>
+                    <button key={l.id} type="button" onClick={() => navigate(`/lavoro/${l.id}`)} className={svolto ? "flex items-center justify-between gap-2 rounded-vetro bg-superficie px-3 py-2.5 text-left" : "flex items-center justify-between gap-2 rounded-vetro border border-dashed border-black/[0.12] px-3 py-2.5 text-left"}>
                       <span className="flex min-w-0 flex-col items-start">
                         <span className="truncate text-sm font-medium">{cliente?.nome ?? "—"} · {l.titolo}</span>
                         <span className="font-mono text-[11px] text-fumo-2">{formatData(l.data)}</span>

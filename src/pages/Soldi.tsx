@@ -72,20 +72,19 @@ export function Soldi() {
           </div>
         }
       >
-        <div className="rounded-pill bg-black/25 p-1">
-          <Segmented
-            value={modo}
-            onValueChange={setModo}
-            options={[
-              { value: "incassare", label: "Entrate" },
-              { value: "pagare", label: "Uscite" },
-            ]}
-            layoutId="modo-soldi"
-          />
-        </div>
+        <Segmented
+          value={modo}
+          onValueChange={setModo}
+          options={[
+            { value: "incassare", label: "Entrate" },
+            { value: "pagare", label: "Uscite" },
+          ]}
+          layoutId="modo-soldi"
+          className="w-full"
+        />
         <div className="mt-5 flex flex-col items-center">
-          <span className="font-mono text-[11px] uppercase tracking-label text-white/70">{modo === "incassare" ? "Totale da incassare" : "Totale da pagare"}</span>
-          <NumberHero value={totale} euro tono="bianco" className="text-[52px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]" />
+          <span className="font-mono text-[11px] uppercase tracking-label text-fumo">{modo === "incassare" ? "Totale da incassare" : "Totale da pagare"}</span>
+          <NumberHero value={totale} euro tono={modo === "incassare" ? "verde" : "rosso"} className="text-[52px]" />
         </div>
       </Cruscotto>
 

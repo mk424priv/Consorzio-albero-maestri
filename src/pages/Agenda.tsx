@@ -62,8 +62,10 @@ export function Agenda() {
       if (l.fase === "fatto") lordo += calcoloLavoro(dati, l).lordo;
     }
     const set = new Set(map.keys());
-    if (chiaveMese(oggi) === mese) set.add(oggi);
-    return { giorni: [...set].sort(), perGiorno: map, meseLordo: lordo, meseConta: lavori.length };
+    if (chiaveMese(oggi) === mese) set.add(oggi); // oggi sempre presente come ancora
+    // ordine: futuri/programmati in alto → oggi → storici in basso (decrescente). Vuoti saltati.
+    const giorni = [...set].sort((a, b) => b.localeCompare(a));
+    return { giorni, perGiorno: map, meseLordo: lordo, meseConta: lavori.length };
   }, [dati, mese, oggi]);
 
   const sommaGiorno = (iso: string) => {
@@ -99,11 +101,11 @@ export function Agenda() {
         }
       >
         <div className="flex flex-col items-center text-center">
-          <span className="font-mono text-[11px] uppercase tracking-label text-white/70">Fatturato del mese</span>
-          <NumberHero value={meseLordo} euro tono="bianco" className="text-[40px] drop-shadow-[0_2px_10px_rgba(0,0,0,0.45)]" />
-          <span className="mt-1 font-mono text-xs text-white/70">
+          <span className="font-mono text-[11px] uppercase tracking-label text-fumo">Fatturato del mese</span>
+          <NumberHero value={meseLordo} euro tono="bianco" className="text-[40px]" />
+          <span className="mt-1 font-mono text-xs text-fumo">
             {meseConta} lavori
-            {cambioMese && <button type="button" className="ml-2 underline" onClick={() => setMese(chiaveMese(oggi))}>· oggi</button>}
+            {cambioMese && <button type="button" className="ml-2 font-semibold text-blu underline" onClick={() => setMese(chiaveMese(oggi))}>· oggi</button>}
           </span>
         </div>
       </Cruscotto>
@@ -121,7 +123,7 @@ export function Agenda() {
         <div className="flex flex-col gap-4 px-4 pt-4">
           <div className="no-scrollbar flex gap-2 overflow-x-auto pb-0.5">
             {FILTRI.map(([v, l]) => (
-              <button key={v} type="button" onClick={() => setFiltro(v)} className={cn("shrink-0 rounded-pill px-3.5 py-1.5 text-sm font-medium transition-colors", filtro === v ? "bg-white text-black" : "bg-superficie text-fumo")}>
+              <button key={v} type="button" onClick={() => setFiltro(v)} className={cn("shrink-0 rounded-pill px-3.5 py-1.5 text-sm font-medium transition-colors", filtro === v ? "bg-scuro text-white" : "bg-superficie text-fumo shadow-card")}>
                 {l}
               </button>
             ))}
@@ -151,7 +153,7 @@ export function Agenda() {
                 </div>
                 <div className="mt-2.5 flex flex-col gap-2.5">
                   {ls.length === 0 ? (
-                    <button type="button" onClick={() => navigate("/nuovo")} className="rounded-vetro border border-dashed border-white/10 py-3 text-center font-mono text-xs text-fumo-2 hover:border-white/20">
+                    <button type="button" onClick={() => navigate("/nuovo")} className="rounded-vetro border border-dashed border-black/[0.12] py-3 text-center font-mono text-xs text-fumo-2 hover:border-black/20">
                       ＋ crea lavoro
                     </button>
                   ) : (

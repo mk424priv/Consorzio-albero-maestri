@@ -28,7 +28,7 @@ export function Layout() {
               type="button"
               onClick={() => navigate("/nuovo")}
               aria-label="Crea record"
-              className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-pill bg-white text-fondo shadow-flottante transition-transform active:scale-95"
+              className="pointer-events-auto flex h-14 w-14 items-center justify-center rounded-pill bg-scuro text-white shadow-flottante transition-transform active:scale-95"
             >
               <Plus className="h-6 w-6" strokeWidth={2.5} />
             </motion.button>

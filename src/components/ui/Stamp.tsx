@@ -19,7 +19,7 @@ export function Stamp({ children, color = "ottone", className, ...props }: Stamp
   return (
     <span
       className={cn(
-        "inline-flex items-center rounded-pill bg-white/8 px-2.5 py-0.5 font-mono text-[0.62rem] font-semibold uppercase tracking-[0.15em]",
+        "inline-flex items-center rounded-pill bg-black/[0.05] px-2.5 py-0.5 font-mono text-[0.62rem] font-semibold uppercase tracking-[0.15em]",
         colors[color],
         className,
       )}

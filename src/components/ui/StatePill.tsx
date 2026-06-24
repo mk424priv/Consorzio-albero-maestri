@@ -8,7 +8,7 @@ const MAP: Record<Stato, { c: string; t: string; I: LucideIcon }> = {
   incassare: { c: "text-rosso bg-rosso/12", t: "Da incassare", I: Clock },
   parziale: { c: "text-attenzione bg-attenzione/12", t: "Parziale", I: AlertCircle },
   pagato: { c: "text-verde bg-verde/12", t: "Saldato", I: CheckCircle2 },
-  storico: { c: "text-bianco bg-white/10", t: "Storico", I: Star },
+  storico: { c: "text-bianco bg-black/[0.06]", t: "Storico", I: Star },
 };
 
 export function StatePill({ stato, className }: { stato: Stato; className?: string }) {

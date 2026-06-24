@@ -46,7 +46,7 @@ export function Dashboard() {
   const ChipFiltri = () => (
     <div className="no-scrollbar flex gap-2 overflow-x-auto">
       {(["tutti", "aperti", "chiusi"] as const).map((v, i) => (
-        <button key={v} type="button" onClick={() => setFiltroL(v)} className={cn("shrink-0 rounded-pill px-3.5 py-1.5 text-sm font-medium transition-colors", filtroL === v ? "bg-white text-black" : "bg-superficie text-fumo")}>
+        <button key={v} type="button" onClick={() => setFiltroL(v)} className={cn("shrink-0 rounded-pill px-3.5 py-1.5 text-sm font-medium transition-colors", filtroL === v ? "bg-scuro text-white" : "bg-superficie text-fumo shadow-card")}>
           {etichetteFiltro[i]}
         </button>
       ))}
@@ -56,21 +56,20 @@ export function Dashboard() {
   return (
     <div className="flex flex-col">
       <Cruscotto titolo="Dashboard" mesh={modo === "clienti" ? "brand" : "blu"}>
-        <div className="rounded-pill bg-black/25 p-1">
-          <Segmented
-            value={modo}
-            onValueChange={setModo}
-            options={[
-              { value: "clienti", label: "Clienti" },
-              { value: "operai", label: "Squadra" },
-            ]}
-            layoutId="modo-dashboard"
-          />
-        </div>
+        <Segmented
+          value={modo}
+          onValueChange={setModo}
+          options={[
+            { value: "clienti", label: "Clienti" },
+            { value: "operai", label: "Squadra" },
+          ]}
+          layoutId="modo-dashboard"
+          className="w-full"
+        />
         <div className="mt-5 flex flex-col items-center text-center">
-          <span className="font-mono text-[11px] uppercase tracking-label text-white/70">{modo === "clienti" ? "Fatturabile totale" : "Da pagare squadra"}</span>
-          <NumberHero value={modo === "clienti" ? kc.fatt : ko.saldo} euro tono="bianco" className="text-[44px] drop-shadow-[0_2px_12px_rgba(0,0,0,0.5)]" />
-          <span className="mt-1 font-mono text-xs text-white/70">
+          <span className="font-mono text-[11px] uppercase tracking-label text-fumo">{modo === "clienti" ? "Fatturabile totale" : "Da pagare squadra"}</span>
+          <NumberHero value={modo === "clienti" ? kc.fatt : ko.saldo} euro tono={modo === "clienti" ? "bianco" : "rosso"} className="text-[44px]" />
+          <span className="mt-1 font-mono text-xs text-fumo">
             {modo === "clienti" ? `Incassato ${formatEuro(kc.inc)} · ${kc.deb} debitori` : `${formatOre(ko.ore)} · pagato ${formatEuro(ko.pagato)}`}
           </span>
         </div>
