@@ -6,6 +6,7 @@ import { cn } from "@/lib/cn";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { dovutoOperatore, riepilogoCliente } from "@/lib/conti";
 import { formatEuro } from "@/lib/format";
+import type { Cliente, Dati } from "@/lib/types";
 import { useStore } from "@/store/store";
 
 function SommarioRubrica({ figure }: { figure: { label: string; val: string; rosso?: boolean }[] }) {
@@ -29,6 +30,7 @@ export function Anagrafiche() {
   const [q, setQ] = useState("");
   const [modo, setModo] = useState<"clienti" | "operai">("clienti");
   const [soloAttivi, setSoloAttivi] = useState(true);
+  const [perLuogo, setPerLuogo] = useState(false);
 
   const operatori = dati.operatori.filter((o) => !o.deleted && (soloAttivi ? o.attivo : true));
 
@@ -39,6 +41,18 @@ export function Anagrafiche() {
       .map((c) => ({ c, r: riepilogoCliente(dati, c.id) }))
       .sort((a, b) => b.r.saldoDaIncassare - a.r.saldoDaIncassare || a.c.nome.localeCompare(b.c.nome));
   }, [dati, q]);
+
+  const gruppiLuogo = useMemo(() => {
+    const map = new Map<string, { label: string; items: typeof clienti }>();
+    for (const item of clienti) {
+      const label = item.c.luogo?.trim() || "Senza luogo";
+      const key = label.toLowerCase();
+      const g = map.get(key) ?? { label, items: [] as typeof clienti };
+      g.items.push(item);
+      map.set(key, g);
+    }
+    return [...map.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }, [clienti]);
 
   const operaiFiltrati = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -102,39 +116,33 @@ export function Anagrafiche() {
               titolo="Clienti"
               conteggio={clienti.length}
               azione={
-                <button type="button" onClick={() => navigate("/cliente/nuovo")} className="flex items-center gap-1 text-sm font-medium text-blu">
-                  <Plus size={16} /> Nuovo
-                </button>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={() => setPerLuogo((v) => !v)} className="font-mono text-[11px] uppercase tracking-label text-fumo-2 hover:text-bianco">
+                    {perLuogo ? "Per luogo" : "Lista"}
+                  </button>
+                  <button type="button" onClick={() => navigate("/cliente/nuovo")} className="flex items-center gap-1 text-sm font-medium text-blu">
+                    <Plus size={16} /> Nuovo
+                  </button>
+                </div>
               }
             />
-            {clienti.map(({ c, r }) => {
-              const storico = r.numeroLavori >= STORICO_SOGLIA;
-              const iniz = `${c.nome[0] ?? ""}${c.cognome?.[0] ?? ""}`.toUpperCase() || "?";
-              return (
-                <button key={c.id} type="button" onClick={() => navigate(`/cliente/${c.id}`)} className="flex items-center justify-between gap-2 rounded-vetro bg-superficie p-3 text-left transition-transform active:scale-[0.99]">
-                  <span className="flex min-w-0 items-center gap-3">
-                    {storico ? <AvatarStorico iniziali={iniz} size={40} /> : <Avatar iniziali={iniz} tono={r.saldoDaIncassare > 0 ? "rosso" : "neutro"} />}
-                    <span className="flex min-w-0 flex-col items-start gap-0.5">
-                      <span className="flex items-center gap-2">
-                        <span className="truncate text-sm font-medium">{c.nome} {c.cognome ?? ""}</span>
-                        {storico && <StatePill stato="storico" />}
-                      </span>
-                      <span className="flex items-center gap-2">
-                        <Codice value={codiceCliente(dati, c.id)} />
-                        <span className="font-mono text-[11px] text-fumo-2">{r.numeroLavori || "0"} lav.</span>
-                      </span>
-                    </span>
-                  </span>
-                  {r.saldoDaIncassare > 0 ? (
-                    <span className="shrink-0 text-sm font-bold tracking-tight text-rosso">{formatEuro(r.saldoDaIncassare)}</span>
-                  ) : r.numeroLavori === 0 ? (
-                    <span className="shrink-0 font-mono text-xs text-fumo-2">nuovo</span>
-                  ) : (
-                    <span className="shrink-0 font-mono text-xs text-verde">saldato</span>
-                  )}
-                </button>
-              );
-            })}
+            {perLuogo
+              ? gruppiLuogo.map((g) => {
+                  const tot = g.items.reduce((s, x) => s + x.r.saldoDaIncassare, 0);
+                  return (
+                    <section key={g.label} className="flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between px-1 pt-1">
+                        <span className="flex items-center gap-2 text-sm font-semibold capitalize">
+                          {g.label}
+                          <span className="font-mono text-[11px] text-fumo-2">{g.items.length}</span>
+                        </span>
+                        {tot > 0 && <span className="font-mono text-xs text-rosso">{formatEuro(tot)}</span>}
+                      </div>
+                      {g.items.map(({ c, r }) => <RigaCliente key={c.id} c={c} r={r} dati={dati} />)}
+                    </section>
+                  );
+                })
+              : clienti.map(({ c, r }) => <RigaCliente key={c.id} c={c} r={r} dati={dati} />)}
           </>
         ) : (
           <>
@@ -176,5 +184,35 @@ export function Anagrafiche() {
         )}
       </div>
     </div>
+  );
+}
+
+function RigaCliente({ c, r, dati }: { c: Cliente; r: ReturnType<typeof riepilogoCliente>; dati: Dati }) {
+  const navigate = useNavigate();
+  const storico = r.numeroLavori >= STORICO_SOGLIA;
+  const iniz = `${c.nome[0] ?? ""}${c.cognome?.[0] ?? ""}`.toUpperCase() || "?";
+  return (
+    <button type="button" onClick={() => navigate(`/cliente/${c.id}`)} className="flex items-center justify-between gap-2 rounded-vetro bg-superficie p-3 text-left transition-transform active:scale-[0.99]">
+      <span className="flex min-w-0 items-center gap-3">
+        {storico ? <AvatarStorico iniziali={iniz} size={40} /> : <Avatar iniziali={iniz} tono={r.saldoDaIncassare > 0 ? "rosso" : "neutro"} />}
+        <span className="flex min-w-0 flex-col items-start gap-0.5">
+          <span className="flex items-center gap-2">
+            <span className="truncate text-sm font-medium">{c.nome} {c.cognome ?? ""}</span>
+            {storico && <StatePill stato="storico" />}
+          </span>
+          <span className="flex items-center gap-2">
+            <Codice value={codiceCliente(dati, c.id)} />
+            <span className="font-mono text-[11px] text-fumo-2">{r.numeroLavori || "0"} lav.</span>
+          </span>
+        </span>
+      </span>
+      {r.saldoDaIncassare > 0 ? (
+        <span className="shrink-0 text-sm font-bold tracking-tight text-rosso">{formatEuro(r.saldoDaIncassare)}</span>
+      ) : r.numeroLavori === 0 ? (
+        <span className="shrink-0 font-mono text-xs text-fumo-2">nuovo</span>
+      ) : (
+        <span className="shrink-0 font-mono text-xs text-verde">saldato</span>
+      )}
+    </button>
   );
 }

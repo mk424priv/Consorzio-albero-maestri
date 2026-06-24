@@ -1,9 +1,10 @@
 import { motion } from "framer-motion";
-import { Calendar, Check, Clock, type LucideIcon, MoreHorizontal, PieChart } from "lucide-react";
+import { Calendar, Check, Clock, type LucideIcon, MapPin, MoreHorizontal, PieChart } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { codiceCliente } from "@/lib/codice-parlante";
 import { cn } from "@/lib/cn";
+import { etichetta, TONO_PREVENTIVO } from "@/lib/dominio";
 import { notificaUndo } from "@/lib/undo";
 import { formatData, formatEuro, formatOre } from "@/lib/format";
 import { calcoloLavoro, operatoreIo, statoQuotazione } from "@/lib/lavoro-calc";
@@ -12,7 +13,7 @@ import { useLongPress } from "@/lib/useLongPress";
 import { incassaLavoro, segnaSvolto } from "@/store/azioni";
 import { useStore } from "@/store/store";
 import { MenuLavoro } from "./MenuLavoro";
-import { Button, Codice, StatePill } from "./ui";
+import { Badge, Button, Codice, StatePill } from "./ui";
 
 type StatoSvolto = "incassare" | "parziale" | "pagato";
 
@@ -38,6 +39,22 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
   const chipLabel = (id: string, nome: string) => (id === ioId ? "io" : nome);
   const apri = () => navigate(`/lavoro/${lavoro.id}`);
   const nomeCliente = cliente ? `${cliente.nome} ${cliente.cognome ?? ""}`.trim() + (cliente.deleted ? " · archiviato" : "") : "Senza cliente";
+
+  const fasciaLabel = lavoro.fascia && lavoro.fascia !== "orario" ? etichetta(lavoro.fascia) : null;
+  const statoPrev = lavoro.modo === "preventivo" ? lavoro.statoPreventivo : undefined;
+  const hasExtra = Boolean(lavoro.luogo || fasciaLabel || statoPrev);
+  const Extra = () => (
+    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+      {lavoro.luogo && (
+        <span className="flex min-w-0 max-w-[60%] items-center gap-0.5 text-[11px] text-fumo-2">
+          <MapPin className="h-3 w-3 shrink-0" />
+          <span className="truncate">{lavoro.luogo}</span>
+        </span>
+      )}
+      {fasciaLabel && <span className="shrink-0 rounded-pill bg-black/[0.05] px-2 py-0.5 text-[11px] text-fumo">{fasciaLabel}</span>}
+      {statoPrev && <Badge stato={TONO_PREVENTIVO[statoPrev]}>{etichetta(statoPrev)}</Badge>}
+    </div>
+  );
 
   // Cliente = porta verso il dossier (tap dedicato, non apre il lavoro).
   const ClienteTag = () =>
@@ -82,6 +99,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
             <span className="text-sm font-medium text-fumo">{lavoro.modo === "preventivo" && lavoro.prezzo ? formatEuro(lavoro.prezzo) : formatData(lavoro.data)}</span>
           </span>
         </div>
+        {hasExtra && <Extra />}
         <div className="mt-2.5 flex items-center justify-between gap-2">
           <Chips />
           <span className="flex shrink-0 items-center gap-1.5">
@@ -124,6 +142,7 @@ export function CardLavoro({ lavoro }: { lavoro: Lavoro }) {
         </span>
       </div>
 
+      {hasExtra && <Extra />}
       <div className="mt-2.5 flex items-center justify-between gap-2">
         <span className="flex min-w-0 items-center gap-1.5 font-mono text-[11px] text-fumo-2">
           <span className="shrink-0">{formatOre(calc.oreTotali)}</span>

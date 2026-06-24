@@ -29,6 +29,8 @@ function meseAdiacente(chiave: string, delta: number): string {
 
 type Filtro = "tutto" | "fare" | "incassare" | "pagati";
 const FILTRI: [Filtro, string][] = [["tutto", "Tutto"], ["fare", "Da fare"], ["incassare", "Da incassare"], ["pagati", "Pagati"]];
+type Raggruppa = "data" | "luogo" | "cliente" | "prezzo";
+const RAGGRUPPI: [Raggruppa, string][] = [["data", "Data"], ["luogo", "Luogo"], ["cliente", "Cliente"], ["prezzo", "Prezzo"]];
 
 export function Agenda() {
   const dati = useStore((s) => s.dati);
@@ -36,6 +38,7 @@ export function Agenda() {
   const oggi = oggiISO();
   const [mese, setMese] = useState(() => chiaveMese(oggi));
   const [filtro, setFiltro] = useState<Filtro>("tutto");
+  const [raggruppa, setRaggruppa] = useState<Raggruppa>("data");
   const bozza = useBozza((s) => s.b);
   const haBozza = bozzaNonVuota(bozza);
 
@@ -70,6 +73,39 @@ export function Agenda() {
     const giorni = [...set].sort((a, b) => b.localeCompare(a));
     return { giorni, perGiorno: map, meseLordo: lordo, meseConta: lavori.length };
   }, [dati, mese, oggi]);
+
+  const gruppi = useMemo(() => {
+    if (raggruppa === "data") return [] as { key: string; label: string; lavori: Lavoro[] }[];
+    const lavori = dati.lavori.filter((l) => !l.deleted && chiaveMese(l.data) === mese && matchFiltro(l));
+    const nomeCli = (id?: string) => {
+      const c = id ? dati.clienti.find((x) => x.id === id) : undefined;
+      return c ? `${c.nome} ${c.cognome ?? ""}`.trim() : "Senza cliente";
+    };
+    const banda = (l: Lavoro): { label: string; ord: number } => {
+      const v = calcoloLavoro(dati, l).lordo;
+      if (v <= 0) return { label: "Senza importo", ord: 0 };
+      if (v < 100) return { label: "Fino a 100 €", ord: 1 };
+      if (v < 500) return { label: "100–500 €", ord: 2 };
+      return { label: "Oltre 500 €", ord: 3 };
+    };
+    const map = new Map<string, { label: string; ord: number; lavori: Lavoro[] }>();
+    for (const l of lavori) {
+      let key: string;
+      let label: string;
+      let ord = 0;
+      if (raggruppa === "luogo") { label = l.luogo?.trim() || "Senza luogo"; key = label.toLowerCase(); }
+      else if (raggruppa === "cliente") { label = nomeCli(l.clienteId); key = label.toLowerCase(); }
+      else { const b = banda(l); label = b.label; ord = b.ord; key = String(b.ord); }
+      const g = map.get(key) ?? { label, ord, lavori: [] };
+      g.lavori.push(l);
+      map.set(key, g);
+    }
+    const arr = [...map.values()];
+    arr.forEach((g) => g.lavori.sort((a, b) => b.data.localeCompare(a.data)));
+    arr.sort((a, b) => (raggruppa === "prezzo" ? b.ord - a.ord : a.label.localeCompare(b.label)));
+    return arr.map((g) => ({ key: g.label, label: g.label, lavori: g.lavori }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dati, mese, raggruppa, filtro]);
 
   const sommaGiorno = (iso: string) => {
     const ls = perGiorno.get(iso) ?? [];
@@ -146,6 +182,18 @@ export function Agenda() {
               </button>
             ))}
           </div>
+          <div className="no-scrollbar flex items-center gap-2 overflow-x-auto pb-0.5">
+            <span className="shrink-0 self-center font-mono text-[10px] uppercase tracking-wider text-fumo-2">Raggruppa</span>
+            {RAGGRUPPI.map(([v, l]) => (
+              <button key={v} type="button" onClick={() => setRaggruppa(v)} className={cn("shrink-0 rounded-pill px-3 py-1.5 text-xs font-medium transition-colors", raggruppa === v ? "bg-scuro text-white" : "bg-superficie text-fumo shadow-card")}>
+                {l}
+              </button>
+            ))}
+          </div>
+          {raggruppa !== "data" ? (
+            <Gruppi gruppi={gruppi} dati={dati} />
+          ) : (
+            <>
           {filtro !== "tutto" && !giorni.some((iso) => (perGiorno.get(iso) ?? []).some(matchFiltro)) && (
             <p className="py-8 text-center text-sm text-fumo-2">Niente in «{FILTRI.find(([v]) => v === filtro)?.[1]}» questo mese.</p>
           )}
@@ -181,9 +229,38 @@ export function Agenda() {
               </motion.section>
             );
           })}
+            </>
+          )}
         </div>
       )}
     </div>
+  );
+}
+
+function Gruppi({ gruppi, dati }: { gruppi: { key: string; label: string; lavori: Lavoro[] }[]; dati: Dati }) {
+  if (gruppi.length === 0) return <p className="py-8 text-center text-sm text-fumo-2">Niente da mostrare.</p>;
+  return (
+    <>
+      {gruppi.map((g) => {
+        const lordo = g.lavori.filter((x) => x.fase === "fatto").reduce((a, x) => a + calcoloLavoro(dati, x).lordo, 0);
+        return (
+          <section key={g.key}>
+            <div className="sticky top-0 z-10 -mx-4 flex items-center justify-between gap-2 bg-fondo/85 px-4 py-2 backdrop-blur-md">
+              <span className="flex items-center gap-2 text-sm font-semibold capitalize">
+                {g.label}
+                <span className="font-mono text-[11px] text-fumo-2">{g.lavori.length}</span>
+              </span>
+              {lordo > 0 && <span className="font-mono text-xs text-fumo-2">{formatEuro(lordo)}</span>}
+            </div>
+            <div className="mt-2.5 flex flex-col gap-2.5">
+              {g.lavori.map((l) => (
+                <Riga key={l.id} lavoro={l} dati={dati} />
+              ))}
+            </div>
+          </section>
+        );
+      })}
+    </>
   );
 }
 
