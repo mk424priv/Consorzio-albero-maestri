@@ -50,7 +50,7 @@ export function NuovoCliente() {
             <AvatarHero iniziali={iniziali} />
             <div className="flex min-w-0 flex-col gap-1.5">
               <span className="truncate text-xl font-bold">{nomeMostrato || "Nuovo cliente"}</span>
-              <span className="w-fit rounded-pill border border-white/25 bg-white/15 px-3 py-1 font-mono text-sm tracking-wider">{iniziali}-00-00-00</span>
+              <span className="w-fit rounded-pill bg-white/20 px-3 py-1 font-mono text-sm tracking-wider backdrop-blur">{iniziali}-00-00-00</span>
             </div>
             {form.tariffa && <span className="ml-auto self-start rounded-pill bg-white/20 px-2.5 py-1 text-xs font-semibold">{form.tariffa} €/h</span>}
           </div>

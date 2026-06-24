@@ -41,7 +41,7 @@ export function NuovoOperaio() {
             <AvatarHero iniziali={iniziali} />
             <div className="flex min-w-0 flex-col gap-1.5">
               <span className="truncate text-xl font-bold">{form.nome.trim() || "Nuovo operaio"}</span>
-              <span className="w-fit rounded-pill border border-white/25 bg-white/15 px-3 py-1 text-xs font-medium">collaboratore</span>
+              <span className="w-fit rounded-pill bg-white/20 px-3 py-1 text-xs font-medium backdrop-blur">collaboratore</span>
             </div>
           </div>
         </HeroMesh>
