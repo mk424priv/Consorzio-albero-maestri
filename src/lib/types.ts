@@ -1,234 +1,104 @@
-import type {
-  CategoriaSpesa,
-  Conteggio,
-  Fase,
-  FasciaGiornata,
-  MetodoPagamento,
-  Modalita,
-  Modo,
-  OriginePagamento,
-  RuoloOperatore,
-  StatoPreventivo,
-} from "./dominio";
+// Dominio NEXUS — centro di controllo dei progetti personali.
+// Derived-not-stored: i totali si ricalcolano alla lettura (src/lib/costi.ts);
+// il DB salva solo fatti. ID = ULID, updatedAt + tombstone `deleted` per sync futuro.
 
-/*
-  Modello canonico pulito (greenfield): nessun campo legacy.
-  Ogni entita' porta id (ULID), updatedAt e tombstone `deleted` per il
-  futuro sync (canone 02 §1.4). I derivati NON sono campi (§2.1).
-*/
+export type TipoProgetto =
+  | "auto"      // restauro auto / moto
+  | "casa"      // lavori in casa
+  | "mobili"    // costruzione mobili
+  | "giardino"  // progettazione esterni
+  | "van"       // allestimento van / camper
+  | "acquisto"  // acquisto pianificato
+  | "tech"      // progetti software / elettronica
+  | "altro";
 
-export interface Cliente {
-  id: string;
-  nome: string;
-  cognome?: string;
-  /** Parte fissa del codice parlante (es. "MR", "MR1"). */
-  inizialiCodice: string;
-  telefono?: string;
-  email?: string;
-  luogo?: string;
-  /** €/ora fatturati al cliente (ricavo). null = non impostata. */
-  tariffaOraria?: number | null;
-  modalitaPredefinita: Modalita;
-  note?: string;
-  creatoIl: string;
-  updatedAt: string;
-  rev?: number;
-  deleted?: boolean;
-}
+export type StatoProgetto =
+  | "idea"
+  | "pianificazione"
+  | "in-corso"
+  | "in-pausa"
+  | "completato";
 
-export interface Operatore {
-  id: string;
-  nome: string;
-  ruolo: RuoloOperatore;
-  /** €/ora di costo. Per il titolare ("io") di norma null. */
-  tariffaOraria?: number | null;
-  telefono?: string;
-  attivo: boolean;
-  note?: string;
-  creatoIl: string;
-  updatedAt: string;
-  rev?: number;
-  deleted?: boolean;
-}
+export type CategoriaCosto =
+  | "materiali"
+  | "attrezzi"
+  | "componenti"
+  | "manodopera"
+  | "trasporto"
+  | "altro";
 
-export interface PartecipanteLavoro {
-  collaboratoreId: string;
-  /** €/ora di costo congelata alla creazione del lavoro. */
-  tariffaSnapshot: number;
-  /** Input per conteggio = "totale" (le ore reali vivono comunque in `ore`). */
-  oreTotale?: number;
-}
-
-/** Voce singola di un preventivo (linea di intervento con descrizione e prezzo). */
-export interface Intervento {
+export interface VoceCosto {
   id: string;
   descrizione: string;
-  prezzo: number;
+  categoria: CategoriaCosto;
+  quantita: number;
+  prezzoUnitario: number; // in euro
+  acquistato: boolean;
+  link?: string; // link al prodotto (per gli acquisti)
 }
 
-export interface Lavoro {
+// ————— Bozza 3D —————
+
+export type Ambiente3D = "giardino" | "stanza" | "van" | "garage";
+
+export type TipoOggetto3D =
+  | "box"
+  | "capanna"
+  | "albero"
+  | "pianta"
+  | "tavolo"
+  | "sedia"
+  | "armadio"
+  | "letto"
+  | "divano"
+  | "cucina"
+  | "auto";
+
+export interface OggettoScena {
   id: string;
-  clienteId?: string;
-  titolo: string;
-  descrizione?: string;
-  luogo?: string;
-  data: string; // ISO yyyy-mm-dd
-  ordineNelGiorno?: number;
-  // assi canoniche
-  fase: Fase;
-  modo: Modo;
-  conteggio: Conteggio;
-  // preventivo
-  periodo?: { dal: string; al: string } | null;
-  prezzo?: number | null;
-  /** Voci di intervento (se presenti, il lordo è la loro somma invece di `prezzo`). */
-  interventi?: Intervento[];
-  /** Ciclo di vita del preventivo (rilevante solo se modo = "preventivo"). */
-  statoPreventivo?: StatoPreventivo;
-  /** Collocazione nel giorno: "orario" usa oraInizio/oraFine; le altre sono fasce grossolane. */
-  fascia?: FasciaGiornata;
-  // fascia oraria opzionale
-  oraInizio?: string;
-  oraFine?: string;
-  /** €/ora cliente congelata: calcolo stabile anche se la tariffa cambia. */
-  tariffaClienteSnapshot?: number | null;
-  partecipanti: PartecipanteLavoro[];
-  /** Default false: le mie ore entrano nel lordo ma non nel costo. */
-  contaMieOreComeCosto?: boolean;
-  note?: string;
-  creatoIl: string;
-  updatedAt: string;
-  rev?: number;
-  deleted?: boolean;
+  tipo: TipoOggetto3D;
+  nome: string;
+  posizione: [number, number, number];
+  rotazioneY: number; // radianti
+  scala: [number, number, number];
+  colore: string;
 }
 
-/** Appuntamento o promemoria in agenda (non collegato a un lavoro). */
-export interface Appuntamento {
-  id: string;
-  tipo: "appuntamento" | "promemoria";
-  titolo: string;
-  descrizione?: string;
-  clienteId?: string;
-  data: string; // ISO yyyy-mm-dd (giorno di inizio)
-  oraInizio?: string;
-  oraFine?: string;
-  periodo?: { dal: string; al: string } | null; // per appuntamenti multi-giorno
-  completato: boolean;
-  creatoIl: string;
-  updatedAt: string;
-  rev?: number;
-  deleted?: boolean;
+export interface Scena3D {
+  ambiente: Ambiente3D;
+  // dimensioni dello spazio in metri
+  larghezza: number;
+  profondita: number;
+  altezza: number;
+  oggetti: OggettoScena[];
 }
 
-/** Unica fonte delle ore reali per tutti i calcoli. */
-export interface RegistrazioneOre {
-  id: string;
-  clienteId?: string;
-  lavoroId?: string;
-  operatoreId?: string;
-  data: string;
-  ore: number;
-  note?: string;
-  creatoIl?: string;
-  updatedAt: string;
-  rev?: number;
-  deleted?: boolean;
-}
+// ————— Progetto —————
 
-/** Pagamento del cliente (denaro IN ENTRATA). */
-export interface Pagamento {
-  id: string;
-  clienteId: string;
-  lavoroId?: string;
-  origine: OriginePagamento;
-  importoAtteso: number;
-  importoIncassato: number;
-  dataEmissione: string;
-  dataScadenza?: string;
-  dataIncasso?: string;
-  metodo?: MetodoPagamento;
-  note?: string;
-  creatoIl?: string;
-  updatedAt: string;
-  rev?: number;
-  deleted?: boolean;
-}
-
-/** Compenso all'operatore (denaro IN USCITA). */
-export interface CompensoOperatore {
-  id: string;
-  operatoreId: string;
-  importo: number;
-  data: string;
-  periodo?: string; // "YYYY-MM"
-  metodo?: MetodoPagamento;
-  note?: string;
-  creatoIl?: string;
-  updatedAt: string;
-  rev?: number;
-  deleted?: boolean;
-}
-
-export interface Spesa {
-  id: string;
-  categoria: CategoriaSpesa;
-  importo: number;
-  data: string;
-  descrizione?: string;
-  clienteId?: string;
-  lavoroId?: string;
-  attrezzoId?: string;
-  creatoIl?: string;
-  updatedAt: string;
-  rev?: number;
-  deleted?: boolean;
-}
-
-export type CategoriaAttrezzo = "auto" | "motore" | "elettrico" | "manuale";
-
-/** Attrezzo/veicolo del «Garage». */
-export interface Attrezzo {
+export interface Progetto {
   id: string;
   nome: string;
-  categoria: CategoriaAttrezzo;
-  prezzo?: number;
-  dataAcquisto?: string; // ISO yyyy-mm-dd
-  caratteristiche?: string;
-  note?: string;
-  // solo veicoli (categoria "auto")
-  consumoMedio?: number; // litri / 100 km
-  carburante?: string; // benzina · diesel · GPL · elettrico
-  prezzoCarburante?: number; // €/litro
-  /** Chiave del modello 3D risolta dal nome (cache derived-not-stored). Vedi canone/10. */
-  modelKey?: string;
+  tipo: TipoProgetto;
+  stato: StatoProgetto;
+  descrizione: string;
+  budget: number | null; // euro; null = nessun budget fissato
+  costi: VoceCosto[];
+  scena: Scena3D | null;
+  createdAt: string; // ISO
   updatedAt: string;
-  rev?: number;
-  deleted?: boolean;
+  deleted: 0 | 1;
 }
 
-/** Snapshot in memoria (idratato da Dexie) su cui operano i calcoli in src/lib. */
-export interface Dati {
-  clienti: Cliente[];
-  operatori: Operatore[];
-  lavori: Lavoro[];
-  ore: RegistrazioneOre[];
-  pagamenti: Pagamento[];
-  compensi: CompensoOperatore[];
-  spese: Spesa[];
-  attrezzi: Attrezzo[];
-  appuntamenti: Appuntamento[];
+// ————— Integrazioni (web-app esterne come sotto-applicazioni) —————
+
+export interface Integrazione {
+  id: string;
+  nome: string;
+  url: string;
+  descrizione: string;
+  // "iframe" = incorporata dentro NEXUS; "link" = si apre in una nuova scheda
+  modalita: "iframe" | "link";
+  createdAt: string;
+  updatedAt: string;
+  deleted: 0 | 1;
 }
-
-export const DATI_VUOTI: Dati = {
-  clienti: [],
-  operatori: [],
-  lavori: [],
-  ore: [],
-  pagamenti: [],
-  compensi: [],
-  spese: [],
-  attrezzi: [],
-  appuntamenti: [],
-};
-
-export type CollezioneKey = keyof Dati;

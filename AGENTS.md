@@ -1,40 +1,47 @@
-# Albero Maestri — guida per chi sviluppa
+# NEXUS — guida per chi sviluppa
 
-> ⚠️ **Prodotto nuovo (greenfield).** L'app precedente è stata scartata. La
-> **fonte di verità** è il canone in [`canone/`](canone/): `01` (visione UX),
-> `02` (specifica), `03` (piano), **`08` (design canonico — palette, ierarchia toni,
-> elevazione, libreria componenti; consolida e sostituisce 05–07)**.
-> Dove il codice diverge dal canone, vince il canone.
+> ⚠️ **Prodotto nuovo (greenfield), seconda generazione.** L'app precedente
+> ("Albero Maestri", gestionale artigiani) è stata **scartata del tutto**:
+> nuovo scopo, nuovo design, nuovo database. Non recuperare codice o concetti
+> dalla storia git se non esplicitamente richiesto.
 
-App **Vite + React 19 + TypeScript + Tailwind CSS v4**, **local-first PWA**:
-nessun backend in v1, i dati vivono in **IndexedDB (Dexie)**. Identità visiva
-"Quaderno di bottega" (carta/inchiostro/ottone).
+**NEXUS** è il centro di controllo dei **progetti personali** dell'utente:
+restauri auto, lavori in casa, costruzione mobili, allestimento van/camper,
+giardino, acquisti pianificati. App **Vite + React 19 + TypeScript +
+Tailwind CSS v4**, **local-first PWA**: nessun backend, i dati vivono in
+**IndexedDB (Dexie, database `nexus`)**.
+
+## Identità visiva
+
+Centro di controllo d'impatto: fondo **void** quasi nero, pannelli **vetro**
+(`glass` / `glass-strong`), neon **Matrix** (`--color-neon`), font mono
+(JetBrains Mono), pioggia di glifi sullo sfondo (`MatrixRain`), animazioni
+framer-motion. Tutti i colori passano dai token `@theme` in `src/index.css` —
+niente colori hard-coded nella UI (nelle scene 3D i colori sono contenuto, ok).
 
 ## Struttura
 
 ```
-canone/         i 3 documenti del canone (verità del prodotto)
 src/
-  lib/          types, dominio (enum+etichette), format, id (ULID), codice-parlante,
-                lavoro-calc (motore conti), conti (aggregati), backup; *.test.ts (vitest)
-  db/           schema Dexie, interfaccia Repository + DexieRepository (cucitura sync-ready)
-  store/        Zustand (idratato da Dexie, CRUD via repository), bozza (draft creazione), azioni
-  data/seed.ts  dati d'esempio
-  components/   Layout, BottomNav, CardLavoro, Intestazione, ui/ (primitivi su Radix)
-  pages/        Agenda, Soldi, Anagrafiche, Dashboard, Crea/schede, Impostazioni
-  app/App.tsx   router + idratazione store
-  index.css     token @theme (Carta/Inchiostro/Ottone/Lichene), grana, utility
+  lib/          types, dominio (etichette), costi (motore, + test vitest), format, id (ULID)
+  db/db.ts      schema Dexie (progetti, integrazioni) — tombstone `deleted`, updatedAt
+  store/        Zustand idratato da Dexie, CRUD
+  components/   Shell (HUD+nav), MatrixRain, ui.tsx (primitivi vetro), CalcolatoreCosti,
+                editor3d/ (Editor3D, Oggetto3D parametrici, catalogo)
+  pages/        Dashboard (CONTROLLO), Progetti, NuovoProgetto (CREA), DettaglioProgetto,
+                Bozza3D, Bozze, Integrazioni (MODULI, iframe/link)
+  app/App.tsx   router + idratazione
 ```
 
 ## Principi
 
-- **Derived-not-stored**: `codice parlante`, totali, stati pagamento si
-  ricalcolano alla lettura in `src/lib/`. Il DB salva solo fatti-eventi.
-- **Cucitura repository**: la UI parla con lo store, lo store con `Repository`.
-  Per un backend reale si sostituisce solo l'implementazione (Dexie → sync → HTTP),
-  nessuno schermo cambia. ID = ULID, `updatedAt` + tombstone `deleted` già presenti.
-- **Stile dai token**: usa i primitivi di `src/components/ui` e i token `@theme`;
-  niente colori hard-coded. Personalità per schermo (canone 01 §2).
+- **Derived-not-stored**: totali costi e scostamenti budget si ricalcolano
+  alla lettura (`src/lib/costi.ts`); il DB salva solo fatti.
+- **Sync-ready**: ID = ULID, `updatedAt` + tombstone `deleted` su ogni riga.
+- **Bozze 3D**: scene `Scena3D` (ambiente + oggetti parametrici) salvate nel
+  progetto; editor con three.js / @react-three/fiber / drei.
+- **Moduli**: le web-app dell'utente (Vercel/GitHub Pages) si collegano come
+  sotto-applicazioni, incorporate (iframe) o in scheda esterna.
 
 ## Comandi
 
@@ -42,17 +49,10 @@ src/
 |---|---|
 | `npm run dev` | Server di sviluppo (http://localhost:3000) |
 | `npm run build` | Type-check (`tsc -b`) + build di produzione in `dist/` |
-| `npm run preview` | Anteprima della build |
-| `npm test` | Test del motore conti (vitest) |
+| `npm test` | Test del motore costi (vitest) |
 | `npm run lint` | ESLint |
-
-Nessuna password: l'app è local-first, si apre diretta. Backup: Impostazioni → Esporta/Importa (file JSON).
 
 ## Flusso di lavoro
 
-- Sviluppa sul branch **`canone/nuovo-prodotto`**.
-- **Commit a ogni tappa** (Conventional Commits); `npm run build` deve passare prima del commit.
-- **OBBLIGATORIO — commit + push SEMPRE a fine lavoro.** Dopo **ogni** lavoro completato, fare
-  **sempre** `commit` e `push` su GitHub **senza aspettare la richiesta dell'utente**: push del branch
-  `canone/nuovo-prodotto` **e** fast-forward di `main` + push di `main`. Questo **triggera il redeploy**.
-  Non lasciare mai lavoro completato non pushato. (Questo punto sovrascrive ogni regola di "push opt-in".)
+- Commit a ogni tappa (Conventional Commits); `npm run build` deve passare prima del commit.
+- A fine lavoro: commit + push del branch di lavoro corrente.

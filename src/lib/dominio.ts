@@ -1,95 +1,52 @@
-// Assi canoniche del lavoro + enum di dominio con etichette italiane. (canone 02 §2.6, §3)
+import type {
+  Ambiente3D,
+  CategoriaCosto,
+  StatoProgetto,
+  TipoProgetto,
+} from "./types";
 
-// ── Assi del lavoro ──
-export type Fase = "fatto" | "da_fare"; // temporale: svolto | programmato
-export type Modo = "preventivo" | "ore"; // compenso
-export type Conteggio = "totale" | "per_giorni"; // conteggio ore
-export type StatoIncasso = "non_pagato" | "parziale" | "pagato"; // per-lavoro
-export type FasciaGiornata = "giornata" | "mattina" | "pomeriggio" | "orario"; // collocazione nel giorno
-export type StatoPreventivo = "da_fare" | "inviato" | "accettato" | "rifiutato"; // ciclo preventivo (solo modo = preventivo)
+export const TIPI_PROGETTO: Record<TipoProgetto, { label: string; icona: string }> = {
+  auto: { label: "Restauro auto", icona: "🔧" },
+  casa: { label: "Lavori in casa", icona: "🏠" },
+  mobili: { label: "Mobili", icona: "🪑" },
+  giardino: { label: "Giardino", icona: "🌿" },
+  van: { label: "Van / Camper", icona: "🚐" },
+  acquisto: { label: "Acquisto", icona: "🛒" },
+  tech: { label: "Tech", icona: "⚡" },
+  altro: { label: "Altro", icona: "◇" },
+};
 
-// ── Altri enum ──
-export type Modalita = "preventivo" | "ore"; // modo predefinito del cliente
-export type RuoloOperatore = "titolare" | "collaboratore";
-export type OriginePagamento = "preventivo" | "acconto" | "saldo" | "ore" | "manuale";
-export type StatoPagamento = "in_attesa" | "pagato" | "in_ritardo"; // per-pagamento (invoice)
-export type StatoCompenso = "da_pagare" | "parziale" | "saldato"; // per-operatore
-export type CategoriaSpesa = "benzina" | "materiali" | "attrezzi" | "altro";
-export type MetodoPagamento = "contanti" | "bonifico" | "carta" | "assegno" | "altro";
+export const STATI_PROGETTO: Record<
+  StatoProgetto,
+  { label: string; colore: string }
+> = {
+  idea: { label: "IDEA", colore: "var(--color-ghost)" },
+  pianificazione: { label: "PIANIFICAZIONE", colore: "var(--color-cyan)" },
+  "in-corso": { label: "IN CORSO", colore: "var(--color-neon)" },
+  "in-pausa": { label: "IN PAUSA", colore: "var(--color-amber)" },
+  completato: { label: "COMPLETATO", colore: "var(--color-ice)" },
+};
 
-export const ETICHETTE: Record<string, string> = {
-  // modo / modalita / origine
-  preventivo: "A preventivo",
-  ore: "A ore",
-  acconto: "Acconto",
-  saldo: "Saldo",
-  manuale: "Manuale",
-  // fase
-  fatto: "Fatto",
-  da_fare: "Da fare",
-  // conteggio
-  totale: "Totale",
-  per_giorni: "A giornate",
-  // stato incasso
-  non_pagato: "Non pagato",
-  parziale: "Parziale",
-  pagato: "Pagato",
-  // stato pagamento
-  in_attesa: "In attesa",
-  in_ritardo: "In ritardo",
-  // stato compenso
-  da_pagare: "Da pagare",
-  saldato: "Saldato",
-  // fascia giornata
-  giornata: "Giornata",
-  mattina: "Mattina",
-  pomeriggio: "Pomeriggio",
-  orario: "Orario",
-  // stato preventivo ("da_fare" già sopra)
-  inviato: "Inviato",
-  accettato: "Accettato",
-  rifiutato: "Rifiutato",
-  // categoria spesa
-  benzina: "Benzina",
+export const CATEGORIE_COSTO: Record<CategoriaCosto, string> = {
   materiali: "Materiali",
   attrezzi: "Attrezzi",
+  componenti: "Componenti",
+  manodopera: "Manodopera",
+  trasporto: "Trasporto",
   altro: "Altro",
-  // metodo
-  contanti: "Contanti",
-  bonifico: "Bonifico",
-  carta: "Carta",
-  assegno: "Assegno",
-  // ruolo
-  titolare: "Titolare",
-  collaboratore: "Collaboratore",
 };
 
-export function etichetta(valore?: string | null): string {
-  if (valore == null) return "—";
-  return ETICHETTE[valore] ?? valore;
-}
+export const AMBIENTI_3D: Record<
+  Ambiente3D,
+  { label: string; larghezza: number; profondita: number; altezza: number }
+> = {
+  giardino: { label: "Giardino", larghezza: 20, profondita: 14, altezza: 0 },
+  stanza: { label: "Stanza", larghezza: 5, profondita: 4, altezza: 2.7 },
+  van: { label: "Van / Camper", larghezza: 1.9, profondita: 4.2, altezza: 1.9 },
+  garage: { label: "Garage", larghezza: 6, profondita: 5, altezza: 2.4 },
+};
 
-// ── Toni semantici per i badge ──
-export type Tono = "positivo" | "attenzione" | "critico" | "lichene" | "ottone" | "neutro";
-
-export const TONO_INCASSO: Record<StatoIncasso, Tono> = {
-  non_pagato: "critico",
-  parziale: "attenzione",
-  pagato: "positivo",
-};
-export const TONO_PAGAMENTO: Record<StatoPagamento, Tono> = {
-  in_attesa: "attenzione",
-  pagato: "positivo",
-  in_ritardo: "critico",
-};
-export const TONO_COMPENSO: Record<StatoCompenso, Tono> = {
-  da_pagare: "attenzione",
-  parziale: "lichene",
-  saldato: "positivo",
-};
-export const TONO_PREVENTIVO: Record<StatoPreventivo, Tono> = {
-  da_fare: "attenzione",
-  inviato: "ottone",
-  accettato: "positivo",
-  rifiutato: "critico",
-};
+export const ORDINE_TIPI = Object.keys(TIPI_PROGETTO) as TipoProgetto[];
+export const ORDINE_STATI = Object.keys(STATI_PROGETTO) as StatoProgetto[];
+export const ORDINE_CATEGORIE = Object.keys(CATEGORIE_COSTO) as CategoriaCosto[];
+export const ORDINE_AMBIENTI = Object.keys(AMBIENTI_3D) as Ambiente3D[];

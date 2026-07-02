@@ -1,121 +1,130 @@
 @import "tailwindcss";
+@import "@fontsource-variable/jetbrains-mono";
 
-/*
-  Albero Maestri — sistema "Luce" (brandbook v5).
-  Luce di giornata: canvas chiara e ariosa, CARD BIANCHE che si sollevano (elevazione
-  via ombra morbida), inchiostro scuro, accenti MORBIDI (non neon). Lo stato è una
-  velatura "ad acquerello" chiara, non un colore gridato. Niente buio: le card volano.
-  NB: il token --color-bianco è il TESTO PRIMARIO (scuro) — nome tenuto per compat.
-*/
+/* NEXUS — design "centro di controllo": vuoto profondo, vetro, neon Matrix.
+   Tutti i colori passano da questi token: niente colori hard-coded nei componenti. */
 @theme {
-  --color-nero: #000000;
-  --color-fondo: #eef1f5; /* canvas chiara */
-  --color-superficie: #ffffff; /* card bianche */
-  --color-superficie-alta: #ffffff;
-  --color-superficie-bassa: #eceff4; /* input / track */
-  --color-superficie-3: #e3e7ee; /* segmented track / hover */
-  --color-bordo: #e6e9f0;
-  --color-scuro: #1c1e26; /* ink scuro: bottoni primari, FAB */
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
+  --font-sans: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, monospace;
 
-  /* inchiostro su chiaro */
-  --color-bianco: #1c1e26; /* TESTO PRIMARIO (scuro) — compat */
-  --color-fumo: #636b78; /* secondario */
-  --color-fumo-2: #98a0ad; /* terziario */
+  /* fondali */
+  --color-void: #04070a;
+  --color-abyss: #070d13;
+  --color-grid: #0c141d;
 
-  /* accenti morbidi */
-  --color-blu: #3b6ef5;
-  --color-verde: #15b87a;
-  --color-rosso: #ef5b52;
-  --color-arancio: #f59331;
-  --color-viola: #6a5bd8;
-  --color-ciano: #22c3d6;
+  /* inchiostri */
+  --color-ice: #dbe9f4; /* testo primario */
+  --color-ghost: #6b7f92; /* testo secondario */
+  --color-faint: #31414f; /* bordi/testo terziario */
 
-  /* alias di compat */
-  --color-lime: #3b6ef5;
-  --color-lime-scuro: #2f57cc;
-  --color-positivo: #15b87a;
-  --color-attenzione: #f59331;
-  --color-critico: #ef5b52;
+  /* neon */
+  --color-neon: #00ff9c;
+  --color-neon-dim: #00b56f;
+  --color-cyan: #37d6f5;
+  --color-amber: #ffc247;
+  --color-danger: #ff4d6a;
 
-  --font-display: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono Variable", ui-monospace, "SF Mono", monospace;
+  --animate-flicker: flicker 4s linear infinite;
+  --animate-pulse-neon: pulse-neon 2.4s ease-in-out infinite;
 
-  --radius-chip: 0.5rem;
-  --radius-btn: 1rem;
-  --radius-vetro: 1.5rem;
-  --radius-bolla: 2rem;
-  --radius-cm: 1.75rem; /* hero "carta-banca" */
-  --radius-pill: 999px;
-
-  /* ombre = elevazione (le card volano sopra la canvas) */
-  --shadow-card: 0 1px 2px rgba(20, 28, 46, 0.05), 0 8px 20px -8px rgba(20, 28, 46, 0.14);
-  --shadow-flottante: 0 14px 40px -12px rgba(20, 28, 46, 0.18);
-  --shadow-sheet: 0 -10px 44px rgba(20, 28, 46, 0.14);
-  --shadow-vetro: var(--shadow-card);
-}
-
-@layer base {
-  html, body, #root { height: 100%; }
-  body {
-    margin: 0;
-    background-color: var(--color-fondo);
-    color: var(--color-bianco);
-    font-family: var(--font-sans);
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
-    overflow-x: hidden;
-    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  @keyframes flicker {
+    0%, 100% { opacity: 1; }
+    97% { opacity: 1; }
+    98% { opacity: 0.72; }
+    99% { opacity: 0.94; }
   }
-  h1, h2, h3 { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; }
-}
-
-@layer utilities {
-  /* card bianche elevate */
-  .glass { background-color: var(--color-superficie); box-shadow: var(--shadow-card); }
-  .glass-alta { background-color: var(--color-superficie); box-shadow: var(--shadow-card), inset 0 0 0 1px var(--color-bordo); }
-  .glass-bassa { background-color: var(--color-superficie-bassa); }
-  .glass-scura { background-color: var(--color-superficie); box-shadow: var(--shadow-flottante); }
-  .superficie { background-color: var(--color-superficie); }
-
-  .tabular-nums { font-variant-numeric: tabular-nums; }
-  .tracking-label { letter-spacing: 0.04em; }
-  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
-  .no-scrollbar::-webkit-scrollbar { display: none; }
-
-  /* fill mesh (per Cruscotto/MeshStrip — restano vividi) */
-  .mesh-blu { background-image: linear-gradient(135deg, #3b6ef5 0%, rgba(59,110,245,0.85) 55%, #6a5bd8 100%); }
-  .mesh-verde { background-image: linear-gradient(135deg, #1bb574 0%, rgba(27,181,116,0.8) 50%, #3b6ef5 100%); }
-  .mesh-rosso { background-image: linear-gradient(135deg, #ef5b52 0%, rgba(239,91,82,0.8) 55%, #6a5bd8 100%); }
-  .mesh-notte { background-image: linear-gradient(150deg, #3b6ef5 0%, #2a2660 55%, #1c1e26 100%); }
-}
-
-/* card per stato: bianca + velatura chiara (acquerello) + ombra. Niente buio. */
-@layer utilities {
-  /* stato = velatura ad acquerello + ombra. NIENTE bordi (canone 08). */
-  .statocard { position: relative; overflow: hidden; border-radius: var(--radius-vetro); }
-  .statocard--programmato {
-    background: radial-gradient(150% 130% at 100% -25%, rgba(59, 110, 245, 0.08), rgba(59, 110, 245, 0) 54%), var(--color-superficie);
-    box-shadow: var(--shadow-card);
-  }
-  .statocard--incassare {
-    background: radial-gradient(150% 130% at 100% -25%, rgba(239, 91, 82, 0.12), rgba(239, 91, 82, 0) 54%), var(--color-superficie);
-    box-shadow: var(--shadow-card);
-  }
-  .statocard--parziale {
-    background: radial-gradient(150% 130% at 100% -25%, rgba(245, 147, 49, 0.13), rgba(245, 147, 49, 0) 54%), var(--color-superficie);
-    box-shadow: var(--shadow-card);
-  }
-  .statocard--pagato {
-    background: radial-gradient(150% 130% at 100% -25%, rgba(21, 184, 122, 0.10), rgba(21, 184, 122, 0) 52%), var(--color-superficie);
-    box-shadow: var(--shadow-card);
+  @keyframes pulse-neon {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.45; }
   }
 }
 
-@keyframes mondoDeriva {
-  0% { background-position: 0% 0%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 0%; }
+html {
+  background: var(--color-void);
+  color-scheme: dark;
 }
-.mondo-anim { background-size: 160% 160%; animation: mondoDeriva 30s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .mondo-anim { animation: none; } }
+
+body {
+  font-family: var(--font-mono);
+  /* niente background qui: coprirebbe il canvas MatrixRain (z-index negativo);
+     il fondo void sta su html */
+  color: var(--color-ice);
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior-y: none;
+}
+
+::selection {
+  background: color-mix(in srgb, var(--color-neon) 30%, transparent);
+  color: var(--color-ice);
+}
+
+/* ————— vetro ————— */
+@utility glass {
+  background: color-mix(in srgb, var(--color-grid) 55%, transparent);
+  backdrop-filter: blur(14px) saturate(1.3);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  border: 1px solid color-mix(in srgb, var(--color-ice) 9%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-ice) 6%, transparent),
+    0 12px 40px -18px rgb(0 0 0 / 0.9);
+}
+
+@utility glass-strong {
+  background: color-mix(in srgb, var(--color-abyss) 82%, transparent);
+  backdrop-filter: blur(22px) saturate(1.4);
+  -webkit-backdrop-filter: blur(22px) saturate(1.4);
+  border: 1px solid color-mix(in srgb, var(--color-ice) 12%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--color-ice) 8%, transparent),
+    0 20px 60px -24px rgb(0 0 0 / 0.95);
+}
+
+/* alone neon per testi e bordi attivi */
+@utility glow {
+  text-shadow:
+    0 0 8px color-mix(in srgb, var(--color-neon) 65%, transparent),
+    0 0 24px color-mix(in srgb, var(--color-neon) 30%, transparent);
+}
+
+@utility glow-ring {
+  border-color: color-mix(in srgb, var(--color-neon) 55%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-neon) 25%, transparent),
+    0 0 18px -4px color-mix(in srgb, var(--color-neon) 55%, transparent);
+}
+
+/* scanline da vecchio monitor, molto discreta */
+@utility scanlines {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 3px,
+      rgb(0 0 0 / 0.14) 3px,
+      rgb(0 0 0 / 0.14) 4px
+    );
+    mix-blend-mode: overlay;
+  }
+}
+
+/* scrollbar coerente col tema */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-faint) transparent;
+}
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-thumb { background: var(--color-faint); border-radius: 3px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* input numerici senza spinner */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] { -moz-appearance: textfield; appearance: textfield; }

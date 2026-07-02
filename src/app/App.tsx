@@ -1,74 +1,61 @@
-import { useEffect } from "react";
-import { MotionConfig } from "framer-motion";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Layout } from "@/components/Layout";
-import { Agenda } from "@/pages/Agenda";
-import { Anagrafiche } from "@/pages/Anagrafiche";
-import { Brandbook } from "@/pages/Brandbook";
-import { CalcolatoreFiscale } from "@/pages/CalcolatoreFiscale";
-import { Cantiere } from "@/pages/Cantiere";
-import { ClienteScheda } from "@/pages/ClienteScheda";
-import { CreaLavoro } from "@/pages/CreaLavoro";
+import { Shell } from "@/components/Shell";
 import { Dashboard } from "@/pages/Dashboard";
-import { Garage } from "@/pages/Garage";
-import { Impostazioni } from "@/pages/Impostazioni";
-import { Kitchen } from "@/pages/Kitchen";
-import { NuovoAppuntamento } from "@/pages/NuovoAppuntamento";
-import { NuovoCliente } from "@/pages/NuovoCliente";
-import { NuovoOperaio } from "@/pages/NuovoOperaio";
-import { OperaioScheda } from "@/pages/OperaioScheda";
-import { Soldi } from "@/pages/Soldi";
-import { avviaSync } from "@/db/sync";
-import { verificaUnaVoltaAlGiorno } from "@/lib/notifiche";
-import { useStore } from "@/store/store";
+import { Progetti } from "@/pages/Progetti";
+import { NuovoProgetto } from "@/pages/NuovoProgetto";
+import { DettaglioProgetto } from "@/pages/DettaglioProgetto";
+import { Bozze } from "@/pages/Bozze";
+import { Integrazioni, ModuloIncorporato } from "@/pages/Integrazioni";
+import { useStore } from "@/store/useStore";
 
-function Splash() {
+// three.js pesa ~1MB: l'editor 3D si carica solo quando serve.
+const Bozza3D = lazy(() =>
+  import("@/pages/Bozza3D").then((m) => ({ default: m.Bozza3D })),
+);
+
+function Avvio() {
   return (
-    <div className="grana flex min-h-dvh items-center justify-center">
-      <p className="font-display text-2xl text-fumo-2">Albero Maestri…</p>
+    <div className="flex min-h-dvh items-center justify-center">
+      <div className="text-xs tracking-[0.4em] text-neon glow animate-pulse-neon">
+        NEXUS // AVVIO…
+      </div>
     </div>
   );
 }
 
-export function App() {
-  const carica = useStore((s) => s.carica);
+export default function App() {
   const pronto = useStore((s) => s.pronto);
+  const idrata = useStore((s) => s.idrata);
 
   useEffect(() => {
-    void carica().then(() => {
-      avviaSync();
-      verificaUnaVoltaAlGiorno(useStore.getState().dati);
-    });
-  }, [carica]);
+    void idrata();
+  }, [idrata]);
+
+  if (!pronto) return <Avvio />;
 
   return (
-    <MotionConfig reducedMotion="user">
-      {!pronto ? (
-        <Splash />
-      ) : (
-        <BrowserRouter>
-          <Routes>
-            <Route path="/_kitchen" element={<Kitchen />} />
-            <Route path="/brandbook" element={<Brandbook />} />
-            <Route element={<Layout />}>
-              <Route path="/" element={<Agenda />} />
-              <Route path="/soldi" element={<Soldi />} />
-              <Route path="/anagrafiche" element={<Anagrafiche />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/garage" element={<Garage />} />
-              <Route path="/nuovo" element={<CreaLavoro />} />
-              <Route path="/lavoro/:id" element={<Cantiere />} />
-              <Route path="/cliente/nuovo" element={<NuovoCliente />} />
-              <Route path="/cliente/:id" element={<ClienteScheda />} />
-              <Route path="/operaio/nuovo" element={<NuovoOperaio />} />
-              <Route path="/operaio/:id" element={<OperaioScheda />} />
-              <Route path="/impostazioni" element={<Impostazioni />} />
-              <Route path="/appuntamento/nuovo" element={<NuovoAppuntamento />} />
-              <Route path="/fiscale" element={<CalcolatoreFiscale />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      )}
-    </MotionConfig>
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Shell />}>
+          <Route path="/" element={<Dashboard />} />
+          <Route path="/progetti" element={<Progetti />} />
+          <Route path="/progetti/:id" element={<DettaglioProgetto />} />
+          <Route
+            path="/progetti/:id/bozza"
+            element={
+              <Suspense fallback={<Avvio />}>
+                <Bozza3D />
+              </Suspense>
+            }
+          />
+          <Route path="/crea" element={<NuovoProgetto />} />
+          <Route path="/bozze" element={<Bozze />} />
+          <Route path="/integrazioni" element={<Integrazioni />} />
+          <Route path="/integrazioni/:id" element={<ModuloIncorporato />} />
+          <Route path="*" element={<Dashboard />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
   );
 }
