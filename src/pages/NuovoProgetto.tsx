@@ -38,6 +38,7 @@ export function NuovoProgetto() {
       budget: budget === "" ? null : Number(budget),
       costi: voci,
       scena,
+      manutenzione: [],
     });
     navigate(apriBozza && scena ? `/progetti/${p.id}/bozza` : `/progetti/${p.id}`);
   };

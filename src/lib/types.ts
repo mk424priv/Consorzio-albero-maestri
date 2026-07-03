@@ -73,6 +73,19 @@ export interface Scena3D {
   oggetti: OggettoScena[];
 }
 
+// ————— Manutenzione (interventi ricorrenti) —————
+
+export type UnitaIntervallo = "giorni" | "mesi" | "anni";
+
+export interface InterventoManutenzione {
+  id: string;
+  titolo: string;
+  note: string;
+  dataUltimo: string; // ISO data (YYYY-MM-DD): data dell'ultimo intervento eseguito
+  intervalloValore: number;
+  intervalloUnita: UnitaIntervallo;
+}
+
 // ————— Progetto —————
 
 export interface Progetto {
@@ -84,6 +97,7 @@ export interface Progetto {
   budget: number | null; // euro; null = nessun budget fissato
   costi: VoceCosto[];
   scena: Scena3D | null;
+  manutenzione: InterventoManutenzione[];
   createdAt: string; // ISO
   updatedAt: string;
   deleted: 0 | 1;

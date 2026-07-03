@@ -3,6 +3,7 @@ import type {
   CategoriaCosto,
   StatoProgetto,
   TipoProgetto,
+  UnitaIntervallo,
 } from "./types";
 
 export const TIPI_PROGETTO: Record<TipoProgetto, { label: string; icona: string }> = {
@@ -46,7 +47,14 @@ export const AMBIENTI_3D: Record<
   garage: { label: "Garage", larghezza: 6, profondita: 5, altezza: 2.4 },
 };
 
+export const UNITA_INTERVALLO: Record<UnitaIntervallo, { label: string }> = {
+  giorni: { label: "giorni" },
+  mesi: { label: "mesi" },
+  anni: { label: "anni" },
+};
+
 export const ORDINE_TIPI = Object.keys(TIPI_PROGETTO) as TipoProgetto[];
 export const ORDINE_STATI = Object.keys(STATI_PROGETTO) as StatoProgetto[];
 export const ORDINE_CATEGORIE = Object.keys(CATEGORIE_COSTO) as CategoriaCosto[];
 export const ORDINE_AMBIENTI = Object.keys(AMBIENTI_3D) as Ambiente3D[];
+export const ORDINE_UNITA = Object.keys(UNITA_INTERVALLO) as UnitaIntervallo[];

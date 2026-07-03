@@ -6,6 +6,7 @@ import { dataBreve } from "@/lib/format";
 import type { Ambiente3D } from "@/lib/types";
 import { useStore } from "@/store/useStore";
 import { CalcolatoreCosti } from "@/components/CalcolatoreCosti";
+import { PianoManutenzione } from "@/components/PianoManutenzione";
 import { Btn, Campo, Chip, PannelloAnimato, TitoloSezione, Vuoto } from "@/components/ui";
 
 /** Scheda progetto: stato, costi (persistenti), bozza 3D, eliminazione. */
@@ -82,7 +83,20 @@ export function DettaglioProgetto() {
         />
       </PannelloAnimato>
 
-      <PannelloAnimato delay={0.16} className="space-y-4 p-5">
+      <PannelloAnimato delay={0.16} className="space-y-3 p-5">
+        <TitoloSezione sub="Interventi ricorrenti: da una data scelta, ripeti ogni N giorni, mesi o anni.">
+          PIANO DI MANUTENZIONE
+        </TitoloSezione>
+        {progetto.manutenzione.length === 0 && (
+          <p className="text-xs text-ghost">Nessun intervento pianificato.</p>
+        )}
+        <PianoManutenzione
+          interventi={progetto.manutenzione}
+          onChange={(manutenzione) => void aggiornaProgetto(progetto.id, { manutenzione })}
+        />
+      </PannelloAnimato>
+
+      <PannelloAnimato delay={0.24} className="space-y-4 p-5">
         <TitoloSezione>BOZZA 3D</TitoloSezione>
         {progetto.scena ? (
           <div className="flex flex-wrap items-center gap-3">
