@@ -4,7 +4,7 @@ import tailwindcss from "@tailwindcss/vite";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "node:path";
 
-// NEXUS — centro di controllo progetti. Local-first PWA: i dati vivono in
+// NEXUS — configuratore di bozze 3D. Local-first PWA: i dati vivono in
 // IndexedDB (Dexie), nessun backend. Il service worker rende l'app offline.
 export default defineConfig({
   plugins: [
@@ -14,9 +14,9 @@ export default defineConfig({
       registerType: "autoUpdate",
       includeAssets: ["nexus.svg"],
       manifest: {
-        name: "NEXUS — Centro di Controllo",
+        name: "NEXUS — Bozze 3D",
         short_name: "NEXUS",
-        description: "Centro di controllo dei progetti personali: costi, bozze 3D, integrazioni.",
+        description: "Configuratore di bozze 3D: disegna giardini, stanze, van e garage in anteprima.",
         lang: "it",
         theme_color: "#04070a",
         background_color: "#04070a",

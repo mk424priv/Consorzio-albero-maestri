@@ -1,21 +1,12 @@
 import { NavLink, Outlet, useLocation } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { clsx } from "clsx";
-import {
-  Boxes,
-  FolderKanban,
-  LayoutDashboard,
-  Plug,
-  Plus,
-} from "lucide-react";
+import { Boxes, Plus } from "lucide-react";
 import { MatrixRain } from "./MatrixRain";
 
 const VOCI = [
-  { to: "/", label: "CONTROLLO", icona: LayoutDashboard, end: true },
-  { to: "/progetti", label: "PROGETTI", icona: FolderKanban },
+  { to: "/", label: "BOZZE 3D", icona: Boxes, end: true },
   { to: "/crea", label: "CREA", icona: Plus },
-  { to: "/bozze", label: "BOZZE 3D", icona: Boxes },
-  { to: "/integrazioni", label: "MODULI", icona: Plug },
 ];
 
 function Orologio() {
@@ -27,7 +18,7 @@ function Orologio() {
   );
 }
 
-/** Guscio "centro di controllo": HUD in alto, nav vetro, pioggia Matrix sotto. */
+/** Guscio dell'app: HUD in alto, nav vetro, pioggia Matrix sotto. */
 export function Shell() {
   const location = useLocation();
 
@@ -45,7 +36,7 @@ export function Shell() {
                 NEXUS<span className="text-neon glow">_</span>
               </div>
               <div className="text-[10px] tracking-widest text-ghost">
-                CENTRO DI CONTROLLO PROGETTI
+                CONFIGURATORE SPAZI 3D
               </div>
             </div>
           </NavLink>

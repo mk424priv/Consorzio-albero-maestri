@@ -1,41 +1,4 @@
-import type {
-  Ambiente3D,
-  CategoriaCosto,
-  StatoProgetto,
-  TipoProgetto,
-  UnitaIntervallo,
-} from "./types";
-
-export const TIPI_PROGETTO: Record<TipoProgetto, { label: string; icona: string }> = {
-  auto: { label: "Restauro auto", icona: "🔧" },
-  casa: { label: "Lavori in casa", icona: "🏠" },
-  mobili: { label: "Mobili", icona: "🪑" },
-  giardino: { label: "Giardino", icona: "🌿" },
-  van: { label: "Van / Camper", icona: "🚐" },
-  acquisto: { label: "Acquisto", icona: "🛒" },
-  tech: { label: "Tech", icona: "⚡" },
-  altro: { label: "Altro", icona: "◇" },
-};
-
-export const STATI_PROGETTO: Record<
-  StatoProgetto,
-  { label: string; colore: string }
-> = {
-  idea: { label: "IDEA", colore: "var(--color-ghost)" },
-  pianificazione: { label: "PIANIFICAZIONE", colore: "var(--color-cyan)" },
-  "in-corso": { label: "IN CORSO", colore: "var(--color-neon)" },
-  "in-pausa": { label: "IN PAUSA", colore: "var(--color-amber)" },
-  completato: { label: "COMPLETATO", colore: "var(--color-ice)" },
-};
-
-export const CATEGORIE_COSTO: Record<CategoriaCosto, string> = {
-  materiali: "Materiali",
-  attrezzi: "Attrezzi",
-  componenti: "Componenti",
-  manodopera: "Manodopera",
-  trasporto: "Trasporto",
-  altro: "Altro",
-};
+import type { Ambiente3D } from "./types";
 
 export const AMBIENTI_3D: Record<
   Ambiente3D,
@@ -47,14 +10,4 @@ export const AMBIENTI_3D: Record<
   garage: { label: "Garage", larghezza: 6, profondita: 5, altezza: 2.4 },
 };
 
-export const UNITA_INTERVALLO: Record<UnitaIntervallo, { label: string }> = {
-  giorni: { label: "giorni" },
-  mesi: { label: "mesi" },
-  anni: { label: "anni" },
-};
-
-export const ORDINE_TIPI = Object.keys(TIPI_PROGETTO) as TipoProgetto[];
-export const ORDINE_STATI = Object.keys(STATI_PROGETTO) as StatoProgetto[];
-export const ORDINE_CATEGORIE = Object.keys(CATEGORIE_COSTO) as CategoriaCosto[];
 export const ORDINE_AMBIENTI = Object.keys(AMBIENTI_3D) as Ambiente3D[];
-export const ORDINE_UNITA = Object.keys(UNITA_INTERVALLO) as UnitaIntervallo[];
